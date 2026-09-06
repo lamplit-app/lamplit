@@ -1006,6 +1006,26 @@ input[type='checkbox'] {
   }
 }
 
+// A Material button that has to fit the room there is, rather than the room its
+// label would like.
+//
+// Material wraps whatever is put in a button in a span of its own, and that
+// span is a flex item with an automatic minimum width — which for a label that
+// will not wrap is the whole label. So the span never shrinks, the button never
+// shrinks, and whatever is around it clips the overflow with a hard edge:
+// "…A hundred and nine ste", cut mid-word, with the app's own `text-overflow`
+// two levels down and nothing for it to do. There is no Material token for it,
+// which is why this is a selector rather than a property.
+//
+// Both buttons that wear this are in the top bar, and both are named things
+// that can be long: the story and chapter you are in, and the model answering.
+.li-truncates > .mdc-button__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 // A two-way choice with room to explain itself: the Narrator / Role-play
 // toggle, shared by the story sheet and the new-story sheet.
 .li-choices {

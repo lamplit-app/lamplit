@@ -40,7 +40,10 @@ import { Persistence } from '../store/persistence';
       align-items: center;
       gap: var(--li-space-xs);
       padding: var(--li-space-3xs) var(--li-space-sm);
-      border: 0;
+      /* Drawn by the two states that want something of the reader and
+         transparent in the third, so that nothing shifts when one becomes
+         another. */
+      border: 1px solid transparent;
       border-radius: var(--li-radius-pill);
       background: none;
       font: inherit;
@@ -49,23 +52,37 @@ import { Persistence } from '../store/persistence';
       cursor: default;
     }
 
+    /* Both states that want something of the reader are chips — a box round
+       them and a tint inside it — so that the shape says status before the
+       colour has to. Neither of them is the accent, and offline is the reason
+       why: the six named buttons along the bar are accent text, and a seventh
+       piece of accent text reads as a seventh way in rather than as the one
+       thing on the bar saying something is wrong.
+
+       Offline is the ink the rest of the app is written in. Nothing is lost
+       and nothing is on fire; the box is what marks it out. */
     .status.offline {
-      color: var(--li-accent);
+      color: var(--li-ink);
+      border-color: var(--li-border);
+      background: color-mix(in srgb, var(--li-ink) 6%, var(--li-surface));
       cursor: pointer;
     }
 
     .status.offline:hover {
-      background: color-mix(in srgb, var(--li-accent) 12%, transparent);
+      background: color-mix(in srgb, var(--li-ink) 12%, var(--li-surface));
     }
 
-    /* A refusal will not clear itself the way a missing server might. */
+    /* A refusal will not clear itself the way a missing server might: the same
+       chip, in the colour that says a decision is wanted. */
     .status.refused {
       color: var(--li-danger);
+      border-color: color-mix(in srgb, var(--li-danger) 45%, var(--li-border));
+      background: color-mix(in srgb, var(--li-danger) 10%, var(--li-surface));
       cursor: pointer;
     }
 
     .status.refused:hover {
-      background: color-mix(in srgb, var(--li-danger) 12%, transparent);
+      background: color-mix(in srgb, var(--li-danger) 18%, var(--li-surface));
     }
 
     .dot {

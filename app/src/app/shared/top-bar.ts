@@ -34,7 +34,7 @@ import { SaveStatusIndicator } from './save-status';
         <!-- The one thing in the bar that says where you are. On a phone there
              is no room for it to say it, so it says what this is instead and
              the menu it opens does the rest. -->
-        <button matButton class="here" [matMenuTriggerFor]="storiesMenu">
+        <button matButton class="here li-truncates" [matMenuTriggerFor]="storiesMenu">
           @if (layout.phone()) {
             <span class="mark">Lamplit</span>
           } @else {
@@ -86,7 +86,7 @@ import { SaveStatusIndicator } from './save-status';
 
           <button
             matButton
-            class="model"
+            class="model li-truncates"
             [class.unset]="!settings.isConnected()"
             (click)="dialogs.openConnection()"
             [matTooltip]="connectionTooltip()"
@@ -182,11 +182,18 @@ import { SaveStatusIndicator } from './save-status';
     }
 
     /* Material centres a button's label, which would spill it over the
-       wordmark: one flex child, started at the left edge, clipped here. */
+       wordmark: one flex child, started at the left edge, clipped here.
+
+       And Material gives every button a flex-shrink of nought, which is half
+       of why a long title used to stop mid-word: the button kept its full width
+       whatever the bar had left, and the identity around it cut the overflow
+       off with a hard edge, having no ellipsis to give. Letting the button give
+       up width is this half; li-truncates, in styles.scss, is the other. */
     .here {
       display: flex;
       justify-content: flex-start;
       overflow: hidden;
+      flex-shrink: 1;
       min-width: 0;
       max-width: 30rem;
     }
@@ -245,11 +252,11 @@ import { SaveStatusIndicator } from './save-status';
       }
     }
 
+    /* Long enough for a name and no longer, because the six named buttons
+       after it are what the bar is for. li-truncates is what ends a longer
+       name in an ellipsis rather than mid-word. */
     .model {
       max-width: 15rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     .model.unset {

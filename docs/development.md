@@ -168,8 +168,9 @@ A few things are worth knowing before reading it:
   label above a box (`li-field`, or `li-editor-field` where the box holds a paragraph), and the
   frame round the box is one rule in `styles.scss` over `input`, `textarea` and `select` alike.
   How tall a box is, is one of three names — `li-rows-short`, `li-rows-medium`, `li-rows-tall` —
-  put on the box or on anything above it; and every modal opens through `DialogsService`, at one of
-  four widths.
+  put on the box or on anything above it; every modal opens through `DialogsService`, at one of
+  four widths; and a Material button whose label can be longer than the room there is wears
+  `li-truncates`, which is what makes it end in an ellipsis rather than mid-word.
 - **Every media query is a mixin in `app/src/breakpoints.scss`.** The five widths and the three
   things the reader's machine answers are declared there, each with the question it asks; a
   component includes one and writes no threshold of its own. The two widths that TypeScript also
