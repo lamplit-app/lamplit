@@ -37,9 +37,9 @@ export interface SceneDialogData {
       </p>
 
       <textarea
-        class="scene"
+        class="scene serif"
         cdkFocusInitial
-        style="--rows-min: 8; --rows-max: 22"
+        style="--rows-min: 4; --rows-max: 22"
         [liText]="scene()"
         (input)="scene.set(text($event))"
         placeholder="A lighthouse gallery. Dusk, the first night of autumn. Mara is alone, and the lamp is already lit."
@@ -79,13 +79,6 @@ export interface SceneDialogData {
 
     .lead {
       margin: 0 0 var(--li-space-2xs);
-    }
-
-    /* Prose, written at reading size, because that is what it is. */
-    .scene {
-      font-family: var(--li-serif);
-      font-size: var(--li-text-lg);
-      line-height: 1.65;
     }
 
     mat-form-field {

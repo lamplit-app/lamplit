@@ -17,7 +17,7 @@ import { MessageItem } from './message-item';
   selector: 'li-message-list',
   imports: [MessageItem],
   template: `
-    <div class="column" [style.--li-reading-size.px]="settings.ui().fontSize">
+    <div class="column">
       <!-- The written turns, not every row: a record of the cast changing is
            in the list so the prompt knows where it happened, not to be read. -->
       @for (message of chapters.written(); track message.id) {

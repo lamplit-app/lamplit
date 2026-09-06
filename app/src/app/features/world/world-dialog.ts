@@ -52,7 +52,7 @@ interface Group {
             <li-editor-field
               label="Always included in every request"
               hint="Closing a chapter rewrites this, folding the chapter into it. Edit it freely — this is the whole of what the model remembers before the chapter it is writing."
-              [rows]="12"
+              [rows]="6"
               serif
               [value]="story().world.storySoFar"
               (save)="stories.setStorySoFar($event)"

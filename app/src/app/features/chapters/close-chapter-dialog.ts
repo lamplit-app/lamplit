@@ -56,7 +56,8 @@ export interface ChapterClose {
       }
 
       <textarea
-        style="--rows-min: 8; --rows-max: 20"
+        class="serif"
+        style="--rows-min: 6; --rows-max: 20"
         [liText]="summary()"
         [readonly]="busy()"
         [placeholder]="
@@ -190,13 +191,6 @@ export interface ChapterClose {
       display: flex;
       flex-direction: column;
       gap: var(--li-space-sm);
-    }
-
-    /* The story so far is prose, and set as prose. */
-    textarea {
-      font-family: var(--li-serif);
-      font-size: var(--li-text-lg);
-      line-height: 1.6;
     }
 
     .foot {

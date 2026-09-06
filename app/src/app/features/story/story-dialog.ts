@@ -135,7 +135,7 @@ export interface StoryDialogData {
                     </header>
                     <li-editor-field
                       label="Who they are"
-                      [rows]="4"
+                      [rows]="2"
                       [value]="character.description"
                       placeholder="How they speak, what they want, what they will not do."
                       (save)="stories.patchCharacter(character.id, { description: $event })"
@@ -168,7 +168,7 @@ export interface StoryDialogData {
             </mat-form-field>
             <li-editor-field
               label="Description"
-              [rows]="6"
+              [rows]="2"
               [value]="story().persona.description"
               placeholder="Mara, a marine biologist, thirty-one, back on the island after nine years."
               (save)="setPersona({ description: $event })"

@@ -95,7 +95,7 @@ const SWIPE_DISTANCE = 48;
                 <li-editor-field
                   serif
                   ariaLabel="The scene"
-                  [rows]="6"
+                  [rows]="4"
                   [value]="chapters.chapter().scene"
                   [readOnly]="chapters.isClosed()"
                   [hint]="sceneHint()"

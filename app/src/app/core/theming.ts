@@ -66,6 +66,13 @@ function shippedPropertyOf(key: ColourKey, theme: ThemeName): string {
 export const READING_FAMILY = '--li-reading-family';
 
 /**
+ * And its size. Written here rather than on the reading column, which is where
+ * it used to live: the boxes the story is written into want the same number,
+ * and they are in sheets over the page rather than inside it.
+ */
+export const READING_SIZE = '--li-reading-size';
+
+/**
  * Everything in Preferences that the page can see, written onto one element.
  *
  * Called from an effect, so it runs on every settings change and has to undo as
@@ -97,6 +104,10 @@ export function applyUi(
   const font = READING_FONTS.find((f) => f.key === ui.font);
   if (font && font !== READING_FONTS[0]) root.style.setProperty(READING_FAMILY, font.stack);
   else root.style.removeProperty(READING_FAMILY);
+
+  // Always, unlike the face: nothing reads this back to find out whether the
+  // reader chose it, and a size is a size whether or not it is the shipped one.
+  root.style.setProperty(READING_SIZE, `${ui.fontSize}px`);
 }
 
 /**

@@ -98,13 +98,6 @@ let nextId = 0;
       cursor: pointer;
     }
 
-    /* The box itself is the shared text field from the global styles; only
-       what differs from it is said here. */
-    textarea.serif {
-      font-family: var(--li-serif);
-      font-size: var(--li-text-lg);
-    }
-
     /* Text that is not the writer's own yet — the narrator default, sitting in
        the box it will be edited in. Typing over it is what adopts it. */
     textarea.dimmed {
@@ -131,6 +124,7 @@ export class EditorField implements OnDestroy {
   readonly placeholder = input('');
   readonly hint = input('');
   readonly rows = input(4);
+  /** A box that holds the story: set as the page sets prose, in the globals. */
   readonly serif = input(false, { transform: booleanAttribute });
   /** Shown, never taken: a closed chapter's scene, and anything else settled. */
   readonly readOnly = input(false, { transform: booleanAttribute });

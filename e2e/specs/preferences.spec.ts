@@ -3,9 +3,11 @@ import {
   captureRequests,
   composer,
   fillProse,
+  openPanel,
   openPreferences,
   pageColour,
   seedDeveloperMode,
+  seedUi,
   send,
   systemOf,
   waitForTurn,
@@ -140,6 +142,37 @@ test.describe('preferences', () => {
     await expect.poll(() => faceOf('.story-prose')).toMatch(/Cascadia|Consolas|monospace/i);
     // The wordmark is app furniture and stays in the serif it always was.
     await expect.poll(() => faceOf('li-top-bar .wordmark')).toMatch(/Iowan|Palatino|serif/i);
+  });
+
+  test('the story is written at the size it is read at', async ({ page, server, app }) => {
+    // Not the default, because the default is also what the stylesheet ships:
+    // a size that only works when nobody has chosen one is not the setting.
+    await seedUi(server, { fontSize: 23 });
+    await app.visit();
+    await send(page, 'Two lines, please.');
+    await waitForTurn(page);
+
+    const sizeOf = (selector: string) =>
+      page
+        .locator(selector)
+        .first()
+        .evaluate((el) => getComputedStyle(el).fontSize);
+
+    await expect.poll(() => sizeOf('.story-prose')).toBe('23px');
+
+    // The two boxes the story itself is written into, in a sheet over the page
+    // and in the panel beside it. Both were 16px against a page of 23.
+    await page.getByRole('button', { name: 'Edit scene' }).click();
+    await expect(page.locator('.mdc-dialog--opening')).toHaveCount(0);
+    expect(await sizeOf('textarea.scene')).toBe('23px');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toBeHidden();
+
+    await openPanel(page);
+    expect(await sizeOf('li-chapter-panel [data-section="scene"] textarea')).toBe('23px');
+
+    // The app around it is not the story and does not follow it.
+    expect(await sizeOf('li-top-bar .wordmark')).not.toBe('23px');
   });
 });
 /**

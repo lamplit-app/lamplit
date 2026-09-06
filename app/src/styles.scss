@@ -168,7 +168,18 @@ $contrast: (
     --li-#{$name}: light-dark(var(--li-#{$name}-light), var(--li-#{$name}-dark));
   }
 
+  // How big the story is set, and how far apart its lines are. The size is what
+  // Preferences → Text size writes here, on this element, so that everything
+  // that shows the story reads the reader's own number: the page, and the four
+  // boxes the story is written into. It was set inline on the reading column
+  // until the boxes needed it too, which left a sheet reading 18px while the
+  // page behind it read 23.
+  //
+  // Neither is on the type scale, and that is the point of them. The scale is
+  // the app's furniture, in `rem`, and it stays where it is when the story
+  // changes size.
   --li-reading-size: 18px;
+  --li-reading-line: 1.65;
 
   // -------------------------------------------------------------------------
   // The scales: how big, how far apart, how round, how lifted, how far forward.
@@ -470,7 +481,7 @@ app-root {
 .story-prose {
   font-family: var(--li-reading-family);
   font-size: var(--li-reading-size);
-  line-height: 1.65;
+  line-height: var(--li-reading-line);
   overflow-wrap: break-word;
 
   p {
@@ -681,6 +692,27 @@ textarea:where(:not(.mat-mdc-input-element)) {
     outline: none;
     border-color: color-mix(in srgb, var(--li-accent) 65%, var(--li-border));
   }
+}
+
+// The four boxes that hold the story rather than a note about it: the scene in
+// its sheet and again in the panel, the story so far, and the summary that
+// rewrites it. Set as the page sets prose, because it is the same words — and a
+// box that shows them a size smaller than they will be read is a box that lies
+// about where the lines break.
+//
+// It was `--li-text-lg`, which is 16px, against a page of 18 and a reader who
+// asked for 23; and it was said in three places, at 1.55, 1.6 and 1.65, none of
+// them the 1.65 the page is set in. `--li-serif` rather than
+// `--li-reading-family`: choosing mono to read in is a choice about the page,
+// and nothing has asked for a mono scene box.
+//
+// Same specificity as the block above — a type selector each, the rest inside
+// `:where()` — so this wins by coming after it, which is the only way one of
+// these two should ever beat the other.
+textarea:where(.serif) {
+  font-family: var(--li-serif);
+  font-size: var(--li-reading-size);
+  line-height: var(--li-reading-line);
 }
 
 // ---------------------------------------------------------------------------
