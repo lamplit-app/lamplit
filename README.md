@@ -60,7 +60,7 @@ who want to *read what comes out*. Two things follow from that:
 | **Narrator or role-play** | One omniscient voice, or a named cast the model plays while never writing for you. |
 | **Book-style reading** | Markdown, quoted speech set apart, `*actions*` in italics, adjustable text size, light and dark. |
 | **Per-message control** | Edit, regenerate, replay from here, copy, delete. Stop mid-stream keeps the partial answer. |
-| **Twenty-two providers, or your own** | OpenAI, Anthropic, Google, OpenRouter, NanoGPT, Ollama and the rest, each filling in its own URL and linking to where it hands out keys — or paste any URL that answers `/models` and `/chat/completions`. Streaming, with the provider's real token usage shown after each reply. |
+| **Every provider on the list, or your own** | OpenAI, Anthropic, Google, OpenRouter, NanoGPT, Ollama and the rest, each filling in its own URL and linking to where it hands out keys — or paste any URL that answers `/models` and `/chat/completions`. Streaming, with the provider's real token usage shown after each reply. |
 | **Plain files on disk** | `settings.json`, `stories/<id>.json`, `chapters/<id>.json` — read once when the app starts and written straight back, with no second copy in the browser to fall out of step with them. Copy the folder and you have copied everything. Zipped to `backups/` once a day. |
 
 ## A look around

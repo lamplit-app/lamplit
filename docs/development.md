@@ -54,14 +54,14 @@ usefully — why each decision went the way it did.
 | `npm run server` | Just the server (and the built app, if there is one). The front end has no standalone mode: it reads its documents from the server or does not start |
 | `npm run build` | Angular production build into `app/dist` |
 | `npm run package` | The runnable zip — see [Running it anywhere](running-anywhere.md) |
-| `npm test` | Unit tests, both workspaces; `npm run test:app` and `npm run test:server` run one of them |
+| `npm test` | Unit tests, all three of them: `npm run test:app`, `npm run test:server` and `npm run test:tools` run one on its own |
 | `npm run lint` | ESLint over the whole tree: the type-aware rule sets on `app/`, the recommended ones on everything else. `npm run lint:fix` applies what can be applied |
 | `npm run e2e` | Builds the app, then the full Playwright suite |
 | `npm run e2e:quick` | Playwright without the build (skips the specs that need it) |
 | `npm run smoke` | Packages, unzips the archive into an empty folder, and starts it — a genuinely fresh install to walk by hand. `--check` stops as soon as it answers `/api/health` and exits, which is how CI runs it |
 | `npm run screenshots` | Regenerates every picture in `docs/images` |
 | `npm run icons` | Regenerates favicon.ico and apple-touch-icon.png from `app/public/favicon.svg` |
-| `npm run providers` | Asks every provider in the list whether it still lets a browser call it, and prints the table for [Models and parameters](models-and-parameters.md). Not in CI: it talks to twenty companies |
+| `npm run providers` | Asks every provider in the list whether it still lets a browser call it, and prints the table for [Models and parameters](models-and-parameters.md). Not in CI: it makes a real request to every company on the list |
 | `npm run electron` | Downloads Electron's binary. Runs on `postinstall`, so normally you never call it — Electron 44 ships no install script of its own, and `npm ci` alone leaves you with the JavaScript and no executable |
 | `npm run desktop` | Opens the Electron window against the repository — no packaging, so a change to the app needs `npm run build` and a reload |
 | `npm run desktop:stage` | Stages the folder the installers wrap (`build/desktop-stage`), and stops |
@@ -78,7 +78,10 @@ scanning, budget trimming, chapter titles, the summary request), and the persist
 startup load, coalescing, sequence numbers, offline queueing, and refusing to start without a
 server). `node --test` for the server: the document store's write ordering and atomic writes, the
 API, the zip writer, the daily backup, and the build stamp (reading it, the dev fallback, and how
-an upgrade is noticed).
+an upgrade is noticed). `node --test` again for the scripts in `tools/`, which have no other way of
+being caught: reading the changelog's top section, the arguments the desktop build hands
+electron-builder, whether the desktop shell may ask GitHub about an update, and which packages the
+runnable zip has to carry.
 
 **End to end — `npm run e2e`.** Playwright drives the real app against
 `e2e/fake-openai-server.mjs`, a deterministic stand-in for an OpenAI-compatible endpoint. Both

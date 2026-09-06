@@ -15,8 +15,9 @@ the window works.
 ## What you need besides
 
 - **Somewhere to send the story** — a key from a provider, or a model running on your own machine.
-  The app has twenty-two providers built in, each one filling in its own URL and linking to the
-  page where it hands out keys; [Models and parameters](models-and-parameters.md) lists them all.
+  Every provider the app knows fills in its own URL and links to the page where it hands out
+  keys — the model makers, the aggregators that resell them, and the ones you run on your own
+  machine; [Models and parameters](models-and-parameters.md) lists them all.
   You do not need an account with anyone in particular, and nothing is sold here.
 - **Nothing else.**
 
