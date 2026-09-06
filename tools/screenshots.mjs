@@ -449,6 +449,17 @@ async function theApp() {
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await stop.waitFor({ timeout: 20_000 });
   await stop.waitFor({ state: 'hidden', timeout: 20_000 });
+  // The page follows the answer down as it streams, which leaves the turn that
+  // asked for it — the one carrying the note this picture is about — above the
+  // top of the frame. Bring that turn back to the top instead.
+  await page
+    .locator('article[data-role="user"]')
+    .last()
+    .evaluate((el) => el.scrollIntoView({ block: 'start' }));
+  // And out of the margin the pointer was left in by pressing Send, which the
+  // scroll puts beside the answer: this picture is about the note, and the
+  // hover actions have a picture of their own.
+  await page.mouse.move(20, 400);
   await page.waitForTimeout(500);
   await shot(page, 'author-note', 'the direction as the page keeps it: a note, not a line');
 
