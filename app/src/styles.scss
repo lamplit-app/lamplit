@@ -49,6 +49,25 @@ html {
 // `--li-page` inline, and "Reset to default" is that property removed rather
 // than a colour copied out of a second list in the TypeScript that could drift
 // from this one. `core/theming.ts` puts a label on each name.
+//
+// Two of these are contrast decisions rather than colours somebody liked.
+//
+// `muted` carries every hint, token count and meta line — 70 sites — and used
+// to sit at 3.35/3.65/3.72 on the three light papers and 3.85 on the darkest
+// dark one. Only one of its six pairings cleared WCAG AA. It is now 4.86 to
+// 5.38 and 5.00 to 6.04, the same warm and cool greys a shade further from
+// their paper, and it clears 4.5 everywhere.
+//
+// `border` is the harder one, because it is 73 sites and it is the app's face.
+// At 1.20-1.44 it was a hairline you could not see: WCAG 1.4.11 asks 3:1 of
+// anything that identifies a control, and the fill does not rescue it — raised
+// paper against paper is 1.01 in light and 1.20 in dark, so the rule *is* the
+// box. A border that clears 3:1 is as dark as the muted text above, and that
+// is a different-looking app: on cream, the composer stops being a page and
+// becomes an outlined rectangle. So this ships at about 2:1 — every box is
+// drawn, nothing shouts — and leans on the label above each field and the
+// accent focus ring (5.78 light, 7.84 dark, both passing) to say "control".
+// The set that does clear 3:1 is `$contrast` below, one switch away.
 $palette: (
   page: (
     light: #f6f3ec,
@@ -63,8 +82,8 @@ $palette: (
     dark: #23262f,
   ),
   border: (
-    light: #e2dccd,
-    dark: #2f333e,
+    light: #b3a992,
+    dark: #4a5060,
   ),
   ink: (
     light: #22201c,
@@ -79,8 +98,8 @@ $palette: (
     dark: #d9d2c4,
   ),
   muted: (
-    light: #8a8478,
-    dark: #7c8090,
+    light: #6f6a5f,
+    dark: #8f94a6,
   ),
   accent: (
     light: #6b4ea8,
@@ -94,7 +113,39 @@ $palette: (
     light: #a3312a,
     dark: #f08a80,
   ),
+  success: (
+    light: #2b7a4b,
+    dark: #6fd39b,
+  ),
 );
+
+// The same names again, at the contrast WCAG 1.4.11 asks of a control's
+// boundary: 3.10/3.38/3.44 on the light papers and 3.75/3.42/3.10 on the dark
+// ones. Only the names that change are listed; everything else already clears
+// its floor and a stronger contrast mode should not repaint an app that is
+// already legible.
+//
+// This is a map rather than a set of hand-written rules so that turning it on
+// stays one line whatever ends up in it. Nothing in the app reads a colour
+// through a name of its own — every one of the 73 borders is `var(--li-border)`
+// — and `--li-border` is `light-dark()` over the two halves below, so writing
+// the halves again is the whole of the switch. Preferences → Colours follows it
+// for free: it reads the shipped colour off <html>, so "Reset to default" in a
+// contrast mode returns to the contrast colour rather than the other one.
+$contrast: (
+  border: (
+    light: #8f8a7e,
+    dark: #6b7183,
+  ),
+);
+
+@mixin contrast-palette {
+  @each $name, $themes in $contrast {
+    @each $theme, $value in $themes {
+      --li-#{$name}-#{$theme}: #{$value};
+    }
+  }
+}
 
 :root {
   // The breakpoint, published so the app's TypeScript can read it back rather
@@ -154,6 +205,32 @@ $palette: (
   @include bp.phone {
     --li-gutter: 1rem;
   }
+}
+
+// Two ways to ask for the stronger set, both of them the same two declarations.
+//
+// The first is the reader's own machine: a person who has turned contrast up in
+// Windows, macOS or their browser has already said this, and there is no reason
+// to make them say it again in a panel they have to find first.
+@media (prefers-contrast: more) {
+  :root {
+    @include contrast-palette;
+  }
+}
+
+// The second is the app saying it, and is what an accessibility panel will
+// write — one attribute on <html>, next to the `color-scheme` the theme is
+// already a single property of. Nothing sets it yet; #63 is where it gets a
+// switch, and where the third state lives: turning contrast *off* on a machine
+// that asks for it needs a block of its own, because a rule cannot unsay a
+// media query.
+//
+// It comes last because coming last is what makes it win. The build minifies
+// `:root[data-contrast='high']` down to the attribute alone, which is worth the
+// same as the `:root` above it — so this is settled by order, in the source and
+// in the bundle, and not by the selector.
+:root[data-contrast='high'] {
+  @include contrast-palette;
 }
 
 // ---------------------------------------------------------------------------
@@ -646,8 +723,12 @@ button {
   }
 }
 
-// The scrollbar sits inside the reading column; keep it out of the way.
+// The scrollbar sits inside the reading column; keep it out of the way, but
+// not so far out of it that it stops saying what it is there to say. Tinted
+// `--li-border` the thumb was 1.32:1 on the surface it slides over, which is a
+// sheet cutting a sentence in half and giving no sign of it. Muted text is the
+// quietest thing in the app that can still be seen.
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--li-border) transparent;
+  scrollbar-color: var(--li-muted) transparent;
 }

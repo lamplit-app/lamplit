@@ -471,7 +471,7 @@ export interface MessageEdit {
     }
 
     .act svg.done {
-      stroke: light-dark(#2f8f5b, #6fd39b);
+      stroke: var(--li-success);
       stroke-width: 1.8;
     }
 

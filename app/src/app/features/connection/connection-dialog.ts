@@ -250,7 +250,7 @@ export interface ConnectionData {
     }
 
     .status.good {
-      color: light-dark(#2f8f5b, #6fd39b);
+      color: var(--li-success);
     }
 
     .status.bad {

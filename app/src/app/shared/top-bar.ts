@@ -266,7 +266,7 @@ import { SaveStatusIndicator } from './save-status';
     }
 
     .dot.live {
-      background: light-dark(#2f8f5b, #6fd39b);
+      background: var(--li-success);
     }
 
     .available {
