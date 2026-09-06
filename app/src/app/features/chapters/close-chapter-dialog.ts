@@ -107,9 +107,9 @@ export interface ChapterClose {
             <div class="body">
               <span class="head">
                 <span class="title">{{ proposal.title }}</span>
-                <span class="category">{{ proposal.category }}</span>
+                <span class="category li-chip">{{ proposal.category }}</span>
                 @if (proposal.updates) {
-                  <span class="category update">replaces an entry</span>
+                  <span class="category update li-chip">replaces an entry</span>
                 }
               </span>
               <span class="keys">
@@ -119,7 +119,7 @@ export interface ChapterClose {
               </span>
               <p class="content">{{ proposal.content }}</p>
               @if (proposal.updates; as existing) {
-                <p class="was"><span class="tag">now</span>{{ existing.content }}</p>
+                <p class="was"><span class="tag li-smallcaps">now</span>{{ existing.content }}</p>
               }
             </div>
           </label>
@@ -288,10 +288,6 @@ export interface ChapterClose {
       padding: 0 var(--li-space-xs);
       border-radius: var(--li-radius-pill);
       background: color-mix(in srgb, var(--li-ink) 8%, transparent);
-      font-family: var(--li-sans);
-      font-size: var(--li-text-xs);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
       color: var(--li-muted);
     }
 
@@ -332,10 +328,6 @@ export interface ChapterClose {
 
     .was .tag {
       margin-right: var(--li-space-xs);
-      font-family: var(--li-sans);
-      font-size: var(--li-text-xs);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
     }
 
     .instruction {

@@ -24,7 +24,7 @@ import { DialogsService } from './dialogs.service';
            about the story, so it keeps developer mode's company. -->
       @if (dataDir()) {
         <p class="data">
-          Documents
+          <span class="li-label">Documents</span>
           <span class="path">{{ dataDir() }}</span>
         </p>
       }
@@ -72,17 +72,12 @@ import { DialogsService } from './dialogs.service';
       flex-direction: column;
       gap: var(--li-space-3xs);
       margin-top: var(--li-space-md);
-      font-size: var(--li-text-xs);
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
       color: var(--li-muted);
     }
 
     .path {
       font-family: var(--li-mono);
       font-size: var(--li-text-sm);
-      letter-spacing: 0;
-      text-transform: none;
       color: var(--li-ink-soft);
       /* A Windows profile path is long and has nowhere natural to break. */
       overflow-wrap: anywhere;

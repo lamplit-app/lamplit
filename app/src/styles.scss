@@ -737,6 +737,59 @@ textarea:where(:not(.mat-mdc-input-element)) {
   line-height: 1.5;
 }
 
+// ---------------------------------------------------------------------------
+// Capitals. Three of them, and the whole of the app's caps.
+// ---------------------------------------------------------------------------
+//
+// There used to be eleven rules across seven files, at eleven sizes between
+// 0.6rem and 0.78rem and eight trackings between 0.02em and 0.06em, no two
+// alike. Nobody chose eleven; each was written where it was needed by somebody
+// looking at that one screen, and a caps label is exactly the thing a reader
+// compares across screens — it is the app's furniture.
+//
+// These three are type and nothing else: face, size, weight, tracking and case.
+// The box a word sits in, the colour it is in and the room around it stay with
+// whatever wears the class, because those are what tell PERSON from WRITING
+// from a cast tag while all three are the same word in the same size.
+//
+// The two mechanisms are not interchangeable, which is why there is not one
+// class here. `text-transform` draws capitals at cap height: it is a label on
+// a thing, and it is meant to be seen before the thing is. Small caps are
+// drawn near x-height and read as an aside — a note in the margin rather than
+// a heading — which is why the speaker and the author tag have always used
+// them, and still do.
+
+// Naming a block: FACTS, PEOPLE, NARRATOR. Above what it names, so it carries
+// the weight; the widest tracking of the three, because a heading in capitals
+// at this size closes up without it.
+.li-label {
+  font-family: var(--li-sans);
+  font-size: var(--li-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+// Naming a thing: PERSON, WRITING, a cast tag. Beside what it names rather
+// than above it, and usually already inside a box that says "tag" for it, so
+// it stays at the text weight and asks for less room between the letters.
+.li-chip {
+  font-family: var(--li-sans);
+  font-size: var(--li-text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+// A word inside the prose: the speaker over a paragraph, AUTHOR in front of
+// one. Set in the interface face so it cannot be mistaken for the story, and
+// in small caps so it does not interrupt it.
+.li-smallcaps {
+  font-family: var(--li-sans);
+  font-size: var(--li-text-xs);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+}
+
 // The one thing about the card that Material has no token for.
 .mat-mdc-dialog-surface {
   border: 1px solid var(--li-border);

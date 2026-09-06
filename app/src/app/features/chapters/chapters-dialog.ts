@@ -32,7 +32,7 @@ interface Row {
             <span class="line">
               <span class="number">{{ row.chapter.number }}</span>
               <span class="title">{{ row.title || 'Untitled chapter' }}</span>
-              <span class="state" [class.closed]="row.chapter.status === 'closed'">
+              <span class="state li-chip" [class.closed]="row.chapter.status === 'closed'">
                 {{ row.chapter.status }}
               </span>
             </span>
@@ -127,9 +127,6 @@ interface Row {
 
     .state {
       flex: none;
-      font-size: var(--li-text-xs);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
       color: var(--li-accent);
     }
 

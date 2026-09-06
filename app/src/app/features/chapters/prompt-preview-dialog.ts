@@ -50,7 +50,7 @@ export interface PromptPreviewData {
         <section class="block pinned">
           <header>
             <span class="pin" aria-hidden="true">•</span>
-            <span class="name">{{ block.label }}</span>
+            <span class="name li-label">{{ block.label }}</span>
             <span class="tokens">{{ format(block.tokens) }}</span>
           </header>
           <pre>{{ block.content }}</pre>
@@ -72,7 +72,7 @@ export interface PromptPreviewData {
               >
                 ⠿
               </button>
-              <span class="name">{{ block.label }}</span>
+              <span class="name li-label">{{ block.label }}</span>
               <span class="tokens">{{ format(block.tokens) }}</span>
             </header>
             <pre>{{ block.content }}</pre>
@@ -85,7 +85,7 @@ export interface PromptPreviewData {
         <section class="block pinned">
           <header>
             <span class="pin" aria-hidden="true">•</span>
-            <span class="name">{{ block.label }}</span>
+            <span class="name li-label">{{ block.label }}</span>
             <span class="tokens">{{ format(block.tokens) }}</span>
           </header>
           <pre>{{ block.content }}</pre>
@@ -95,7 +95,7 @@ export interface PromptPreviewData {
 
       <section class="block">
         <header>
-          <span class="name">Lore</span>
+          <span class="name li-label">Lore</span>
           <span class="tokens">{{ prompt().lore.length }} active</span>
         </header>
         @if (prompt().lore.length) {
@@ -127,7 +127,7 @@ export interface PromptPreviewData {
 
       <section class="block">
         <header>
-          <span class="name">This chapter</span>
+          <span class="name li-label">This chapter</span>
           <span class="tokens">{{ format(prompt().tokens.history) }}</span>
         </header>
         <p class="li-hint empty">
@@ -151,7 +151,7 @@ export interface PromptPreviewData {
       @if (nextMessage()) {
         <section class="block">
           <header>
-            <span class="name">Your next message</span>
+            <span class="name li-label">Your next message</span>
             <span class="tokens">{{ format(prompt().tokens.draft) }}</span>
           </header>
           <!-- As it will go out, direction and all, rather than as it is typed:
@@ -194,9 +194,6 @@ export interface PromptPreviewData {
     }
 
     .name {
-      font-size: var(--li-text-sm);
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
       color: var(--li-ink-soft);
     }
 

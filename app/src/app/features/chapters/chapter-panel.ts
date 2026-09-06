@@ -218,7 +218,7 @@ const SWIPE_DISTANCE = 48;
                           <span class="cast-name">
                             {{ character.name || 'Unnamed' }}
                             @if (isPlaying(character.id)) {
-                              <span class="tag">playing</span>
+                              <span class="tag li-chip">playing</span>
                             }
                           </span>
                           <span class="cast-line">{{ describe(character.description) }}</span>
@@ -537,9 +537,6 @@ const SWIPE_DISTANCE = 48;
       border-radius: var(--li-radius-pill);
       background: color-mix(in srgb, var(--li-cast-colour) 24%, transparent);
       color: var(--li-cast-colour);
-      font-size: var(--li-text-xs);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
       vertical-align: 1px;
     }
 

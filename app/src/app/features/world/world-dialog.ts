@@ -106,7 +106,7 @@ interface Group {
 
             @if (folded().length) {
               <section class="folded">
-                <h3>Folded in so far</h3>
+                <h3 class="li-label">Folded in so far</h3>
                 @for (chapter of folded(); track chapter.id) {
                   <p>
                     <span class="number">Chapter {{ chapter.number }}</span>
@@ -141,7 +141,7 @@ interface Group {
             </div>
 
             @for (group of groups(); track group.label) {
-              <h3>{{ group.label }}</h3>
+              <h3 class="li-label">{{ group.label }}</h3>
               @for (entry of group.entries; track entry.id) {
                 <section
                   class="entry"
@@ -162,7 +162,7 @@ interface Group {
                       <span class="name">{{ entry.title.trim() || 'Untitled entry' }}</span>
                       <span class="keys">{{ summaryOf(entry) }}</span>
                       @if (!entry.enabled) {
-                        <span class="tag">off</span>
+                        <span class="tag li-chip">off</span>
                       }
                       @if (!entry.content.trim()) {
                         <span class="tag warn">needs text</span>
@@ -310,10 +310,6 @@ interface Group {
 
     h3 {
       margin: var(--li-space-xs) 0 0;
-      font-family: var(--li-sans);
-      font-size: var(--li-text-xs);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
       color: var(--li-muted);
     }
 
@@ -446,9 +442,6 @@ interface Group {
       padding: var(--li-space-3xs) var(--li-space-sm);
       border: 1px solid var(--li-border);
       border-radius: var(--li-radius-pill);
-      font-size: var(--li-text-xs);
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
       color: var(--li-muted);
     }
 

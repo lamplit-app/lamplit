@@ -74,7 +74,7 @@ import { TextValue } from '../../shared/text-value';
                    read before it is sent rather than discovered afterwards. -->
               @if (authoring()) {
                 <div class="direction">
-                  <span class="tag">author</span>
+                  <span class="tag li-smallcaps">author</span>
                   <textarea
                     #directionInput
                     style="--rows-min: 1; --rows-max: 8"
@@ -264,10 +264,6 @@ import { TextValue } from '../../shared/text-value';
 
     .direction .tag {
       flex: none;
-      font-family: var(--li-sans);
-      font-size: var(--li-text-xs);
-      font-variant-caps: all-small-caps;
-      letter-spacing: 0.06em;
       color: var(--li-muted);
     }
 

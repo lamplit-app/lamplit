@@ -43,7 +43,11 @@ export interface MessageEdit {
            their colour, in the UI font, so it reads as a note in the margin
            rather than as the first words of the passage. -->
       @if (speaker(); as who) {
-        <header class="speaker" [class.faded]="!who.colour" [style.color]="who.colour || null">
+        <header
+          class="speaker li-smallcaps"
+          [class.faded]="!who.colour"
+          [style.color]="who.colour || null"
+        >
           <span class="dot" aria-hidden="true"></span>{{ who.name }}
         </header>
       }
@@ -66,7 +70,7 @@ export interface MessageEdit {
                keeping the two apart is that neither can eat the other. -->
           @if (message().direction) {
             <label class="direction-edit">
-              <span class="tag">author</span>
+              <span class="tag li-smallcaps">author</span>
               <textarea
                 style="--rows-min: 2; --rows-max: 10"
                 aria-label="The direction from the author"
@@ -109,7 +113,7 @@ export interface MessageEdit {
           <!-- The author speaking, not the persona: a note about the story
                rather than a line of it, so it is never set as prose. -->
           @if (message().direction; as direction) {
-            <p class="direction"><span class="tag">author</span>{{ direction }}</p>
+            <p class="direction"><span class="tag li-smallcaps">author</span>{{ direction }}</p>
           }
 
           @if (streaming() && !message().content) {
@@ -302,10 +306,6 @@ export interface MessageEdit {
       align-items: center;
       gap: var(--li-space-xs);
       margin: 0 0 var(--li-space-xs);
-      font-family: var(--li-sans);
-      font-size: var(--li-text-xs);
-      font-variant-caps: all-small-caps;
-      letter-spacing: 0.04em;
       line-height: 1.2;
     }
 
@@ -339,10 +339,8 @@ export interface MessageEdit {
     .tag {
       display: inline-block;
       margin-right: var(--li-space-sm);
-      font-size: var(--li-text-xs);
+      /* The direction on the page is italic; the tag in front of it is not. */
       font-style: normal;
-      font-variant-caps: all-small-caps;
-      letter-spacing: 0.06em;
       color: color-mix(in srgb, var(--li-muted) 80%, var(--li-ink));
     }
 
