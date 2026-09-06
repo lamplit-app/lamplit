@@ -170,6 +170,11 @@ A few things are worth knowing before reading it:
   How tall a box is, is one of three names — `li-rows-short`, `li-rows-medium`, `li-rows-tall` —
   put on the box or on anything above it; and every modal opens through `DialogsService`, at one of
   four widths.
+- **Every media query is a mixin in `app/src/breakpoints.scss`.** The five widths and the three
+  things the reader's machine answers are declared there, each with the question it asks; a
+  component includes one and writes no threshold of its own. The two widths that TypeScript also
+  has to know are published as custom properties and read back off `<html>` in `core/layout.ts`, so
+  no number is written twice.
 
 ## Conventions
 

@@ -472,9 +472,8 @@ export interface MessageEdit {
       stroke-width: 1.8;
     }
 
-    /* Wide enough for a margin, and a pointer that can hover into it: the
-       measure plus a rail and a gap on each side, with room to breathe. */
-    @media (min-width: 42rem) and (hover: hover) {
+    /* Out in the margin, where there is one and a pointer to reach it with. */
+    @include bp.margin {
       .rail {
         display: flex;
       }
@@ -570,7 +569,7 @@ export interface MessageEdit {
       }
     }
 
-    @media (prefers-reduced-motion: reduce) {
+    @include bp.reduced-motion {
       .waiting .dot {
         animation: none;
         opacity: 0.5;

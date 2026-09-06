@@ -1,35 +1,145 @@
-// The one breakpoint, and the one question the layout ever asks.
+// Every question the app asks the browser: the five widths, and the three
+// things the reader's own machine answers.
 //
-// Above it there is room for a bar of named buttons, a panel beside the page
-// and a sheet floating in the middle of it. Below it there is not, so the app
-// is the phone layout: a wordmark, a dot and one menu; the panel and the
-// dialogs as full sheets; the story edge to edge between them.
+// All of it is here because a threshold written where it is used is a threshold
+// nobody can hold up against the others. This file used to say the layout
+// "only ever asks the one question" while four more widths lived in four
+// component files — one of them a number in TypeScript — and two rules asked
+// the same question in different words, which is exactly how they come apart.
 //
-// Nothing sniffs at a user agent and nothing asks how big the screen is. A
-// desktop window dragged this narrow gets the phone layout too, which is the
-// point of writing it as a width — it is the room there is, not the device.
+// Nothing sniffs at a user agent and nothing asks what the device is. A desktop
+// window dragged narrow gets the phone layout too, which is the point of
+// writing every one of these as a width: it is the room there is, not the
+// machine it is on.
 //
-// `--li-phone-width` in styles.scss is this number handed to the app's
-// TypeScript, which has the same question to answer in two places where CSS
-// cannot: which items the one menu holds, and whether Enter sends. See
-// `core/layout.ts`.
-$phone-width: 48rem;
+// The widths are all in `rem`, so every one of them moves with the reader's own
+// font size — what a threshold asks is whether some number of words still fits,
+// and words set larger need more room. Three of them were written in pixels
+// (980, 1100 and 1180) and are the nearest whole rem to those here, which at
+// the browser's default of 16px is the same place to within five pixels.
+
+// ---------------------------------------------------------------------------
+// The widths, widest first.
+// ---------------------------------------------------------------------------
+//
+// Three of them are one thing happening in stages: the top bar running out of
+// room and giving up what it can spare, in the order it can spare it. The
+// indicator's word goes at 74rem, the wordmark at 61rem, and at 48rem what is
+// left stops being a bar of named buttons at all. Reading them in this order is
+// the only way to see that ladder; it was invisible while they sat in three
+// different files.
+//
+// The panel's width is in among them by arithmetic rather than by kind, and the
+// margin's is under them all.
+
+/// The save indicator keeps its word rather than standing as a dot on its own.
+$save-label-width: 74rem;
+
+/// Room for the panel beside the page rather than over it.
+///
+/// Above this the reading column still has its measure with the panel next to
+/// it, so the panel takes its width out of the page and covers none of it.
+/// Below it there is nothing left to give, so it comes over the page and goes
+/// away again on Escape.
+///
+/// The one width with no mixin under it, because no rule asks it: the panel is
+/// pushed by a class on the host, so the question is answered in TypeScript.
+/// `styles.scss` publishes this as `--li-panel-push-width` and
+/// `core/layout.ts` reads it back, the same way the phone width is handed over.
+$panel-push-width: 69rem;
+
+/// Room in the bar for the wordmark as well as the story and the model.
+$wordmark-width: 61rem;
 
 /// The phone layout: this width and under.
+///
+/// Above it there is room for a bar of named buttons, a panel beside the page
+/// and a sheet floating in the middle of it. Below it there is not, so the app
+/// is the phone layout: a wordmark, a dot and one menu; the panel and the
+/// dialogs as full sheets; the story edge to edge between them.
+///
+/// `--li-phone-width` in styles.scss is this number handed to the app's
+/// TypeScript, which has the same question to answer in two places where CSS
+/// cannot: which items the one menu holds, and whether Enter sends. See
+/// `core/layout.ts`.
+$phone-width: 48rem;
+
+/// A margin beside the reading column, wide enough to put something in.
+///
+/// The measure plus a rail and a gap on each side, with room to breathe. Below
+/// the phone width and still above this one, both are true at once — a narrow
+/// desktop window is the phone layout with margins — and that overlap is meant:
+/// the two are different questions and neither implies the other.
+$margin-width: 42rem;
+
+// ---------------------------------------------------------------------------
+// The mixins.
+// ---------------------------------------------------------------------------
+
+/// The phone layout: `$phone-width` and under.
 @mixin phone {
   @media (max-width: $phone-width) {
     @content;
   }
 }
 
+/// A margin beside the column, and a pointer that can hover into it.
+///
+/// Both halves, every time, because both callers need both: the message
+/// actions live out in that margin and only appear on hover, and Jump to
+/// latest lines up with them. One question with one answer — it was asked
+/// twice in two different words, and the two would have drifted apart the
+/// first time either was touched. A margin nothing can reach into is a margin
+/// with no reason to be used — which is why `(hover: hover)` is asked here and
+/// nowhere else in the app.
+@mixin margin {
+  @media (min-width: $margin-width) and (hover: hover) {
+    @content;
+  }
+}
+
+/// The bar has run out of room for the wordmark.
+@mixin without-wordmark {
+  @media (max-width: $wordmark-width) {
+    @content;
+  }
+}
+
+/// The save indicator has run out of room for its word.
+@mixin without-save-label {
+  @media (max-width: $save-label-width) {
+    @content;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// What the reader has in their hand, and what they have asked their machine
+// for. Not widths, and none of them is the negation of another: a narrow window
+// on a laptop is the phone layout with a keyboard and a mouse still attached.
+// ---------------------------------------------------------------------------
+
 /// A finger rather than a pointer.
 ///
-/// Deliberately not the same question as `phone`. A narrow window on a laptop
-/// is the phone *layout* and still has a keyboard and a mouse, so what belongs
-/// here is only what a finger changes: how big a target has to be, and the
-/// shortcuts that mean nothing without keys to press.
+/// Deliberately not the same question as `phone`. What belongs here is only
+/// what a finger changes: how big a target has to be, and the shortcuts that
+/// mean nothing without keys to press.
 @mixin touch {
   @media (pointer: coarse) {
+    @content;
+  }
+}
+
+/// Motion turned down, in the operating system or the browser. Anything that
+/// moves on its own says here what it does instead.
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+/// Contrast turned up, which `styles.scss` answers with the stronger palette.
+@mixin more-contrast {
+  @media (prefers-contrast: more) {
     @content;
   }
 }

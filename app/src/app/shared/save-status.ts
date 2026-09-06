@@ -33,6 +33,8 @@ import { Persistence } from '../store/persistence';
     }
   `,
   styles: `
+    @use '../../breakpoints' as bp;
+
     .status {
       display: inline-flex;
       align-items: center;
@@ -87,7 +89,9 @@ import { Persistence } from '../store/persistence';
       }
     }
 
-    @media (max-width: 1180px) {
+    /* The first thing the bar gives up when it runs short: the word beside the
+       dot, whose colour and tooltip say the same thing. */
+    @include bp.without-save-label {
       .label {
         display: none;
       }

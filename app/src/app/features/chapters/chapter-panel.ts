@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, untracked } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DEFAULT_NARRATOR_PROMPT } from '../../core/defaults';
 import { characterColour } from '../../core/character-colours';
@@ -12,17 +12,6 @@ import { TextValue } from '../../shared/text-value';
 import { ChapterStore } from '../../store/chapter-store';
 import { SettingsStore } from '../../store/settings-store';
 import { StoryStore } from '../../store/story-store';
-
-/**
- * Where the panel stops pushing the page and starts covering it.
- *
- * Above this the reading column still has its measure with the panel beside
- * it, so the panel takes its width out of the page and everything stays
- * visible. Below it there is nothing left to give, so it comes over the page
- * and goes away again on Escape. One number, because the layout only ever asks
- * the one question.
- */
-const PANEL_PUSH_WIDTH = 1100;
 
 /**
  * The swipe that opens it on a phone, where there is no rail to press.
@@ -652,9 +641,8 @@ export class ChapterPanel {
 
   protected readonly open = computed(() => this.settings.ui().sidebarOpen);
 
-  private readonly wide = signal(true);
   /** No room left to push the page aside, so it goes over it instead. */
-  protected readonly overlay = computed(() => !this.wide());
+  protected readonly overlay = computed(() => !this.layout.roomForPanel());
 
   protected readonly narratorText = computed(() => {
     const narrator = this.story().narrator;
@@ -688,11 +676,6 @@ export class ChapterPanel {
   private pushed = false;
 
   constructor() {
-    const query = matchMedia(`(min-width: ${PANEL_PUSH_WIDTH}px)`);
-    const listen = () => this.wide.set(query.matches);
-    listen();
-    query.addEventListener('change', listen);
-
     const back = () => this.onBack();
     addEventListener('popstate', back);
 
@@ -711,7 +694,6 @@ export class ChapterPanel {
     document.addEventListener('touchcancel', end, touch);
 
     inject(DestroyRef).onDestroy(() => {
-      query.removeEventListener('change', listen);
       removeEventListener('popstate', back);
       document.removeEventListener('touchstart', start);
       document.removeEventListener('touchmove', move);

@@ -234,8 +234,9 @@ const PINNED_SLACK = 96;
       }
     }
 
-    /* The same margin the message actions ask for, so the two line up. */
-    @media (min-width: 42rem) {
+    /* Out into the margin, on the same question the message actions ask, so
+       the two line up rather than nearly line up. */
+    @include bp.margin {
       .jump {
         right: auto;
         left: calc(100% + var(--li-margin-gap));

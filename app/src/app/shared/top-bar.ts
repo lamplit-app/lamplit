@@ -239,7 +239,7 @@ import { SaveStatusIndicator } from './save-status';
        a phone it is the other way round — the story and the chapter move into
        the menu, and the button carries the wordmark itself — so this span,
        standing on its own beside it, is gone at both widths. */
-    @media (max-width: 980px) {
+    @include bp.without-wordmark {
       .wordmark {
         display: none;
       }
