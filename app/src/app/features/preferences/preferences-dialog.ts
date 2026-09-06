@@ -92,16 +92,18 @@ import { ReadAloud } from '../../shared/read-aloud.service';
                  never heard of it simply reads in its own. -->
             @if (speech.supported) {
               <hr />
-              <mat-slide-toggle
-                [checked]="ui().readAloud"
-                (change)="settings.patchUi({ readAloud: $event.checked })"
-              >
-                Read replies aloud
-              </mat-slide-toggle>
-              <p class="li-hint">
-                Each reply is read as it finishes. Any message can be read on its own from its
-                <strong>⋯</strong> menu without this being on.
-              </p>
+              <div class="li-setting">
+                <mat-slide-toggle
+                  [checked]="ui().readAloud"
+                  (change)="settings.patchUi({ readAloud: $event.checked })"
+                >
+                  Read replies aloud
+                </mat-slide-toggle>
+                <p class="li-hint">
+                  Each reply is read as it finishes. Any message can be read on its own from its
+                  <strong>⋯</strong> menu without this being on.
+                </p>
+              </div>
 
               <mat-form-field appearance="outline" class="font" subscriptSizing="dynamic">
                 <mat-label>Voice</mat-label>
@@ -273,33 +275,37 @@ import { ReadAloud } from '../../shared/read-aloud.service';
           <p class="li-hint under-the-hood">Options for people who want to look under the hood.</p>
 
           <div class="stack">
-            <mat-slide-toggle
-              [checked]="ui().checkForUpdates"
-              (change)="setCheckForUpdates($event.checked)"
-            >
-              Check for a new version when Lamplit starts
-            </mat-slide-toggle>
-            <p class="li-hint">
-              Once per start, the server asks GitHub which versions have been published and the top
-              bar says so if one of them is newer. Switched off, it is not asked at all. Your
-              stories never leave this machine either way.
-            </p>
+            <div class="li-setting">
+              <mat-slide-toggle
+                [checked]="ui().checkForUpdates"
+                (change)="setCheckForUpdates($event.checked)"
+              >
+                Check for a new version when Lamplit starts
+              </mat-slide-toggle>
+              <p class="li-hint">
+                Once per start, the server asks GitHub which versions have been published and the
+                top bar says so if one of them is newer. Switched off, it is not asked at all. Your
+                stories never leave this machine either way.
+              </p>
+            </div>
 
             @if (share.available()) {
               <hr />
 
-              <mat-slide-toggle
-                [checked]="share.on()"
-                [disabled]="share.busy()"
-                (change)="setShare($event.checked)"
-              >
-                Share on this network
-              </mat-slide-toggle>
-              <p class="li-hint">
-                Open the story on your phone while it is on the same Wi-Fi. Lamplit keeps answering
-                on this computer exactly as it did; sharing adds a second door, and the code below
-                is the key to it. Switch it off and that door is gone.
-              </p>
+              <div class="li-setting">
+                <mat-slide-toggle
+                  [checked]="share.on()"
+                  [disabled]="share.busy()"
+                  (change)="setShare($event.checked)"
+                >
+                  Share on this network
+                </mat-slide-toggle>
+                <p class="li-hint">
+                  Open the story on your phone while it is on the same Wi-Fi. Lamplit keeps
+                  answering on this computer exactly as it did; sharing adds a second door, and the
+                  code below is the key to it. Switch it off and that door is gone.
+                </p>
+              </div>
 
               @if (share.error()) {
                 <p class="warning" role="status">{{ share.error() }}</p>
@@ -381,35 +387,39 @@ import { ReadAloud } from '../../shared/read-aloud.service';
             @if (isDesktop) {
               <hr />
 
-              <mat-slide-toggle
-                [checked]="ui().systemProxy"
-                (change)="setSystemProxy($event.checked)"
-              >
-                Reach the model through this computer’s proxy
-              </mat-slide-toggle>
-              <p class="li-hint">
-                Off, Lamplit connects straight to whichever endpoint you have given it, the same as
-                the zip and a browser tab do. Switch it on if your network only lets you out through
-                a proxy — a work laptop, usually. Lamplit's window then takes a moment to find that
-                proxy the first time it needs it, which is why it is not the default: on some
-                networks that search takes twenty seconds, and nobody should wait for it just to
-                open the app.
-              </p>
+              <div class="li-setting">
+                <mat-slide-toggle
+                  [checked]="ui().systemProxy"
+                  (change)="setSystemProxy($event.checked)"
+                >
+                  Reach the model through this computer’s proxy
+                </mat-slide-toggle>
+                <p class="li-hint">
+                  Off, Lamplit connects straight to whichever endpoint you have given it, the same
+                  as the zip and a browser tab do. Switch it on if your network only lets you out
+                  through a proxy — a work laptop, usually. Lamplit's window then takes a moment to
+                  find that proxy the first time it needs it, which is why it is not the default: on
+                  some networks that search takes twenty seconds, and nobody should wait for it just
+                  to open the app.
+                </p>
+              </div>
             }
 
             <hr />
 
-            <mat-slide-toggle
-              [checked]="ui().developerMode"
-              (change)="settings.patchUi({ developerMode: $event.checked })"
-            >
-              Developer mode — show how the prompt is built and what the app is doing
-            </mat-slide-toggle>
-            <p class="li-hint">
-              Puts the context pill back under the composer, which is the way into what the model
-              actually sees, and adds the folder your documents are in to the About sheet. It
-              changes nothing about the request itself.
-            </p>
+            <div class="li-setting">
+              <mat-slide-toggle
+                [checked]="ui().developerMode"
+                (change)="settings.patchUi({ developerMode: $event.checked })"
+              >
+                Developer mode — show how the prompt is built and what the app is doing
+              </mat-slide-toggle>
+              <p class="li-hint">
+                Puts the context pill back under the composer, which is the way into what the model
+                actually sees, and adds the folder your documents are in to the About sheet. It
+                changes nothing about the request itself.
+              </p>
+            </div>
           </div>
         </mat-expansion-panel>
       </mat-accordion>
@@ -441,11 +451,19 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       margin: 0 0 var(--li-space-lg);
     }
 
+    /* A rule across a stack, at the stack's own gap either side of it: the
+       divider groups the settings without adding a rhythm of its own. */
     hr {
       width: 100%;
       border: 0;
       border-top: 1px solid var(--li-border);
-      margin: var(--li-space-xs) 0;
+      margin: 0;
+    }
+
+    /* Whatever else the stack is holding — a note, a warning — takes its room
+       from the gap and not from the browser's paragraph margin. */
+    .stack > p {
+      margin: 0;
     }
 
     /* A switch with a sentence for a label wraps, and its own text should not
@@ -731,12 +749,6 @@ import { ReadAloud } from '../../shared/read-aloud.service';
 
     .warning code {
       word-break: break-all;
-    }
-
-    hr {
-      border: 0;
-      border-top: 1px solid var(--li-border);
-      margin: var(--li-space-lg) 0 var(--li-space-md);
     }
 
     .revert {

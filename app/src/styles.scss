@@ -348,6 +348,47 @@ $contrast: (
 // loses to it silently, which is how fifteen sheets came to be titled in
 // `system-ui` while their stylesheet said serif.
 html {
+  // -------------------------------------------------------------------------
+  // Material's palette, pointed at the app's.
+  // -------------------------------------------------------------------------
+  //
+  // Every token a Material component draws with falls back to one of these:
+  // `var(--mat-slide-toggle-selected-track-color, var(--mat-sys-primary))`. So
+  // the thirteen names below stand in for the hundred and three tokens the
+  // twelve components this app uses would otherwise have to be listed by, one
+  // at a time — and for whatever the next component brings with it, without
+  // anybody having to remember.
+  //
+  // `mat.theme()` at the top of this file writes these same names from
+  // `$violet-palette`; this block is later and wins. What it wrote was a violet
+  // of the library's own — #7d00fa on the light page, #d5baff on the dark one —
+  // against an app whose accent is #6b4ea8 and #b79cf0. That is why a toggle,
+  // a slider, a filled Done and every text button in the top bar were brighter
+  // than anything the app draws itself, and why the loudest thing on a sheet
+  // about reading was the switches.
+  //
+  // These are `var(--li-*)` rather than copies of them, so Preferences →
+  // Colours reaches the controls: drag the accent and the toggles follow, and
+  // the stronger contrast set raises every control's edge with every other one.
+  --mat-sys-primary: var(--li-accent);
+  --mat-sys-on-primary: var(--li-page);
+  --mat-sys-primary-container: color-mix(in srgb, var(--li-accent) 30%, var(--li-surface));
+  --mat-sys-on-primary-container: var(--li-ink);
+  --mat-sys-secondary-container: color-mix(in srgb, var(--li-accent) 16%, var(--li-surface));
+  --mat-sys-on-secondary-container: var(--li-ink);
+  --mat-sys-surface: var(--li-surface);
+  --mat-sys-surface-container: var(--li-surface);
+  --mat-sys-on-surface: var(--li-ink);
+  --mat-sys-on-surface-variant: var(--li-muted);
+  --mat-sys-outline: var(--li-border);
+  --mat-sys-error: var(--li-danger);
+
+  // `surface-variant` is not a surface anywhere the app uses it: it is the
+  // divider under a tab row, the divider in a menu, the unfilled half of a
+  // slider and the resting track of a toggle. All four are the same hairline,
+  // and the app has a colour for that.
+  --mat-sys-surface-variant: var(--li-border);
+
   // A sheet is titled in the reading face, at the size a title is set in.
   --mat-dialog-subhead-font: var(--li-serif);
   --mat-dialog-subhead-size: var(--li-text-xl);
@@ -376,6 +417,47 @@ html {
   // The panels that fold Advanced away sit on the sheet rather than on a card
   // of their own; the two that want an edge draw their own border.
   --mat-expansion-container-background-color: transparent;
+
+  // -------------------------------------------------------------------------
+  // The switch, turned the other way round.
+  // -------------------------------------------------------------------------
+  //
+  // Material fills the track with the accent and puts a pale knob on it, which
+  // makes an "on" switch a block of colour the size of a word. Three of them
+  // down the left of Preferences were the loudest thing on a screen about
+  // reading. The track is the app's hairline in both states here, and the knob
+  // is what carries the answer: the paper it is drawn on when off, the accent
+  // when on, and Material grows it from 16px to 24px on the way, so the switch
+  // still says which way it is set to somebody who cannot see the difference
+  // between the two colours.
+  //
+  // The tick inside the knob goes with `hideIcon` in `app.config.ts` rather
+  // than from here — the icon is a `<svg>` in the template, and not drawing it
+  // at all beats drawing it and hiding it.
+  --mat-slide-toggle-selected-track-color: var(--li-border);
+  --mat-slide-toggle-selected-hover-track-color: var(--li-border);
+  --mat-slide-toggle-selected-focus-track-color: var(--li-border);
+  --mat-slide-toggle-selected-pressed-track-color: var(--li-border);
+  --mat-slide-toggle-selected-handle-color: var(--li-accent);
+  --mat-slide-toggle-selected-hover-handle-color: var(--li-accent);
+  --mat-slide-toggle-selected-focus-handle-color: var(--li-accent);
+  --mat-slide-toggle-selected-pressed-handle-color: var(--li-accent);
+
+  // The other half of the same swap: `outline` is the track's colour now, so a
+  // knob that took it would be a knob you could not see.
+  --mat-slide-toggle-unselected-handle-color: var(--li-surface);
+  --mat-slide-toggle-unselected-hover-handle-color: var(--li-surface);
+  --mat-slide-toggle-unselected-focus-handle-color: var(--li-surface);
+  --mat-slide-toggle-unselected-pressed-handle-color: var(--li-surface);
+
+  // A text button's state layer is the whole of what it draws — there is no
+  // fill and no border under it — and Material shapes it `corner-full`, so
+  // hovering a word in the top bar put a violet pill round it. The app's
+  // radius for a thing you can press, and a tint of the ink rather than of the
+  // accent: the label is already the accent, and a tinted pill of the same
+  // colour behind it is how a button ends up looking pressed when it is not.
+  --mat-button-text-container-shape: var(--li-radius-md);
+  --mat-button-text-state-layer-color: var(--li-ink);
 }
 
 // The subscript wrapper has no colour of its own to set, so it inherits the
@@ -716,8 +798,89 @@ textarea:where(.serif) {
 }
 
 // ---------------------------------------------------------------------------
+// The tick. One box, drawn by hand, wherever the app asks a yes-or-no of a row
+// rather than of a setting.
+// ---------------------------------------------------------------------------
+//
+// The lore review sheet is the one place that asks it, and it asked with the
+// browser's own checkbox and `accent-color` — a third control idiom on a screen
+// that already has switches and buttons, drawn in whatever square the operating
+// system happens to draw. This is the same box the app draws everything else
+// in: the raised paper, the hairline, the small radius, and the accent as a
+// tint rather than a fill, which is the language the row around it already
+// speaks when it is ticked.
+//
+// The mark is two borders of a rotated box rather than a glyph or an SVG, so
+// its colour is a custom property like everything else and it costs no request.
+// `appearance: none` is what makes the box ours and what makes the pseudo
+// element possible; without it there is nothing to draw on.
+input[type='checkbox'] {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  border: 1px solid var(--li-border);
+  border-radius: var(--li-radius-sm);
+  background: var(--li-surface-raised);
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    width: 0.28rem;
+    height: 0.55rem;
+    border: 2px solid var(--li-accent);
+    border-top: 0;
+    border-left: 0;
+    transform: translate(-50%, -55%) rotate(45deg);
+    opacity: 0;
+  }
+
+  &:checked {
+    border-color: color-mix(in srgb, var(--li-accent) 55%, var(--li-border));
+    background: color-mix(in srgb, var(--li-accent) 14%, var(--li-surface-raised));
+  }
+
+  &:checked::after {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--li-accent) 65%, transparent);
+    outline-offset: 2px;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Shared bits
 // ---------------------------------------------------------------------------
+
+// A control and the note about it, as one row of whatever is stacking them.
+//
+// Seven of these are toggles with a sentence underneath, and the note used to
+// be a sibling of the control in the stack — which put the stack's own gap
+// between them and the browser's `1em` paragraph margin on top of that: 24.8px
+// drawn where 12 was declared, and a hint sitting as far from the switch it
+// belongs to as from the next switch down. Two of them had been hand-corrected
+// with a negative margin, which is the same bug with the sign flipped.
+//
+// Now the pair is one row. The stack's gap goes round the pair, and the gap
+// inside it is declared here and is a step tighter, which is the whole of what
+// makes the note read as belonging to the control above it.
+.li-setting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--li-space-2xs);
+
+  > p {
+    margin: 0;
+  }
+}
+
 .li-pill {
   display: inline-flex;
   align-items: center;

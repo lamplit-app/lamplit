@@ -253,9 +253,10 @@ export interface ChapterClose {
       background: color-mix(in srgb, var(--li-accent) 8%, transparent);
     }
 
+    /* The box itself is the app's, in the global styles; this is only where
+       it sits, which is on the cap height of the title beside it. */
     .proposal input {
-      margin: var(--li-space-3xs) 0 0;
-      accent-color: var(--li-accent);
+      margin-top: var(--li-space-3xs);
     }
 
     .proposal .body {

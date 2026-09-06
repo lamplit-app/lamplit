@@ -206,20 +206,22 @@ export interface StoryDialogData {
 
             <hr />
 
-            <mat-slide-toggle
-              [checked]="story().autoTheme"
-              (change)="stories.patch({ autoTheme: $event.checked })"
-            >
-              Let the model choose the page colours from each chapter's scene
-            </mat-slide-toggle>
-            <p class="li-hint">
-              Opening a chapter sends its scene, and a list of ten palettes with what each one is
-              for, and asks which fits. The answer is one word; the chapter is read on that page
-              from then on, and switching chapters switches pages. It is a small request of its own,
-              made once per scene and never during a turn, and its cost is in the scene sheet's
-              footer. Off, nothing is asked and nothing changes. Whatever it picks, the palette row
-              in <strong>Preferences → Colours</strong> is where you overrule it.
-            </p>
+            <div class="li-setting">
+              <mat-slide-toggle
+                [checked]="story().autoTheme"
+                (change)="stories.patch({ autoTheme: $event.checked })"
+              >
+                Let the model choose the page colours from each chapter's scene
+              </mat-slide-toggle>
+              <p class="li-hint">
+                Opening a chapter sends its scene, and a list of ten palettes with what each one is
+                for, and asks which fits. The answer is one word; the chapter is read on that page
+                from then on, and switching chapters switches pages. It is a small request of its
+                own, made once per scene and never during a turn, and its cost is in the scene
+                sheet's footer. Off, nothing is asked and nothing changes. Whatever it picks, the
+                palette row in <strong>Preferences → Colours</strong> is where you overrule it.
+              </p>
+            </div>
           </div>
         </mat-tab>
       </mat-tab-group>

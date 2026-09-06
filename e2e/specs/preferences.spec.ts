@@ -144,6 +144,85 @@ test.describe('preferences', () => {
     await expect.poll(() => faceOf('li-top-bar .wordmark')).toMatch(/Iowan|Palatino|serif/i);
   });
 
+  test('the controls are the app’s own, and a stack draws the gap it declares', async ({
+    page,
+    app,
+  }) => {
+    await app.visit();
+
+    // A text button has no fill and no border, so its state layer is the whole
+    // of what hovering it draws. Material shapes that layer `corner-full`,
+    // which put a violet pill round a word in the top bar.
+    const layerShape = await page.getByRole('button', { name: 'Preferences' }).evaluate((el) => {
+      const layer = el.querySelector('.mat-mdc-button-persistent-ripple')!;
+      return getComputedStyle(layer, '::before').borderRadius;
+    });
+    expect(layerShape).not.toMatch(/9999px|50%/);
+
+    await openPreferences(page);
+    await expect(page.locator('.mdc-dialog--opening')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Advanced' }).first().click();
+    // The panel unfolds, and anything measured while it is unfolding is
+    // measured against geometry that is about to change.
+    await page.waitForTimeout(600);
+
+    const measured = await page.evaluate(() => {
+      // A custom property's declared value is the `light-dark()` pair it was
+      // written as, so the only way to compare it with a drawn colour is to
+      // let the browser resolve it the same way it resolved that one.
+      const resolve = (value: string) => {
+        const probe = document.createElement('span');
+        probe.style.color = value;
+        document.body.append(probe);
+        const colour = getComputedStyle(probe).color;
+        probe.remove();
+        return colour;
+      };
+
+      const toggle = document.querySelector('mat-slide-toggle')!;
+      const gapsOf = (box: Element) => {
+        const rows = [...box.children].map((el) => el.getBoundingClientRect());
+        return rows
+          .slice(1)
+          .map((r, i) => Math.round(r.top - rows[i].bottom))
+          .filter((gap) => gap >= 0);
+      };
+
+      return {
+        border: resolve('var(--li-border)'),
+        accent: resolve('var(--li-accent)'),
+        track: getComputedStyle(toggle.querySelector('.mdc-switch__track')!, '::after')
+          .backgroundColor,
+        knob: getComputedStyle(toggle.querySelector('.mdc-switch__handle')!, '::after')
+          .backgroundColor,
+        ticks: document.querySelectorAll('.mdc-switch__icons').length,
+        stacks: [...document.querySelectorAll('.stack')].map((box) => ({
+          declared: Math.round(parseFloat(getComputedStyle(box).rowGap)),
+          drawn: gapsOf(box),
+        })),
+        settings: [...document.querySelectorAll('.li-setting')].map((box) => ({
+          declared: Math.round(parseFloat(getComputedStyle(box).rowGap)),
+          drawn: gapsOf(box),
+        })),
+      };
+    });
+
+    // The switch, the other way round from the one Material ships: the app's
+    // hairline for a track and the app's accent for the knob.
+    expect(measured.track).toBe(measured.border);
+    expect(measured.knob).toBe(measured.accent);
+    expect(measured.ticks).toBe(0);
+
+    // And the rhythm is the one that is written down. Both of these were out
+    // by the browser's paragraph margin on top of the flex gap.
+    expect(measured.stacks.length).toBeGreaterThan(0);
+    expect(measured.settings.length).toBeGreaterThan(0);
+    for (const box of [...measured.stacks, ...measured.settings]) {
+      expect(box.drawn.length).toBeGreaterThan(0);
+      for (const gap of box.drawn) expect(Math.abs(gap - box.declared)).toBeLessThanOrEqual(1);
+    }
+  });
+
   test('the story is written at the size it is read at', async ({ page, server, app }) => {
     // Not the default, because the default is also what the stylesheet ships:
     // a size that only works when nobody has chosen one is not the setting.
