@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
 @use '@angular/cdk' as cdk;
 @use 'breakpoints' as bp;
@@ -147,6 +148,18 @@ $contrast: (
   }
 }
 
+// The way back, for a reader whose machine asks for more contrast and who does
+// not want it here. A rule cannot unsay a media query, so the shipped half is
+// written out a second time — over exactly the names `$contrast` covers, read
+// from `$palette` rather than typed again, so the two can never disagree.
+@mixin shipped-palette {
+  @each $name in map.keys($contrast) {
+    @each $theme, $value in map.get($palette, $name) {
+      --li-#{$name}-#{$theme}: #{$value};
+    }
+  }
+}
+
 :root {
   // The two widths the app's TypeScript has to know, published so it can read
   // them back rather than write either number down a second time.
@@ -168,6 +181,18 @@ $contrast: (
       --li-#{$name}-#{$theme}: #{$value};
     }
     --li-#{$name}: light-dark(var(--li-#{$name}-light), var(--li-#{$name}-dark));
+  }
+
+  // And the contrast half under names of its own, always — nothing is drawn
+  // from these. `contrast-palette` writes the same values over `--li-x-light`
+  // and `--li-x-dark` when a contrast mode is on, which is what the page reads;
+  // these are so that Preferences → Colours can ask what a contrast mode ships
+  // without one being on, and so that the answer does not depend on the
+  // attribute having been written yet. `core/theming.ts` is the reader.
+  @each $name, $themes in $contrast {
+    @each $theme, $value in $themes {
+      --li-#{$name}-#{$theme}-contrast: #{$value};
+    }
   }
 
   // How big the story is set, and how far apart its lines are. The size is what
@@ -323,19 +348,27 @@ $contrast: (
   }
 }
 
-// The second is the app saying it, and is what an accessibility panel will
-// write — one attribute on <html>, next to the `color-scheme` the theme is
-// already a single property of. Nothing sets it yet; #63 is where it gets a
-// switch, and where the third state lives: turning contrast *off* on a machine
-// that asks for it needs a block of its own, because a rule cannot unsay a
-// media query.
+// The second is the app saying it: one attribute on <html>, next to the
+// `color-scheme` the theme is already a single property of. Preferences →
+// Accessibility writes it, and `core/theming.ts` is the hand that does —
+// absent when the setting is to follow the machine, which is why the media
+// query above is the only thing that can answer then.
 //
-// It comes last because coming last is what makes it win. The build minifies
-// `:root[data-contrast='high']` down to the attribute alone, which is worth the
-// same as the `:root` above it — so this is settled by order, in the source and
-// in the bundle, and not by the selector.
+// Both come last because coming last is what makes them win. The build
+// minifies `:root[data-contrast='high']` down to the attribute alone, which is
+// worth the same as the `:root` above it — so this is settled by order, in the
+// source and in the bundle, and not by the selector.
 :root[data-contrast='high'] {
   @include contrast-palette;
+}
+
+// And the third state, which needs a block of its own for the reason the mixin
+// gives: on a machine asking for more contrast the media query has already
+// fired, and only a later declaration of the same names can put the shipped
+// ones back. On a machine that asks for nothing this changes nothing, which is
+// what it should do.
+:root[data-contrast='normal'] {
+  @include shipped-palette;
 }
 
 // ---------------------------------------------------------------------------
@@ -1324,7 +1357,13 @@ button {
 // The composer's box eases its border to the accent as it takes focus, and
 // that goes too. A colour is not motion, and one rule over everything cannot
 // tell the difference; the accent simply arrives.
-@include bp.reduced-motion {
+//
+// Asked twice, like the contrast palette above and for the same reason: the
+// machine, and the app. Preferences → Accessibility is the second door, for a
+// reader whose desktop has no such switch or who wants this app still and the
+// rest of it as it is. There is no door the other way — nothing here can ask a
+// machine that wants stillness to move, and `MotionMode` says why.
+@mixin still {
   *,
   *::before,
   *::after {
@@ -1332,4 +1371,15 @@ button {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+@include bp.reduced-motion {
+  @include still;
+}
+
+// Nested, so these are `<html>`'s descendants rather than everything: <html>
+// itself is the one element left out, and it is the one element in the app
+// with nothing to animate.
+:root[data-motion='reduced'] {
+  @include still;
 }

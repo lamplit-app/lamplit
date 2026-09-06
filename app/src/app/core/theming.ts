@@ -1,4 +1,4 @@
-import { ColourKey, ReadingFont, ThemeName, UiSettings } from './models';
+import { ColourKey, ContrastMode, ReadingFont, ThemeName, UiSettings } from './models';
 import { PagePalette } from './page-palettes';
 
 /**
@@ -83,8 +83,7 @@ export const READING_SIZE = '--li-reading-size';
  * the stylesheet and the colours set by hand — a preset is exactly that, and a
  * swatch the reader dragged themselves beats one a table chose for them.
  *
- * A page has two halves per theme, and which one is written is the one question
- * here that is not a setting: see `wantsContrast`.
+ * A page has two halves per theme, and which one is written is `wantsContrast`.
  */
 export function applyUi(
   root: HTMLElement,
@@ -94,8 +93,16 @@ export function applyUi(
   // The whole palette hangs off `color-scheme`, so this one line is the theme.
   root.style.colorScheme = ui.theme;
 
+  // And the two accessibility modes are one attribute each, for the same
+  // reason: `styles.scss` has a block per state, so saying which state we are
+  // in is the whole of applying it. Following the machine is the attribute
+  // *absent* rather than a third value — the media query is then the only
+  // thing that can answer, which is exactly what following it means.
+  setMode(root, 'contrast', ui.contrast === 'system' ? '' : ui.contrast);
+  setMode(root, 'motion', ui.motion === 'system' ? '' : ui.motion);
+
   const preset = palette?.[ui.theme];
-  const strong = wantsContrast(root) ? palette?.contrast[ui.theme] : undefined;
+  const strong = wantsContrast(root, ui.contrast) ? palette?.contrast[ui.theme] : undefined;
   const overrides = ui.colours[ui.theme] ?? {};
   for (const { key } of THEME_COLOURS) {
     // A colour the reader chose themselves still wins, in a contrast mode as
@@ -117,30 +124,45 @@ export function applyUi(
   root.style.setProperty(READING_SIZE, `${ui.fontSize}px`);
 }
 
+/** An attribute the stylesheet keys on; the empty state is it not being there. */
+function setMode(root: HTMLElement, name: 'contrast' | 'motion', value: string): void {
+  if (value) root.dataset[name] = value;
+  else delete root.dataset[name];
+}
+
 /**
- * Whether the page is being drawn at the stronger contrast — asked the two ways
- * `styles.scss` asks it, and in the same order.
- *
- * The attribute is what an accessibility panel writes (#63, where the switch
- * lives); the media query is the reader's own machine, which is the only one of
- * the two that says yes today. Both, because the stylesheet honours both, and a
- * page whose rules were chosen for a contrast mode by one door and not the
- * other is a page that disagrees with the app around it.
- *
- * This is read when the settings effect runs rather than watched, so a reader
- * who turns contrast up in Windows without touching Lamplit keeps the page's
- * ordinary rules until something else changes — the stylesheet moves at once,
- * a preset's inline border does not. #63 owns that gap: the switch it adds is a
- * setting, and a setting runs the effect.
+ * The one question the page asks the machine. Published because `workspace.ts`
+ * listens to it, and two spellings of the same query would be two answers.
  */
-function wantsContrast(root: HTMLElement): boolean {
-  if (root.dataset['contrast'] === 'high') return true;
+export const MORE_CONTRAST = '(prefers-contrast: more)';
+
+/**
+ * Whether the page is being drawn at the stronger contrast — the two doors
+ * `styles.scss` has, at the precedence the stylesheet gives them.
+ *
+ * The setting answers on its own when it is not `system`, which is the
+ * stylesheet's own order: `[data-contrast]` is written after the media query
+ * and beats it. Otherwise the reader's machine, because the media query is then
+ * the thing drawing the app, and a page whose rules were chosen by one door and
+ * not the other is a page that disagrees with the app around it.
+ *
+ * The machine's answer is read when this runs rather than watched. `workspace.ts`
+ * is where it is listened for, because only a caller can run this again.
+ *
+ * Exported because Preferences → Colours asks it too, and two answers to this
+ * would be a sheet offering one colour while the page behind it is drawn in
+ * another. Both callers ask the setting and the machine rather than reading the
+ * attribute back off `<html>`: the attribute is written from this same answer,
+ * and a reader that waited for the write would have to be sure it had happened.
+ */
+export function wantsContrast(root: HTMLElement, mode: ContrastMode): boolean {
+  if (mode !== 'system') return mode === 'high';
   // Asked for rather than assumed: the element a unit test hands over has a
   // document behind it but not a browser's worth of window, and a page is not
   // worth a thrown error for the sake of a question that has a safe answer.
   const view = root.ownerDocument.defaultView;
   if (typeof view?.matchMedia !== 'function') return false;
-  return view.matchMedia('(prefers-contrast: more)').matches;
+  return view.matchMedia(MORE_CONTRAST).matches;
 }
 
 /**
@@ -151,9 +173,24 @@ function wantsContrast(root: HTMLElement): boolean {
  * this, so the colour a reset returns to is the one the theme is built from,
  * whichever theme is on screen. Empty when there is no stylesheet attached,
  * which is every unit test — callers fall back.
+ *
+ * `stronger` is the contrast mode, and it is a question rather than a state of
+ * the element: the stylesheet publishes the contrast half under `-contrast`
+ * names of its own, always, so this can be asked before the attribute that
+ * turns the mode on has been written. Only a few names have one — everything
+ * else is already legible and a contrast mode leaves it alone.
  */
-export function shippedColour(root: Element, key: ColourKey, theme: ThemeName): string {
-  return getComputedStyle(root).getPropertyValue(shippedPropertyOf(key, theme)).trim();
+export function shippedColour(
+  root: Element,
+  key: ColourKey,
+  theme: ThemeName,
+  stronger = false,
+): string {
+  const style = getComputedStyle(root);
+  const strong = stronger
+    ? style.getPropertyValue(`${shippedPropertyOf(key, theme)}-contrast`)
+    : '';
+  return (strong || style.getPropertyValue(shippedPropertyOf(key, theme))).trim();
 }
 
 /** WCAG 2's floor for body text. Below it the dialog warns; it never blocks. */

@@ -200,7 +200,7 @@ usable either way — the panel never takes the box you are writing in.
 **Preferences** holds everything that changes how the story looks to you and nothing about what is
 sent. It is behind the **⋯** menu in the top bar, or **Ctrl/Cmd+,** — it is the app being set up
 rather than the story being written, so it is not one of the bar's own names. It opens on
-**Reading**, with **Colours** and **Advanced** folded away underneath.
+**Reading**, with **Accessibility**, **Colours** and **Advanced** folded away underneath.
 
 ### Reading
 
@@ -248,6 +248,39 @@ your laptop uses simply reads in its own.
 > its own: the browser API for it refuses to run on a plain-HTTP address like the one your phone
 > reaches Lamplit on, and getting round that needs a domain name and a certificate for a server
 > that lives on your desk. See [On your phone](on-your-phone.md).
+
+### Accessibility
+
+![Contrast and motion, and what they follow](images/preferences-accessibility.png)
+
+Lamplit already follows what your computer asks for, so there is nothing to do here unless this app
+should be the exception. Two questions, and both open on **Follow my computer**.
+
+**Contrast** draws every rule, box and divider more firmly — the hairlines round the composer, the
+fields, the cards and the panel. Nothing else moves: the text, the dialogue and the accent are where
+they were.
+
+- **Follow my computer** reads Windows' *Contrast themes*, macOS' *Increase contrast*, or the same
+  setting in your browser, and is what a fresh install does.
+- **Always stronger** is for a computer with no such switch, or for wanting it here and not
+  everywhere.
+- **Always as it ships** is the way back, and the reason there are three states rather than two:
+  without it, a computer set to more contrast would have the last word here. The rules Lamplit
+  ships sit at about 2:1, which draws every box without turning a page of prose into a form; the
+  stronger set clears the 3:1 that WCAG asks of anything marking out a control. Your text is over
+  the 4.5:1 that AA asks either way, so this is a fair thing to choose.
+
+A page palette follows the switch with everything else — each of the ten has a stronger set of rules
+of its own, so a story with a page keeps that page and not somebody else's hairline.
+
+**Motion** turns off the sheets scaling in, the switches sliding, and everything else that moves.
+There is no *always animate*, and that is deliberate: nothing in Lamplit moves in order to tell you
+something, so a computer asking for stillness is never overruled from this panel. **Always still**
+is for a computer that has no such setting, or one you would rather leave alone.
+
+> Both live in `settings.json` rather than in the story, so they are the app being set up and not
+> one story's look — and **Follow my computer** is answered by whichever computer is showing
+> Lamplit, which matters when the same `settings.json` is being read on a phone as well.
 
 ### Colours
 

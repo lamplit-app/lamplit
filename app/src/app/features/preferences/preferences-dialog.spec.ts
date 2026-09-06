@@ -108,6 +108,31 @@ describe('PreferencesDialog', () => {
     fixture.detectChanges();
   }
 
+  /** What one folded section says about itself, found by the name on it. */
+  function summaryOf(title: string): string {
+    const panel = [...host().querySelectorAll('mat-expansion-panel')].find(
+      (candidate) => candidate.querySelector('mat-panel-title')?.textContent.trim() === title,
+    );
+    if (!panel) throw new Error(`no section called ${title}`);
+    return panel.querySelector('mat-panel-description')?.textContent.trim() ?? '';
+  }
+
+  /** One of the choices in Accessibility, reached by the name above the box. */
+  function choice(label: string): HTMLSelectElement {
+    const field = [...host().querySelectorAll('li-field')].find(
+      (candidate) => candidate.querySelector('.li-field-label')?.textContent.trim() === label,
+    );
+    if (!field) throw new Error(`no field called ${label}`);
+    return field.querySelector<HTMLSelectElement>('select')!;
+  }
+
+  function say(label: string, value: string): void {
+    const select = choice(label);
+    select.value = value;
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  }
+
   /** A named slide toggle in Advanced, as the reader would reach it. */
   function toggle(label: string): HTMLElement | null {
     const row = [...host().querySelectorAll<HTMLElement>('mat-slide-toggle')].find((candidate) =>
@@ -162,6 +187,53 @@ describe('PreferencesDialog', () => {
       open({ colours: { light: { ink: 'rebeccapurple', surface: '#fbfaf7' } } });
 
       expect(warning()).toBe('');
+    });
+  });
+
+  /**
+   * The panel is two questions and both of them have an answer already — the
+   * reader's own machine. What is asserted is that saying otherwise is written
+   * down as a setting, because that is the whole of the panel: `applyUi` turns
+   * it into an attribute and `styles.scss` has a block per state.
+   */
+  describe('accessibility', () => {
+    it('offers three states for contrast and two for motion', () => {
+      open();
+
+      expect([...choice('Contrast').options].map((option) => option.value)).toEqual([
+        'system',
+        'high',
+        'normal',
+      ]);
+      // No "always animate": see `MotionMode`, which is where the reason is.
+      expect([...choice('Motion').options].map((option) => option.value)).toEqual([
+        'system',
+        'reduced',
+      ]);
+    });
+
+    it('starts on the machine, and writes down whichever way it is overruled', () => {
+      open();
+      expect(choice('Contrast').value).toBe('system');
+      expect(summaryOf('Accessibility')).toBe('following your computer');
+
+      say('Contrast', 'high');
+      expect(settings().ui().contrast).toBe('high');
+      expect(summaryOf('Accessibility')).toBe('stronger contrast');
+
+      say('Contrast', 'normal');
+      expect(settings().ui().contrast).toBe('normal');
+
+      say('Motion', 'reduced');
+      expect(settings().ui().motion).toBe('reduced');
+      expect(summaryOf('Accessibility')).toBe('contrast as it ships, nothing moves');
+    });
+
+    it('shows what a settings file already says', () => {
+      open({ contrast: 'high', motion: 'reduced' });
+
+      expect(choice('Contrast').value).toBe('high');
+      expect(choice('Motion').value).toBe('reduced');
     });
   });
 
@@ -311,8 +383,7 @@ describe('PreferencesDialog', () => {
 
     it('is the first thing the folded panel says about itself', async () => {
       await openSharing({ share: true, port: 4177, addresses: ['192.168.1.5'] });
-      const description = host().querySelectorAll('mat-panel-description')[2];
-      expect(description.textContent.trim()).toBe('shared on this network');
+      expect(summaryOf('Advanced')).toBe('shared on this network');
     });
   });
 

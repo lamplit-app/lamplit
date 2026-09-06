@@ -385,13 +385,17 @@ async function theApp() {
   await shot(page, 'chapters', 'every chapter of the story, and what is in it');
   await escape(page);
 
-  // Preferences: Reading as it opens, then the colours behind the second
-  // section, then the light theme the first one can switch to.
+  // Preferences: Reading as it opens, then each folded section in the order it
+  // is met, then the light theme the first one can switch to.
   await openPreferences(page);
   await page.waitForTimeout(400);
   await shot(page, 'preferences', 'text size, book style, theme');
-  // Reading folded away so the whole palette is in the frame at once.
+  // Reading folded away so the whole of each section below is in the frame.
   await page.getByRole('button', { name: 'Reading' }).first().click();
+  await page.getByRole('button', { name: 'Accessibility' }).first().click();
+  await page.waitForTimeout(500);
+  await shot(page, 'preferences-accessibility', 'contrast and motion, and what they follow');
+  await page.getByRole('button', { name: 'Accessibility' }).first().click();
   await page.getByRole('button', { name: 'Colours' }).first().click();
   await page.waitForTimeout(600);
   await shot(page, 'preferences-colours', 'the ten pages a story can be read on');

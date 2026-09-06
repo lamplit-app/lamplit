@@ -1,7 +1,7 @@
 import { Component, afterNextRender, effect, inject, untracked } from '@angular/core';
 import { DEFAULT_STORY_TITLE } from './core/defaults';
 import { desktop } from './core/desktop';
-import { applyUi } from './core/theming';
+import { MORE_CONTRAST, applyUi } from './core/theming';
 import { ChapterPanel } from './features/chapters/chapter-panel';
 import { ChaptersPage } from './features/chapters/chapters-page';
 import { ReloadNotice } from './shared/reload-notice';
@@ -103,13 +103,30 @@ export class Workspace {
     // before the dialog has finished handling the event. The palette under
     // those colours comes from the open chapter, so switching chapters switches
     // pages by the same route.
-    effect(() => {
-      applyUi(document.documentElement, this.settings.ui(), this.chapters.palette());
-    });
+    effect(() => this.paint());
+
+    // The machine's own answer to `prefers-contrast`, which is the one input to
+    // the paint above that is not a signal. The stylesheet follows it on its
+    // own, but a page palette's rules are written inline from here and inline
+    // beats a stylesheet — so without this, turning contrast up in Windows
+    // mid-session moves the app and leaves a chosen page's hairlines where they
+    // were. Not removed: this component is the session.
+    window.matchMedia(MORE_CONTRAST).addEventListener('change', () => this.paint());
 
     afterNextRender(() => {
       void this.askWhatIsMissing();
     });
+  }
+
+  /**
+   * Everything under Preferences that the page can see, onto `<html>`.
+   *
+   * A method rather than the body of the effect because the media query above
+   * needs to run it too, and the signals it reads are tracked through the call
+   * either way.
+   */
+  private paint(): void {
+    applyUi(document.documentElement, this.settings.ui(), this.chapters.palette());
   }
 
   /**

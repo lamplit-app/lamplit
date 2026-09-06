@@ -84,10 +84,9 @@ describe('applyUi', () => {
     applyUi(root, ui({ theme: 'light' }), palette);
     expect(root.style.getPropertyValue(propertyOf('border'))).toBe(palette.light.border);
 
-    // The attribute an accessibility panel will write (#63); the reader's own
-    // machine is the other door and is not something jsdom can be asked about.
-    root.dataset['contrast'] = 'high';
-    applyUi(root, ui({ theme: 'light' }), palette);
+    // The setting the accessibility panel writes; the reader's own machine is
+    // the other door and is not something jsdom can be asked about.
+    applyUi(root, ui({ theme: 'light', contrast: 'high' }), palette);
     expect(root.style.getPropertyValue(propertyOf('border'))).toBe(palette.contrast.light.border);
     // And it is the rules alone: the page is the page it was.
     expect(root.style.getPropertyValue(propertyOf('page'))).toBe(palette.light.page);
@@ -95,11 +94,47 @@ describe('applyUi', () => {
 
   it('lets a rule the reader chose themselves beat the contrast half', () => {
     const root = document.createElement('html');
-    root.dataset['contrast'] = 'high';
     const colours = { light: { border: '#ff0000' } };
-    applyUi(root, ui({ theme: 'light', colours }), PAGE_PALETTES[0]);
+    applyUi(root, ui({ theme: 'light', contrast: 'high', colours }), PAGE_PALETTES[0]);
 
     expect(root.style.getPropertyValue(propertyOf('border'))).toBe('#ff0000');
+  });
+
+  /**
+   * The attribute is the whole of what the stylesheet is told: it has a block
+   * per state and no way of reading a setting, so what is asserted here is that
+   * each state is spelled the way `styles.scss` spells it — and that following
+   * the machine is the attribute gone, because a `data-contrast` of any value
+   * would stop the media query being the thing that answers.
+   */
+  it('says which contrast and which motion, and says nothing when it follows the machine', () => {
+    const root = document.createElement('html');
+
+    applyUi(root, ui({ contrast: 'high', motion: 'reduced' }));
+    expect(root.dataset['contrast']).toBe('high');
+    expect(root.dataset['motion']).toBe('reduced');
+
+    applyUi(root, ui({ contrast: 'normal' }));
+    expect(root.dataset['contrast']).toBe('normal');
+    expect(root.dataset['motion']).toBeUndefined();
+
+    applyUi(root, ui());
+    expect(root.dataset['contrast']).toBeUndefined();
+    expect(root.dataset['motion']).toBeUndefined();
+  });
+
+  /**
+   * A page's rules are written inline, and inline beats every block in the
+   * stylesheet — so "always as it ships" has to be answered here as well, or a
+   * reader whose machine asks for contrast would keep a preset's stronger
+   * hairlines after saying they did not want them.
+   */
+  it('declines the stronger rules when the reader has asked it to', () => {
+    const root = document.createElement('html');
+    const palette = PAGE_PALETTES[0];
+
+    applyUi(root, ui({ theme: 'light', contrast: 'normal' }), palette);
+    expect(root.style.getPropertyValue(propertyOf('border'))).toBe(palette.light.border);
   });
 
   it('ignores a name it does not know, rather than writing it out', () => {

@@ -81,6 +81,45 @@ export async function seedDeveloperMode(server: PersistenceServer): Promise<void
   await seedUi(server, { developerMode: true });
 }
 
+/**
+ * Everything drawn on the page that still has a duration longer than an
+ * instant, as `element property: value`.
+ *
+ * Every element and both of its pseudo-elements, because the rule covers all
+ * three and a walk that asked less would pass on the strength of not looking.
+ * A duration is a list — `120ms, 60ms` — so each entry is read on its own, and
+ * an animation duration counts only where there is an animation to run: a
+ * duration left on an element whose `animation-name` is `none` moves nothing.
+ */
+export async function moving(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const durations = (value: string): number[] =>
+      value.split(',').map((one) => {
+        const each = one.trim();
+        return each.endsWith('ms') ? parseFloat(each) : parseFloat(each) * 1000;
+      });
+    const describe = (element: Element): string => {
+      const classes = element.getAttribute('class');
+      return element.localName + (classes ? '.' + classes.trim().split(/\s+/).join('.') : '');
+    };
+    const found = new Set<string>();
+    for (const element of document.querySelectorAll('*')) {
+      for (const pseudo of ['', '::before', '::after']) {
+        const style = getComputedStyle(element, pseudo);
+        const asked: [string, string][] = [['transition-duration', style.transitionDuration]];
+        if (style.animationName !== 'none')
+          asked.push(['animation-duration', style.animationDuration]);
+        for (const [property, value] of asked) {
+          if (durations(value).some((ms) => ms > 1)) {
+            found.add(`${describe(element)}${pseudo} ${property}: ${value}`);
+          }
+        }
+      }
+    }
+    return [...found];
+  });
+}
+
 /** Opens What the model sees, which developer mode's pill is the only way into. */
 export async function openPromptPreview(page: Page): Promise<void> {
   await page.getByRole('button', { name: /^context/ }).click();

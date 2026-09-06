@@ -35,6 +35,8 @@ export const DEFAULT_SETTINGS: Settings = {
     colours: {},
     palette: '',
     font: 'serif',
+    contrast: 'system',
+    motion: 'system',
     developerMode: false,
     checkForUpdates: true,
     systemProxy: false,

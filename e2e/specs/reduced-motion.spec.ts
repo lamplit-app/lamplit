@@ -1,6 +1,6 @@
 import { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { chapterPanel, openPanel, openPromptPreview, send, waitForTurn } from './helpers';
+import { chapterPanel, moving, openPanel, openPromptPreview, send, waitForTurn } from './helpers';
 
 /**
  * What the app does for a reader who has asked their machine to turn motion
@@ -14,6 +14,10 @@ import { chapterPanel, openPanel, openPromptPreview, send, waitForTurn } from '.
  * holds a write open; and the prompt preview's blocks only have a transition
  * while a block is being dragged past them, which is why one test stops with
  * the mouse still down.
+ *
+ * The walk itself is `moving` in `helpers.ts`, because the other door into the
+ * same rule — Preferences → Accessibility, on a machine that asked for nothing
+ * — is asked in `accessibility.spec.ts` and has to be asked the same way.
  */
 
 /**
@@ -35,45 +39,6 @@ const CAST = [
   { id: 'nell', name: 'Nell', description: 'Kept the light with Tomas.', enabled: true },
   { id: 'tomas', name: 'Tomas', description: 'The keeper before her father.', enabled: false },
 ];
-
-/**
- * Everything drawn on the page that still has a duration longer than an
- * instant, as `element property: value`.
- *
- * Every element and both of its pseudo-elements, because the rule covers all
- * three and a walk that asked less would pass on the strength of not looking.
- * A duration is a list — `120ms, 60ms` — so each entry is read on its own, and
- * an animation duration counts only where there is an animation to run: a
- * duration left on an element whose `animation-name` is `none` moves nothing.
- */
-async function moving(page: Page): Promise<string[]> {
-  return page.evaluate(() => {
-    const durations = (value: string): number[] =>
-      value.split(',').map((one) => {
-        const each = one.trim();
-        return each.endsWith('ms') ? parseFloat(each) : parseFloat(each) * 1000;
-      });
-    const describe = (element: Element): string => {
-      const classes = element.getAttribute('class');
-      return element.localName + (classes ? '.' + classes.trim().split(/\s+/).join('.') : '');
-    };
-    const found = new Set<string>();
-    for (const element of document.querySelectorAll('*')) {
-      for (const pseudo of ['', '::before', '::after']) {
-        const style = getComputedStyle(element, pseudo);
-        const asked: [string, string][] = [['transition-duration', style.transitionDuration]];
-        if (style.animationName !== 'none')
-          asked.push(['animation-duration', style.animationDuration]);
-        for (const [property, value] of asked) {
-          if (durations(value).some((ms) => ms > 1)) {
-            found.add(`${describe(element)}${pseudo} ${property}: ${value}`);
-          }
-        }
-      }
-    }
-    return [...found];
-  });
-}
 
 test('the page, the bar and the panel have nothing left to animate', async ({ page, app }) => {
   await app.open({ mode: 'roleplay', characters: CAST });

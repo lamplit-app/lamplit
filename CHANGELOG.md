@@ -25,6 +25,20 @@ written, and both have moved to where they belong:
 - The phone's bar and its one menu are unchanged. Preferences and the model were never offered
   there, and still are not.
 
+**Contrast and motion, and the computer you are on.** Preferences has an **Accessibility**
+section. Lamplit has always followed what your computer asks for — a machine set to more contrast
+gets a stronger set of rules, one asking for less motion gets an app that stands still — and both
+are now yours to overrule in this app alone:
+
+- **Contrast** has three states, because a machine asking for more has to be answerable in both
+  directions: follow it, always stronger, or always as Lamplit ships. The stronger rules clear the
+  3:1 that WCAG asks of anything marking out a control; the ones it ships sit at about 2:1, and
+  your text is over the 4.5:1 AA asks either way. A story with a page of its own keeps that page,
+  at whichever strength.
+- **Motion** has two: follow it, or always still. There is no *always animate*, and that is
+  deliberate — nothing here moves in order to tell you something, so a computer asking for
+  stillness is never argued with from a panel.
+
 **A read through the whole of it, and the things that read found.** Nothing here is a feature; all
 of it is something that was wrong. The ones you could have noticed:
 

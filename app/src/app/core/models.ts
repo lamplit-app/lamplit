@@ -76,6 +76,35 @@ export type ThemeColours = Partial<Record<ColourKey, string>>;
 export type ReadingFont = 'serif' | 'sans' | 'mono';
 
 /**
+ * How the app answers `prefers-contrast: more`, which `styles.scss` holds a
+ * second palette for.
+ *
+ * Three states rather than two, because a machine's answer has to be
+ * overridable in both directions: `system` is the reader's own setting, which
+ * for almost everybody is right; `high` is somebody whose OS has no such
+ * switch, or who wants it here and not everywhere; `normal` is somebody who
+ * turned contrast up for the rest of their desktop and does not want this app
+ * repainted, which is a fair thing to want — the shipped theme clears WCAG AA
+ * on every pair of colours the story is read in, and the stronger set only
+ * moves the rules.
+ */
+export type ContrastMode = 'system' | 'high' | 'normal';
+
+/**
+ * And the same for `prefers-reduced-motion`, which has two states and not
+ * three. `system` and `reduced`; there is no "always animate".
+ *
+ * The asymmetry is the point. Declining the stronger contrast costs a reader
+ * nothing they need — see `ContrastMode`. Overriding a reduced-motion
+ * preference the other way would be the app putting back movement somebody's
+ * machine was told to take away, which for a reader with a vestibular disorder
+ * is the harm the preference exists to prevent. Nothing in Lamplit moves in
+ * order to say something (see the rule at the foot of `styles.scss`), so there
+ * is nothing on the other side of that trade to weigh against it.
+ */
+export type MotionMode = 'system' | 'reduced';
+
+/**
  * The panel's sections, top to bottom. Persisted as object keys, so a name is
  * part of the file format: one this build does not know is ignored on load.
  */
@@ -95,6 +124,10 @@ export interface UiSettings {
    */
   palette: string;
   font: ReadingFont;
+  /** The stronger palette: the reader's machine, or this saying so. */
+  contrast: ContrastMode;
+  /** Motion turned down: the reader's machine, or this saying so. */
+  motion: MotionMode;
   /**
    * Shows what the app is doing rather than what the story says: the context
    * pill and the prompt behind it, and the folder the documents are in. It
