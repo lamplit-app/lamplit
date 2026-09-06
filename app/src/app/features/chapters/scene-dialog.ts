@@ -5,7 +5,7 @@ import { ChapterStore } from '../../store/chapter-store';
 import { StoryStore } from '../../store/story-store';
 import { TOKEN_ESTIMATOR, formatTokens } from '../../core/tokens';
 import { countWords } from '../../shared/editor-field';
-import { Field } from '../../shared/field';
+import { Field, fieldValue } from '../../shared/field';
 import { firstLine } from '../../core/prompt-builder';
 import { buildPalettePrompt, paletteLabel } from '../../core/page-palettes';
 import { TextValue } from '../../shared/text-value';
@@ -138,9 +138,7 @@ export class SceneDialog {
     inject(DestroyRef).onDestroy(() => this.commit());
   }
 
-  protected text(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLTextAreaElement).value;
-  }
+  protected readonly text = fieldValue;
 
   /**
    * Confirming is the moment the scene exists to be read, so it is where the

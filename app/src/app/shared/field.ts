@@ -71,12 +71,15 @@ export class Field implements AfterContentInit {
  * came from before it can read one. The cast is the whole of the work and it
  * is the same cast every time — an input, a textarea and a select all keep a
  * string there — so it is written here rather than once per component, where
- * six copies had drifted into four different unions of those three.
+ * sixteen copies had drifted into six different unions of those three.
  *
- * A function rather than a pipe or a directive: it is called from a template,
- * where a component's own members are what is in scope, so each of the six
- * holds it as one — `protected readonly value = fieldValue;` — and the
- * templates go on reading `value($event)`.
+ * A function rather than a pipe or a directive, because a template can only
+ * reach a component's own members: the thirteen components that read a box
+ * from a template each hold this as one, and go on calling it. The member is
+ * named `value` at six of them and `text` at seven — a name at a call site
+ * rather than a second version of this, and there was never one name free
+ * everywhere, since `editor-field` spends `value` on an input of its own.
+ * Code that is not in a template calls it outright.
  */
 export function fieldValue(event: Event): string {
   return (event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;

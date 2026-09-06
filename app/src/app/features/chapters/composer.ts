@@ -18,6 +18,7 @@ import { Layout } from '../../core/layout';
 import { withDirection } from '../../core/prompt-builder';
 import { TOKEN_ESTIMATOR, formatTokens } from '../../core/tokens';
 import { DialogsService } from '../../shared/dialogs.service';
+import { fieldValue } from '../../shared/field';
 import { ProseEditor } from '../../shared/prose-editor';
 import { TextValue } from '../../shared/text-value';
 
@@ -446,9 +447,7 @@ export class Composer {
     this.chapters.isEmpty() ? 'The chapter opens. What do you do?' : 'What happens next?',
   );
 
-  protected text(event: Event): string {
-    return (event.target as HTMLTextAreaElement).value;
-  }
+  protected readonly text = fieldValue;
 
   /**
    * `[AUTHOR]` at the start of a line takes that line and everything after it

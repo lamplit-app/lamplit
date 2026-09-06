@@ -11,6 +11,7 @@ import { newId } from '../../store/documents';
 import { ChapterStore } from '../../store/chapter-store';
 import { StoryStore } from '../../store/story-store';
 import { EditorField } from '../../shared/editor-field';
+import { fieldValue } from '../../shared/field';
 import { TextValue } from '../../shared/text-value';
 import { chapterTitle } from '../../core/prompt-builder';
 import { countWords } from '../../shared/editor-field';
@@ -411,9 +412,7 @@ export class CloseChapterDialog {
     this.stories.setSummaryPrompt({ useDefault: true });
   }
 
-  protected text(event: Event): string {
-    return (event.target as HTMLTextAreaElement).value;
-  }
+  protected readonly text = fieldValue;
 
   /**
    * Asked for again after a Stop, and the first request is still on its way

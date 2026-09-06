@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { StoryMode } from '../../core/models';
-import { Field } from '../../shared/field';
+import { Field, fieldValue } from '../../shared/field';
 import { TextValue } from '../../shared/text-value';
 
 export interface StorySetup {
@@ -119,9 +119,7 @@ export class NewStoryDialog {
   protected readonly name = signal(this.data.persona.name);
   protected readonly description = signal(this.data.persona.description);
 
-  protected text(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLTextAreaElement).value;
-  }
+  protected readonly text = fieldValue;
 
   /** Cancel and Escape both mean "not this way": nothing is created, or kept. */
   protected confirm(): void {

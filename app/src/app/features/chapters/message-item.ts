@@ -9,6 +9,7 @@ import { withDirection } from '../../core/prompt-builder';
 import { SpeakerLabel } from '../../core/speakers';
 import { budgetThatFits } from '../../core/model-errors';
 import { tokenCost } from '../../core/tokens';
+import { fieldValue } from '../../shared/field';
 import { ProseEditor } from '../../shared/prose-editor';
 import { TextValue } from '../../shared/text-value';
 
@@ -658,9 +659,7 @@ export class MessageItem {
     return parts.join('  ·  ');
   });
 
-  protected text(event: Event): string {
-    return (event.target as HTMLTextAreaElement).value;
-  }
+  protected readonly text = fieldValue;
 
   /**
    * Not while the words are still arriving: the next delta is appended to

@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { fieldValue } from './field';
 import { TextValue } from './text-value';
 
 let nextId = 0;
@@ -163,9 +164,7 @@ export class EditorField implements OnDestroy {
     this.commit();
   }
 
-  protected text(event: Event): string {
-    return (event.target as HTMLTextAreaElement).value;
-  }
+  protected readonly text = fieldValue;
 
   protected commit(): void {
     if (this.dirty() && !this.readOnly()) this.save.emit(this.draft());

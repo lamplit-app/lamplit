@@ -1,6 +1,7 @@
 import { Component, booleanAttribute, computed, input, output } from '@angular/core';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { fieldValue } from './field';
 
 /**
  * One tunable number: label, slider, exact value. Optional rows carry a switch
@@ -117,7 +118,7 @@ export class ParamRow {
   }
 
   protected commitExact(event: Event): void {
-    const raw = (event.target as HTMLInputElement).value.trim();
+    const raw = fieldValue(event).trim();
     if (raw === '') {
       if (this.optional()) this.valueChange.emit(undefined);
       return;

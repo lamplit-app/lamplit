@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { Field } from './field';
+import { Field, fieldValue } from './field';
 
 export interface TextPromptData {
   title: string;
@@ -48,9 +48,7 @@ export class TextPromptDialog {
 
   protected readonly draft = signal(this.data.value ?? '');
 
-  protected text(event: Event): string {
-    return (event.target as HTMLInputElement).value;
-  }
+  protected readonly text = fieldValue;
 
   /**
    * Save closes with what is in the box, empty or not: for a chapter, cleared
