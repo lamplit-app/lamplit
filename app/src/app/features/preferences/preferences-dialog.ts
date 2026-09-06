@@ -84,6 +84,23 @@ import { ReadAloud } from '../../shared/read-aloud.service';
               </mat-slider>
             </label>
 
+            <!-- The other half of how the story is set, beside the size of it.
+                 It lived under Colours, which is where the page is chosen and
+                 not where the story is set. -->
+            <li-field
+              label="Reading font"
+              class="font"
+              hint="The story itself, not the app around it."
+            >
+              <select (change)="setFont(value($event))">
+                @for (font of fonts; track font.key) {
+                  <option [value]="font.key" [selected]="font.key === ui().font">
+                    {{ font.label }}
+                  </option>
+                }
+              </select>
+            </li-field>
+
             <!-- Read aloud. The device's own voices and nothing sent anywhere,
                  so the list is whatever this machine happens to ship with —
                  which is why the choice is stored by name and a phone that has
@@ -183,28 +200,20 @@ import { ReadAloud } from '../../shared/read-aloud.service';
             }
           </div>
 
-          <li-field
-            label="Reading font"
-            class="font"
-            hint="The story itself, not the app around it."
-          >
-            <select (change)="setFont(value($event))">
-              @for (font of fonts; track font.key) {
-                <option [value]="font.key" [selected]="font.key === ui().font">
-                  {{ font.label }}
-                </option>
-              }
-            </select>
-          </li-field>
-
           <p class="li-hint editing">
             You are editing the <strong>{{ ui().theme }}</strong> theme. Switch it above and the
             other set is edited instead; each keeps its own colours.
           </p>
 
           <div class="swatches">
+            <!-- An odd number of colours in two columns leaves one of them
+                 beside an empty cell; the last one takes the row instead. -->
             @for (swatch of swatches(); track swatch.key) {
-              <label class="swatch" [class.custom]="swatch.custom">
+              <label
+                class="swatch"
+                [class.custom]="swatch.custom"
+                [class.wide]="$last && $count % 2 === 1"
+              >
                 <input
                   type="color"
                   [value]="swatch.colour"
@@ -538,7 +547,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       align-items: stretch;
       gap: var(--li-space-xs);
       padding: var(--li-space-xs);
-      border: 1px solid transparent;
+      border: 0;
       border-radius: var(--li-radius-md);
       background: none;
       color: var(--li-muted);
@@ -552,9 +561,18 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       }
 
       &.on {
-        border-color: color-mix(in srgb, var(--li-accent) 60%, transparent);
         color: var(--li-ink);
       }
+    }
+
+    /* The ring goes round the page being chosen rather than round the tile
+       holding it, and it is an outline, which is drawn outside the box and
+       takes no room: every preview is the same size and on the same line
+       whether it is the chosen one or not. As a border on the tile it read as
+       a larger, lower object than the nine beside it. */
+    .palette.on .preview {
+      outline: 2px solid color-mix(in srgb, var(--li-accent) 70%, transparent);
+      outline-offset: 2px;
     }
 
     /* A page in miniature: the tint behind, a sheet on it, two lines of story
@@ -614,9 +632,13 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       gap: var(--li-space-xs) var(--li-space-lg);
     }
 
+    /* Started rather than centred, and this is the whole of why: two
+       swatches share a grid row, the hint under one of them wraps onto a
+       second line and the other does not, and centring puts the two names ten
+       pixels apart down a column that is meant to read as a column. */
     .swatch {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: var(--li-space-md);
       padding: var(--li-space-xs) var(--li-space-sm);
       border: 1px solid transparent;
@@ -631,6 +653,10 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       &.custom {
         border-color: color-mix(in srgb, var(--li-accent) 45%, transparent);
       }
+
+      &.wide {
+        grid-column: 1 / -1;
+      }
     }
 
     /* The native picker, with the browser's chrome around it pared back to a
@@ -640,7 +666,14 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       width: 2.4rem;
       height: 2.4rem;
       padding: 0;
-      border: 1px solid var(--li-border);
+      /* Muted rather than the app's own border, which is the one place that
+         rule does not hold. Page, Paper and Raised paper are within 1.2:1 of
+         the paper a swatch is drawn on, and Rules is that border itself, so
+         the ring is the whole of what says a swatch is there — and at 2:1 it
+         left four of the eleven reading as empty boxes. Muted is over 5:1 on
+         either paper, which is the contrast it is picked for everywhere
+         else. */
+      border: 1px solid var(--li-muted);
       border-radius: var(--li-radius-md);
       background: none;
       cursor: pointer;
@@ -920,16 +953,20 @@ export class PreferencesDialog {
 
   protected readonly readingSummary = computed(() => {
     const ui = this.ui();
+    // The face only when it is not the one the app ships in, which is the same
+    // test `applyUi` makes before it writes the property at all.
+    const font = READING_FONTS.find((f) => f.key === ui.font);
+    const face = font && font !== READING_FONTS[0] ? `, ${font.label.toLowerCase()}` : '';
     const aloud = ui.readAloud ? ', read aloud' : '';
-    return `${ui.theme} theme, ${ui.fontSize}px${aloud}`;
+    return `${ui.theme} theme, ${ui.fontSize}px${face}${aloud}`;
   });
 
   protected readonly coloursSummary = computed(() => {
     const changed = this.swatches().filter((s) => s.custom).length;
-    const font = READING_FONTS.find((f) => f.key === this.ui().font)?.label.toLowerCase();
     if (changed) return `${changed} changed in ${this.ui().theme}`;
-    if (this.currentPalette()) return paletteLabel(this.currentPalette()).toLowerCase();
-    return font === 'serif' ? 'as it ships' : `${font}`;
+    return this.currentPalette()
+      ? paletteLabel(this.currentPalette()).toLowerCase()
+      : 'as it ships';
   });
 
   /**

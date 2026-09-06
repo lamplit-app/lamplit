@@ -211,6 +211,8 @@ away underneath.
   already break their own lines look the same either way.
 - **Show token counts** — the line under each answer.
 - **Text size** — 14 to 26 pixels.
+- **Reading font** — the serif it ships with, a sans-serif, or a monospace, all from fonts your
+  computer already has. It sets the story itself; the app around it stays as it is.
 - **Read replies aloud**, and under it the **voice** and the **reading speed** — see below.
 
 ![The same chapter, light](images/light.png)
@@ -271,8 +273,6 @@ when it moves.
 
 - **Each theme keeps its own set.** Editing while the dark theme is on edits the dark colours;
   switch to light in **Reading** and you are editing the light ones. Neither touches the other.
-- **Reading font** — the serif it ships with, a sans-serif, or a monospace, all from fonts your
-  computer already has. It sets the story itself; the app around it stays as it is.
 - **Reset the … colours** puts one theme back to whatever is underneath — the palette you picked,
   or what Lamplit ships — and asks first. It clears only what you changed, so a colour you never
   touched cannot drift.

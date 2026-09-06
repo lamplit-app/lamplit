@@ -50,11 +50,14 @@ test.describe('preferences', () => {
     await app.visit();
     await openPreferences(page);
 
-    // The first section is open on arrival, with all four of its settings.
+    // The first section is open on arrival, with all of its settings — the
+    // font among them, because how the story is set is one question and the
+    // size of it was answered here while the face was answered under Colours.
     await expect(page.getByRole('switch', { name: 'Dark theme' })).toBeVisible();
     await expect(page.getByRole('switch', { name: 'Dialogue on its own line' })).toBeVisible();
     await expect(page.getByRole('switch', { name: 'Show token counts' })).toBeVisible();
     await expect(page.getByRole('slider', { name: 'Text size' })).toBeVisible();
+    await expect(page.getByLabel('Reading font')).toBeVisible();
 
     await page.getByRole('switch', { name: 'Show token counts' }).click();
     await expect
@@ -120,6 +123,112 @@ test.describe('preferences', () => {
     await expect.poll(() => pageColour(page)).toBe(rgb('#123456'));
   });
 
+  /**
+   * A colour swatch is the one control in the app whose fill is not the app's
+   * to choose: three of these are within 1.2:1 of the paper they sit on, and a
+   * fourth is that paper's own hairline. So the ring round them is measured
+   * rather than looked at — 3:1 is what WCAG 1.4.11 asks of the boundary that
+   * identifies a control, and under it a swatch the colour of the surface is
+   * an empty box.
+   */
+  test('every swatch is a box you can see, in both themes', async ({ page, app }) => {
+    await app.visit();
+    await openPreferences(page);
+    await page.getByRole('button', { name: 'Colours' }).first().click();
+
+    const worstRing = () =>
+      page.evaluate(() => {
+        // A custom property holds the `light-dark()` pair it was written as, so
+        // it has to be resolved the way the drawn colour was.
+        const resolve = (value: string) => {
+          const probe = document.createElement('span');
+          probe.style.color = value;
+          document.body.append(probe);
+          const colour = getComputedStyle(probe).color;
+          probe.remove();
+          return colour;
+        };
+        const channels = (colour: string) =>
+          [...colour.matchAll(/[\d.]+/g)].slice(0, 3).map((m) => Number(m[0]));
+        const luminance = (colour: string) => {
+          const [r, g, b] = channels(colour).map((c) => {
+            const channel = c / 255;
+            return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+          });
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        };
+        const contrast = (a: string, b: string) => {
+          const one = luminance(a);
+          const two = luminance(b);
+          return (Math.max(one, two) + 0.05) / (Math.min(one, two) + 0.05);
+        };
+
+        const paper = resolve('var(--li-surface)');
+        const rings = [...document.querySelectorAll('.swatch input')].map(
+          (input) => getComputedStyle(input).borderTopColor,
+        );
+        return {
+          count: rings.length,
+          worst: Math.min(...rings.map((ring) => contrast(ring, paper))),
+        };
+      });
+
+    const dark = await worstRing();
+    expect(dark.count).toBe(11);
+    expect(dark.worst).toBeGreaterThanOrEqual(3);
+
+    await page.getByRole('switch', { name: 'Dark theme' }).click();
+    const light = await worstRing();
+    expect(light.worst).toBeGreaterThanOrEqual(3);
+  });
+
+  test('the swatches line up, and the odd one out takes a row', async ({ page, app }) => {
+    await app.visit();
+    await openPreferences(page);
+    await page.getByRole('button', { name: 'Colours' }).first().click();
+
+    const grid = await page.evaluate(() => {
+      const swatches = [...document.querySelectorAll('.swatches')][0]!.children;
+      return [...swatches].map((swatch) => ({
+        left: Math.round(swatch.getBoundingClientRect().x),
+        width: Math.round(swatch.getBoundingClientRect().width),
+        // What a reader lines a column up by: the name, not the box round it.
+        name: Math.round(swatch.querySelector('.name')!.getBoundingClientRect().y),
+      }));
+    });
+
+    // Two columns, so the names come in pairs — and each pair is one line.
+    const columns = new Set(grid.map((swatch) => swatch.left));
+    expect(columns.size).toBe(2);
+    for (let i = 0; i + 1 < grid.length - 1; i += 2) {
+      expect(grid[i].name).toBe(grid[i + 1].name);
+    }
+
+    // Eleven in two columns leaves one; it has the row rather than a hole.
+    const last = grid[grid.length - 1];
+    expect(grid.length % 2).toBe(1);
+    expect(last.width).toBeGreaterThan(grid[0].width * 1.8);
+  });
+
+  test('the chosen page is the same size as the pages beside it', async ({ page, app }) => {
+    await app.visit();
+    await openPreferences(page);
+    await page.getByRole('button', { name: 'Colours' }).first().click();
+
+    const previews = await page.locator('.palette .preview').evaluateAll((nodes) =>
+      nodes.map((node) => {
+        const box = node.getBoundingClientRect();
+        return [Math.round(box.y), Math.round(box.width), Math.round(box.height)].join('/');
+      }),
+    );
+    const chosen = await page.locator('.palette.on').count();
+
+    // One is selected, and the ring it wears is an outline: it takes no room,
+    // so its page is the same box on the same line as the ten beside it.
+    expect(chosen).toBe(1);
+    expect(new Set(previews.slice(0, 6)).size).toBe(1);
+  });
+
   test('the reading font changes the story and leaves the app alone', async ({ page, app }) => {
     await app.visit();
     // The reading face is only visible on prose, so there has to be some.
@@ -127,7 +236,6 @@ test.describe('preferences', () => {
     await waitForTurn(page);
 
     await openPreferences(page);
-    await page.getByRole('button', { name: 'Colours' }).first().click();
     await page.getByLabel('Reading font').selectOption('mono');
     await page.getByRole('button', { name: 'Done' }).click();
     await expect(page.getByRole('heading', { name: 'Preferences' })).toBeHidden();
