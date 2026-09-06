@@ -316,10 +316,10 @@ const SWIPE_DISTANCE = 48;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--li-space-sm);
       width: 100%;
       height: 100%;
-      padding: 0.7rem 0;
+      padding: var(--li-space-md) 0;
       border: 0;
       border-left: 1px solid var(--li-border);
       background: color-mix(in srgb, var(--li-surface) 55%, transparent);
@@ -335,14 +335,14 @@ const SWIPE_DISTANCE = 48;
 
     .edge {
       writing-mode: vertical-rl;
-      font-size: 0.72rem;
+      font-size: var(--li-text-xs);
       letter-spacing: 0.06em;
     }
 
     .scrim {
       position: absolute;
       inset: 0;
-      z-index: 1;
+      z-index: var(--li-layer-page);
       background: light-dark(rgb(30 26 20 / 24%), rgb(6 7 10 / 46%));
     }
 
@@ -362,8 +362,13 @@ const SWIPE_DISTANCE = 48;
       position: absolute;
       inset-block: 0;
       right: 0;
-      z-index: 3;
+      z-index: var(--li-layer-over);
       width: min(21rem, 88vw);
+
+      /* Off the shadow scale, because both of its steps fall downwards and
+         this one has to fall sideways: the panel's only free edge is the left
+         one, and a shadow under a thing whose top and bottom are the window is
+         a shadow nobody sees. The same ink as the over step, turned. */
       box-shadow: -18px 0 48px light-dark(rgb(0 0 0 / 12%), rgb(0 0 0 / 45%));
     }
 
@@ -380,8 +385,8 @@ const SWIPE_DISTANCE = 48;
       flex: none;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0.4rem 0.5rem 0.85rem;
+      gap: var(--li-space-sm);
+      padding: var(--li-space-sm) var(--li-space-xs) var(--li-space-sm) var(--li-space-md);
       border-bottom: 1px solid var(--li-border);
     }
 
@@ -392,7 +397,7 @@ const SWIPE_DISTANCE = 48;
       white-space: nowrap;
       text-overflow: ellipsis;
       font-family: var(--li-serif);
-      font-size: 0.95rem;
+      font-size: var(--li-text-lg);
       color: var(--li-ink);
     }
 
@@ -400,12 +405,12 @@ const SWIPE_DISTANCE = 48;
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding: 0.2rem 0 1.5rem;
+      padding: var(--li-space-2xs) 0 var(--li-space-xl);
     }
 
     @include bp.phone {
       .scroll {
-        padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+        padding-bottom: calc(var(--li-space-xl) + env(safe-area-inset-bottom));
       }
     }
 
@@ -416,14 +421,14 @@ const SWIPE_DISTANCE = 48;
     .head {
       display: flex;
       align-items: baseline;
-      gap: 0.45rem;
+      gap: var(--li-space-sm);
       width: 100%;
-      padding: 0.6rem 0.85rem;
+      padding: var(--li-space-sm) var(--li-space-md);
       border: 0;
       background: none;
       color: var(--li-ink);
       font: inherit;
-      font-size: 0.82rem;
+      font-size: var(--li-text-sm);
       text-align: left;
       cursor: pointer;
     }
@@ -435,7 +440,7 @@ const SWIPE_DISTANCE = 48;
     .mark {
       flex: none;
       color: var(--li-muted);
-      font-size: 0.7rem;
+      font-size: var(--li-text-xs);
     }
 
     .head .name {
@@ -452,25 +457,25 @@ const SWIPE_DISTANCE = 48;
       text-overflow: ellipsis;
       text-align: right;
       color: var(--li-muted);
-      font-size: 0.74rem;
+      font-size: var(--li-text-xs);
     }
 
     .body {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
-      padding: 0 0.85rem 0.9rem;
+      gap: var(--li-space-sm);
+      padding: 0 var(--li-space-md) var(--li-space-md);
     }
 
     .line-field {
       width: 100%;
-      padding: 0.45rem 0.6rem;
+      padding: var(--li-space-sm);
       border: 1px solid var(--li-border);
-      border-radius: 8px;
+      border-radius: var(--li-radius-md);
       background: var(--li-surface-raised);
       color: var(--li-ink);
       font: inherit;
-      font-size: 0.9rem;
+      font-size: var(--li-text-md);
     }
 
     .line-field:focus {
@@ -486,7 +491,7 @@ const SWIPE_DISTANCE = 48;
       background: none;
       color: var(--li-accent);
       font: inherit;
-      font-size: 0.78rem;
+      font-size: var(--li-text-sm);
       cursor: pointer;
     }
 
@@ -496,16 +501,16 @@ const SWIPE_DISTANCE = 48;
     }
 
     .add {
-      margin-top: 0.15rem;
+      margin-top: var(--li-space-3xs);
     }
 
     .cast-row {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.35rem 0.4rem;
+      gap: var(--li-space-sm);
+      padding: var(--li-space-xs);
       border: 1px solid transparent;
-      border-radius: 9px;
+      border-radius: var(--li-radius-md);
     }
 
     .cast-row:hover {
@@ -527,12 +532,12 @@ const SWIPE_DISTANCE = 48;
     }
 
     .tag {
-      margin-left: 0.35rem;
-      padding: 0 0.3rem;
-      border-radius: 999px;
+      margin-left: var(--li-space-xs);
+      padding: 0 var(--li-space-xs);
+      border-radius: var(--li-radius-pill);
       background: color-mix(in srgb, var(--li-cast-colour) 24%, transparent);
       color: var(--li-cast-colour);
-      font-size: 0.6rem;
+      font-size: var(--li-text-xs);
       letter-spacing: 0.04em;
       text-transform: uppercase;
       vertical-align: 1px;
@@ -545,7 +550,7 @@ const SWIPE_DISTANCE = 48;
       height: 0.85rem;
       padding: 0;
       border: 1px solid var(--li-border);
-      border-radius: 999px;
+      border-radius: var(--li-radius-pill);
       background: var(--li-surface);
       cursor: pointer;
     }
@@ -559,7 +564,7 @@ const SWIPE_DISTANCE = 48;
       display: block;
       width: 0.5rem;
       height: 0.5rem;
-      margin-left: 0.1rem;
+      margin-left: var(--li-space-3xs);
       border-radius: 50%;
       background: var(--li-muted);
       transition: transform 120ms ease;
@@ -590,7 +595,7 @@ const SWIPE_DISTANCE = 48;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
-      font-size: 0.85rem;
+      font-size: var(--li-text-md);
       color: var(--li-ink);
     }
 
@@ -598,7 +603,7 @@ const SWIPE_DISTANCE = 48;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
-      font-size: 0.74rem;
+      font-size: var(--li-text-xs);
       color: var(--li-muted);
     }
 
@@ -611,7 +616,7 @@ const SWIPE_DISTANCE = 48;
       background: none;
       color: var(--li-muted);
       font: inherit;
-      font-size: 0.9rem;
+      font-size: var(--li-text-md);
       line-height: 1;
       cursor: pointer;
     }
@@ -626,13 +631,13 @@ const SWIPE_DISTANCE = 48;
        and its knob in step, so it still reads as one thing sliding. */
     @include bp.touch {
       .head {
-        padding: 0.85rem;
+        padding: var(--li-space-md);
       }
 
       .icon {
         width: 2.25rem;
         height: 2.25rem;
-        font-size: 1.05rem;
+        font-size: var(--li-text-lg);
       }
 
       .in-scene {

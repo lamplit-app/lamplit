@@ -93,14 +93,14 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
     }
 
     .running {
-      margin: 0 0 0.9rem;
+      margin: 0 0 var(--li-space-md);
     }
 
     .release {
-      margin: 0 0 0.9rem;
-      padding: 0.75rem 0.9rem 0.85rem;
+      margin: 0 0 var(--li-space-md);
+      padding: var(--li-space-md);
       border: 1px solid var(--li-border);
-      border-radius: 12px;
+      border-radius: var(--li-radius-lg);
       background: var(--li-surface-raised);
     }
 
@@ -108,26 +108,26 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      gap: 1rem;
-      margin-bottom: 0.35rem;
+      gap: var(--li-space-lg);
+      margin-bottom: var(--li-space-xs);
     }
 
     .version {
       font-family: var(--li-serif);
-      font-size: 1.1rem;
+      font-size: var(--li-text-lg);
       color: var(--li-ink);
     }
 
     .when {
       flex: none;
-      font-size: 0.75rem;
+      font-size: var(--li-text-xs);
       color: var(--li-muted);
       font-variant-numeric: tabular-nums;
     }
 
     /* Release notes are ordinary markdown, set as prose rather than as story. */
     .notes {
-      font-size: 0.9rem;
+      font-size: var(--li-text-md);
       line-height: 1.6;
       color: var(--li-ink-soft);
       overflow-wrap: break-word;
@@ -160,13 +160,13 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
       font-size: 0.85em;
       background: color-mix(in srgb, var(--li-ink) 8%, transparent);
       padding: 0.12em 0.35em;
-      border-radius: 5px;
+      border-radius: var(--li-radius-sm);
     }
 
     .source {
       display: inline-block;
-      margin-top: 0.6rem;
-      font-size: 0.78rem;
+      margin-top: var(--li-space-sm);
+      font-size: var(--li-text-sm);
       color: var(--li-muted);
     }
 
@@ -175,24 +175,24 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
     }
 
     .how {
-      margin-top: 1.2rem;
-      padding: 0.75rem 0.9rem 0.85rem;
+      margin-top: var(--li-space-lg);
+      padding: var(--li-space-md);
       border: 1px solid color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
-      border-radius: 12px;
+      border-radius: var(--li-radius-lg);
       background: color-mix(in srgb, var(--li-accent) 7%, transparent);
     }
 
     h3 {
-      margin: 0 0 0.3rem;
+      margin: 0 0 var(--li-space-xs);
       font-family: var(--li-serif);
-      font-size: 1rem;
+      font-size: var(--li-text-lg);
       font-weight: 600;
       color: var(--li-ink);
     }
 
     .how p {
       margin: 0;
-      font-size: 0.86rem;
+      font-size: var(--li-text-md);
       line-height: 1.55;
       color: var(--li-ink-soft);
     }
@@ -201,9 +201,9 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
        the how above is a class and an element, and a lone class loses to it. */
     p.links {
       display: flex;
-      gap: 0.5rem;
-      margin-top: 0.6rem;
-      font-size: 0.86rem;
+      gap: var(--li-space-sm);
+      margin-top: var(--li-space-sm);
+      font-size: var(--li-text-md);
     }
 
     .links a {
@@ -217,9 +217,9 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
     .waiting {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: var(--li-space-sm);
       margin: 0;
-      font-size: 0.88rem;
+      font-size: var(--li-text-md);
       color: var(--li-muted);
     }
   `,

@@ -92,7 +92,7 @@ export interface ConfirmData {
     p {
       max-width: 26rem;
       margin: 0;
-      font-size: 0.92rem;
+      font-size: var(--li-text-md);
       line-height: 1.6;
       color: var(--li-ink-soft);
     }

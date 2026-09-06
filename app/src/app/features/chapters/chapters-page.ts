@@ -142,7 +142,7 @@ const PINNED_SLACK = 96;
     .welcome {
       display: grid;
       place-items: center;
-      padding: 1.5rem;
+      padding: var(--li-space-xl);
     }
 
     .tail {
@@ -166,7 +166,7 @@ const PINNED_SLACK = 96;
        nothing to the page it is sitting at the end of. */
     .jump-dock {
       position: sticky;
-      bottom: 1rem;
+      bottom: var(--li-space-lg);
       width: var(--li-column);
       height: 0;
       margin: 0 auto;
@@ -180,7 +180,7 @@ const PINNED_SLACK = 96;
     .jump {
       position: absolute;
       bottom: 0;
-      right: -1rem;
+      right: calc(-1 * var(--li-space-lg));
       pointer-events: auto;
       display: flex;
       align-items: center;
@@ -193,7 +193,7 @@ const PINNED_SLACK = 96;
       background: var(--li-surface-raised);
       color: var(--li-ink-soft);
       cursor: pointer;
-      box-shadow: 0 6px 18px light-dark(rgb(0 0 0 / 12%), rgb(0 0 0 / 40%));
+      box-shadow: var(--li-shadow-raised);
     }
 
     .jump:hover,
@@ -235,31 +235,31 @@ const PINNED_SLACK = 96;
     h1 {
       font-family: var(--li-serif);
       font-weight: 500;
-      font-size: 1.9rem;
-      margin: 0 0 0.6rem;
+      font-size: var(--li-text-2xl);
+      margin: 0 0 var(--li-space-sm);
       color: var(--li-ink);
     }
 
     p {
       font-family: var(--li-serif);
-      font-size: 1.02rem;
+      font-size: var(--li-text-lg);
       line-height: 1.6;
       color: var(--li-ink-soft);
-      margin: 0 0 1rem;
+      margin: 0 0 var(--li-space-lg);
     }
 
     /* The scene is prose the writer wrote: set it as prose, not as a caption. */
     .scene {
       white-space: pre-wrap;
       text-align: left;
-      padding: 0.9rem 1.1rem;
+      padding: var(--li-space-md) var(--li-space-lg);
       border-left: 2px solid color-mix(in srgb, var(--li-accent) 55%, transparent);
       background: color-mix(in srgb, var(--li-surface) 70%, transparent);
     }
 
     p.li-hint {
       font-family: var(--li-sans);
-      font-size: 0.78rem;
+      font-size: var(--li-text-sm);
     }
   `,
 })

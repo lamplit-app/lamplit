@@ -427,25 +427,25 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     mat-panel-description {
       flex: none;
       color: var(--li-muted);
-      font-size: 0.8rem;
+      font-size: var(--li-text-sm);
     }
 
     .stack {
       display: flex;
       flex-direction: column;
-      gap: 0.7rem;
-      padding-bottom: 0.35rem;
+      gap: var(--li-space-md);
+      padding-bottom: var(--li-space-xs);
     }
 
     .under-the-hood {
-      margin: 0 0 1rem;
+      margin: 0 0 var(--li-space-lg);
     }
 
     hr {
       width: 100%;
       border: 0;
       border-top: 1px solid var(--li-border);
-      margin: 0.35rem 0;
+      margin: var(--li-space-xs) 0;
     }
 
     /* A switch with a sentence for a label wraps, and its own text should not
@@ -457,7 +457,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     .size {
       display: flex;
       flex-direction: column;
-      font-size: 0.8rem;
+      font-size: var(--li-text-sm);
       color: var(--li-muted);
     }
 
@@ -467,7 +467,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     }
 
     .editing {
-      margin: 1.1rem 0 0.9rem;
+      margin: var(--li-space-lg) 0 var(--li-space-md);
 
       strong {
         color: var(--li-ink);
@@ -478,28 +478,28 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     .row-head {
       display: flex;
       align-items: baseline;
-      gap: 0.5rem;
-      margin: 0.9rem 0 0.35rem;
+      gap: var(--li-space-sm);
+      margin: var(--li-space-md) 0 var(--li-space-xs);
     }
 
     .row-name {
-      font-size: 0.9rem;
+      font-size: var(--li-text-md);
       color: var(--li-ink);
     }
 
     /* Said rather than implied: a preset with your own colours over it is not
        that preset any more, and Reset is the only way back to one. */
     .tag {
-      padding: 0.05rem 0.4rem;
+      padding: var(--li-space-3xs) var(--li-space-xs);
       border: 1px solid color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
-      border-radius: 999px;
+      border-radius: var(--li-radius-pill);
       color: var(--li-muted);
-      font-size: 0.7rem;
+      font-size: var(--li-text-xs);
       letter-spacing: 0.02em;
     }
 
     .palette-lead {
-      margin: 0 0 0.7rem;
+      margin: 0 0 var(--li-space-md);
 
       strong {
         color: var(--li-ink);
@@ -510,21 +510,21 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     .palettes {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr));
-      gap: 0.5rem;
+      gap: var(--li-space-sm);
     }
 
     .palette {
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      gap: 0.3rem;
-      padding: 0.3rem;
+      gap: var(--li-space-xs);
+      padding: var(--li-space-xs);
       border: 1px solid transparent;
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       background: none;
       color: var(--li-muted);
       font: inherit;
-      font-size: 0.75rem;
+      font-size: var(--li-text-xs);
       text-align: center;
       cursor: pointer;
 
@@ -544,9 +544,9 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       position: relative;
       display: block;
       height: 2.9rem;
-      padding: 0.4rem 0.35rem;
+      padding: var(--li-space-xs);
       border: 1px solid var(--li-border);
-      border-radius: 7px;
+      border-radius: var(--li-radius-sm);
       overflow: hidden;
     }
 
@@ -554,14 +554,18 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 0.25rem;
+      gap: var(--li-space-2xs);
       height: 100%;
-      padding: 0 0.3rem;
-      border-radius: 4px;
+      padding: 0 var(--li-space-xs);
+      border-radius: var(--li-radius-sm);
     }
 
     .line {
       height: 2px;
+
+      /* Half the height of the rule it rounds, which is what makes it a
+         lozenge rather than a rectangle. Not on the radius scale: the scale's
+         smallest step is larger than this whole element. */
       border-radius: 1px;
       opacity: 0.85;
     }
@@ -572,8 +576,8 @@ import { ReadAloud } from '../../shared/read-aloud.service';
 
     .dot {
       position: absolute;
-      right: 0.3rem;
-      bottom: 0.3rem;
+      right: var(--li-space-xs);
+      bottom: var(--li-space-xs);
       width: 0.42rem;
       height: 0.42rem;
       border-radius: 50%;
@@ -588,16 +592,16 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     .swatches {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-      gap: 0.35rem 1.25rem;
+      gap: var(--li-space-xs) var(--li-space-lg);
     }
 
     .swatch {
       display: flex;
       align-items: center;
-      gap: 0.7rem;
-      padding: 0.4rem 0.5rem;
+      gap: var(--li-space-md);
+      padding: var(--li-space-xs) var(--li-space-sm);
       border: 1px solid transparent;
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       cursor: pointer;
 
       &:hover {
@@ -618,7 +622,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       height: 2.4rem;
       padding: 0;
       border: 1px solid var(--li-border);
-      border-radius: 8px;
+      border-radius: var(--li-radius-md);
       background: none;
       cursor: pointer;
 
@@ -628,12 +632,12 @@ import { ReadAloud } from '../../shared/read-aloud.service';
 
       &::-webkit-color-swatch {
         border: none;
-        border-radius: 5px;
+        border-radius: var(--li-radius-sm);
       }
 
       &::-moz-color-swatch {
         border: none;
-        border-radius: 5px;
+        border-radius: var(--li-radius-sm);
       }
     }
 
@@ -644,17 +648,17 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     }
 
     .name {
-      font-size: 0.9rem;
+      font-size: var(--li-text-md);
       color: var(--li-ink);
     }
 
     .warning {
-      margin: 0.9rem 0 0;
-      padding: 0.6rem 0.8rem;
+      margin: var(--li-space-md) 0 0;
+      padding: var(--li-space-sm) var(--li-space-md);
       border: 1px solid color-mix(in srgb, var(--li-danger) 45%, var(--li-border));
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       color: var(--li-ink-soft);
-      font-size: 0.8rem;
+      font-size: var(--li-text-sm);
       line-height: 1.5;
       background: color-mix(in srgb, var(--li-danger) 8%, transparent);
     }
@@ -662,7 +666,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     .reset {
       display: flex;
       justify-content: flex-end;
-      margin-top: 0.75rem;
+      margin-top: var(--li-space-md);
     }
 
     /* The code and what to do with it, side by side, and stacked when the
@@ -671,8 +675,8 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       display: flex;
       flex-wrap: wrap;
       align-items: flex-start;
-      gap: 1rem;
-      margin: 0.4rem 0 0.2rem;
+      gap: var(--li-space-lg);
+      margin: var(--li-space-xs) 0 var(--li-space-2xs);
     }
 
     .share-side {
@@ -683,9 +687,9 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     .qr {
       flex: none;
       display: block;
-      padding: 0.4rem;
+      padding: var(--li-space-xs);
       border: 1px solid var(--li-border);
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       /* White behind it whatever the theme: a phone camera reads a QR code by
          its contrast, and the dark page would invert it. */
       background: #ffffff;
@@ -695,17 +699,17 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       flex-basis: 100%;
       display: flex;
       flex-wrap: wrap;
-      gap: 0.35rem;
+      gap: var(--li-space-xs);
     }
 
     .address {
-      padding: 0.15rem 0.55rem;
+      padding: var(--li-space-3xs) var(--li-space-sm);
       border: 1px solid var(--li-border);
-      border-radius: 999px;
+      border-radius: var(--li-radius-pill);
       background: none;
       color: var(--li-muted);
       font: inherit;
-      font-size: 0.78rem;
+      font-size: var(--li-text-sm);
       cursor: pointer;
 
       &.on {
@@ -715,8 +719,8 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     }
 
     .url {
-      margin: 0 0 0.6rem;
-      font-size: 0.8rem;
+      margin: 0 0 var(--li-space-sm);
+      font-size: var(--li-text-sm);
       color: var(--li-muted);
 
       code {
@@ -732,12 +736,12 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     hr {
       border: 0;
       border-top: 1px solid var(--li-border);
-      margin: 1.1rem 0 0.9rem;
+      margin: var(--li-space-lg) 0 var(--li-space-md);
     }
 
     .revert {
       flex: none;
-      font-size: 0.75rem;
+      font-size: var(--li-text-xs);
     }
   `,
 })

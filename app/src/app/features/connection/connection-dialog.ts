@@ -206,15 +206,15 @@ export interface ConnectionData {
   `,
   styles: `
     .lede {
-      margin: 0 0 0.9rem;
+      margin: 0 0 var(--li-space-md);
       color: var(--li-muted);
       line-height: 1.5;
     }
 
     /* Guidance beside the choice it is about, in the hint voice rather than the lede. */
     .note {
-      margin: 0 0 0.6rem;
-      font-size: 0.8rem;
+      margin: 0 0 var(--li-space-sm);
+      font-size: var(--li-text-sm);
       color: var(--li-muted);
       line-height: 1.45;
     }
@@ -222,7 +222,7 @@ export interface ConnectionData {
     mat-dialog-content {
       display: flex;
       flex-direction: column;
-      gap: 0.35rem;
+      gap: var(--li-space-xs);
     }
 
     mat-form-field {
@@ -232,9 +232,9 @@ export interface ConnectionData {
     .row {
       display: flex;
       align-items: center;
-      gap: 0.7rem;
+      gap: var(--li-space-md);
       min-height: 2.5rem;
-      margin-bottom: 0.35rem;
+      margin-bottom: var(--li-space-xs);
     }
 
     /* The "get a key" link lives in a hint, and hints inherit a muted grey. */
@@ -244,7 +244,7 @@ export interface ConnectionData {
     }
 
     .status {
-      font-size: 0.8rem;
+      font-size: var(--li-text-sm);
       color: var(--li-muted);
       line-height: 1.35;
     }
@@ -260,7 +260,7 @@ export interface ConnectionData {
     .mono {
       display: block;
       font-family: var(--li-mono);
-      font-size: 0.68rem;
+      font-size: var(--li-text-xs);
       color: var(--li-muted);
       line-height: 1.2;
     }

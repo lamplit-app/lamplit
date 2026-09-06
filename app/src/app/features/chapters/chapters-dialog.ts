@@ -71,7 +71,7 @@ interface Row {
     .row {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
+      gap: var(--li-space-2xs);
       border-bottom: 1px solid color-mix(in srgb, var(--li-border) 60%, transparent);
     }
 
@@ -84,10 +84,10 @@ interface Row {
       min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 0.15rem;
-      padding: 0.65rem 0.6rem;
+      gap: var(--li-space-3xs);
+      padding: var(--li-space-md) var(--li-space-sm);
       border: 0;
-      border-radius: 8px;
+      border-radius: var(--li-radius-md);
       background: none;
       color: inherit;
       font: inherit;
@@ -102,7 +102,7 @@ interface Row {
     .line {
       display: flex;
       align-items: baseline;
-      gap: 0.5rem;
+      gap: var(--li-space-sm);
       min-width: 0;
     }
 
@@ -110,7 +110,7 @@ interface Row {
       flex: none;
       width: 1.4rem;
       font-family: var(--li-serif);
-      font-size: 1rem;
+      font-size: var(--li-text-lg);
       color: var(--li-muted);
     }
 
@@ -121,13 +121,13 @@ interface Row {
       white-space: nowrap;
       text-overflow: ellipsis;
       font-family: var(--li-serif);
-      font-size: 1.02rem;
+      font-size: var(--li-text-lg);
       color: var(--li-ink);
     }
 
     .state {
       flex: none;
-      font-size: 0.68rem;
+      font-size: var(--li-text-xs);
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--li-accent);
@@ -137,9 +137,12 @@ interface Row {
       color: var(--li-muted);
     }
 
+    /* Indented past the chapter number above, so the two lines under a title
+       start where the title does rather than at a number of their own. The
+       number's width and the row's gap, added up. */
     .opening,
     .counts {
-      padding-left: 1.9rem;
+      padding-left: calc(1.4rem + var(--li-space-sm));
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -148,11 +151,11 @@ interface Row {
 
     .opening {
       font-family: var(--li-serif);
-      font-size: 0.85rem;
+      font-size: var(--li-text-md);
     }
 
     .counts {
-      font-size: 0.72rem;
+      font-size: var(--li-text-xs);
     }
   `,
 })

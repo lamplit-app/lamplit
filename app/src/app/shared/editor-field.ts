@@ -70,31 +70,31 @@ let nextId = 0;
     .field {
       display: flex;
       flex-direction: column;
-      gap: 0.3rem;
+      gap: var(--li-space-xs);
     }
 
     .head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
+      gap: var(--li-space-lg);
       min-height: 1.4rem;
     }
 
     .label {
-      font-size: 0.82rem;
+      font-size: var(--li-text-sm);
       color: var(--li-ink);
     }
 
     .save {
       margin-left: auto;
       border: 1px solid color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
-      border-radius: 999px;
+      border-radius: var(--li-radius-pill);
       background: color-mix(in srgb, var(--li-accent) 12%, transparent);
       color: var(--li-accent);
       font: inherit;
-      font-size: 0.72rem;
-      padding: 0.05rem 0.55rem;
+      font-size: var(--li-text-xs);
+      padding: var(--li-space-3xs) var(--li-space-sm);
       cursor: pointer;
     }
 
@@ -102,7 +102,7 @@ let nextId = 0;
        what differs from it is said here. */
     textarea.serif {
       font-family: var(--li-serif);
-      font-size: 1rem;
+      font-size: var(--li-text-lg);
     }
 
     /* Text that is not the writer's own yet — the narrator default, sitting in
@@ -114,7 +114,7 @@ let nextId = 0;
     .foot {
       display: flex;
       justify-content: space-between;
-      gap: 1rem;
+      gap: var(--li-space-lg);
     }
 
     .count {

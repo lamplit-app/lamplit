@@ -35,11 +35,11 @@ import { Persistence } from '../store/persistence';
     .notice {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.35rem 0.5rem 0.35rem 1.1rem;
+      gap: var(--li-space-md);
+      padding: var(--li-space-xs) var(--li-space-sm) var(--li-space-xs) var(--li-space-lg);
       border-bottom: 1px solid var(--li-border);
       background: color-mix(in srgb, var(--li-accent) 12%, var(--li-surface));
-      font-size: 0.86rem;
+      font-size: var(--li-text-md);
       color: var(--li-ink);
     }
 
@@ -54,7 +54,7 @@ import { Persistence } from '../store/persistence';
     .close {
       flex: none;
       margin-left: auto;
-      font-size: 1.1rem;
+      font-size: var(--li-text-lg);
       line-height: 1;
       color: var(--li-muted);
     }

@@ -237,8 +237,8 @@ export interface StoryDialogData {
     .tab {
       display: flex;
       flex-direction: column;
-      gap: 0.9rem;
-      padding: 1rem 0.15rem 0.35rem;
+      gap: var(--li-space-md);
+      padding: var(--li-space-lg) var(--li-space-3xs) var(--li-space-xs);
     }
 
     .tab > * {
@@ -249,16 +249,16 @@ export interface StoryDialogData {
       width: 100%;
       border: 0;
       border-top: 1px solid var(--li-border);
-      margin: 0.2rem 0;
+      margin: var(--li-space-2xs) 0;
     }
 
     .preset {
       margin: 0;
-      padding: 0.7rem 0.85rem;
+      padding: var(--li-space-md);
       border: 1px dashed var(--li-border);
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       font-family: var(--li-serif);
-      font-size: 0.92rem;
+      font-size: var(--li-text-md);
       line-height: 1.6;
       color: var(--li-ink-soft);
     }
@@ -266,32 +266,32 @@ export interface StoryDialogData {
     .cast {
       display: flex;
       flex-direction: column;
-      gap: 0.8rem;
+      gap: var(--li-space-md);
     }
 
     /* Nested inside the mode choice above it, so it is drawn a size down: the
        question it asks only exists because of the answer to that one. */
     .casting .li-choice {
-      padding: 0.55rem 0.7rem;
+      padding: var(--li-space-sm) var(--li-space-md);
     }
 
     .casting .name {
-      font-size: 0.95rem;
+      font-size: var(--li-text-lg);
     }
 
     .character {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
-      padding: 0.7rem 0.8rem;
+      gap: var(--li-space-xs);
+      padding: var(--li-space-md);
       border: 1px solid var(--li-border);
-      border-radius: 12px;
+      border-radius: var(--li-radius-lg);
     }
 
     .character header {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--li-space-md);
     }
 
     .name-field {
@@ -306,21 +306,21 @@ export interface StoryDialogData {
     .lengths {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: var(--li-space-xs);
     }
 
     .lengths .li-hint {
-      margin-right: 0.4rem;
+      margin-right: var(--li-space-xs);
     }
 
     .length {
-      padding: 0.25rem 0.8rem;
+      padding: var(--li-space-2xs) var(--li-space-md);
       border: 1px solid var(--li-border);
-      border-radius: 999px;
+      border-radius: var(--li-radius-pill);
       background: var(--li-surface-raised);
       color: var(--li-ink-soft);
       font: inherit;
-      font-size: 0.82rem;
+      font-size: var(--li-text-sm);
       cursor: pointer;
     }
 

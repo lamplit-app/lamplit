@@ -189,7 +189,7 @@ import { ParamRow } from '../../shared/param-row';
     mat-dialog-content {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: var(--li-space-2xs);
       max-height: var(--li-sheet-height);
     }
 
@@ -206,14 +206,14 @@ import { ParamRow } from '../../shared/param-row';
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-      column-gap: 1.5rem;
+      column-gap: var(--li-space-xl);
     }
 
     .budgets {
-      padding: 0.5rem 0.85rem 0.3rem;
-      margin-bottom: 0.5rem;
+      padding: var(--li-space-sm) var(--li-space-md) var(--li-space-xs);
+      margin-bottom: var(--li-space-sm);
       border: 1px solid var(--li-border);
-      border-radius: 12px;
+      border-radius: var(--li-radius-lg);
       background: color-mix(in srgb, var(--li-accent) 6%, transparent);
     }
 
@@ -226,19 +226,19 @@ import { ParamRow } from '../../shared/param-row';
          squashes anything that clips when it runs out of room: it would be
          folded to nothing at the bottom rather than scrolled to. */
       flex-shrink: 0;
-      margin: 0.6rem 0 0.2rem;
+      margin: var(--li-space-sm) 0 var(--li-space-2xs);
     }
 
     mat-panel-description {
       flex: none;
       color: var(--li-muted);
-      font-size: 0.8rem;
+      font-size: var(--li-text-sm);
     }
 
     .pair {
       display: flex;
-      gap: 0.75rem;
-      margin-top: 0.5rem;
+      gap: var(--li-space-md);
+      margin-top: var(--li-space-sm);
     }
   `,
 })

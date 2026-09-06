@@ -300,8 +300,8 @@ interface Group {
     .tab {
       display: flex;
       flex-direction: column;
-      gap: 0.8rem;
-      padding: 1rem 0.15rem 0.35rem;
+      gap: var(--li-space-md);
+      padding: var(--li-space-lg) var(--li-space-3xs) var(--li-space-xs);
     }
 
     .tab > * {
@@ -309,9 +309,9 @@ interface Group {
     }
 
     h3 {
-      margin: 0.4rem 0 0;
+      margin: var(--li-space-xs) 0 0;
       font-family: var(--li-sans);
-      font-size: 0.72rem;
+      font-size: var(--li-text-xs);
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--li-muted);
@@ -319,40 +319,40 @@ interface Group {
 
     .instruction {
       border: 1px solid var(--li-border);
-      border-radius: 12px;
+      border-radius: var(--li-radius-lg);
     }
 
     mat-panel-description {
       flex: none;
       color: var(--li-muted);
-      font-size: 0.8rem;
+      font-size: var(--li-text-sm);
     }
 
     .preset {
-      margin: 0.6rem 0 0;
-      padding: 0.7rem 0.85rem;
+      margin: var(--li-space-sm) 0 0;
+      padding: var(--li-space-md);
       border: 1px dashed var(--li-border);
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       font-family: var(--li-serif);
-      font-size: 0.92rem;
+      font-size: var(--li-text-md);
       line-height: 1.6;
       color: var(--li-ink-soft);
     }
 
     .extract {
-      margin-top: 0.35rem;
+      margin-top: var(--li-space-xs);
     }
 
     .extract-hint {
-      margin: -0.35rem 0 0;
+      margin: calc(-1 * var(--li-space-xs)) 0 0;
     }
 
     .folded p {
       display: flex;
-      gap: 0.6rem;
-      margin: 0.35rem 0 0;
+      gap: var(--li-space-sm);
+      margin: var(--li-space-xs) 0 0;
       font-family: var(--li-serif);
-      font-size: 0.9rem;
+      font-size: var(--li-text-md);
       color: var(--li-ink-soft);
     }
 
@@ -364,7 +364,7 @@ interface Group {
     .lore-head {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--li-space-md);
     }
 
     .search {
@@ -375,14 +375,14 @@ interface Group {
     .entry {
       display: flex;
       flex-direction: column;
-      gap: 0.35rem;
-      padding: 0.35rem 0.5rem;
+      gap: var(--li-space-xs);
+      padding: var(--li-space-xs) var(--li-space-sm);
       border: 1px solid var(--li-border);
-      border-radius: 12px;
+      border-radius: var(--li-radius-lg);
     }
 
     .entry.open {
-      padding: 0.5rem 0.8rem 0.7rem;
+      padding: var(--li-space-sm) var(--li-space-md) var(--li-space-md);
       background: color-mix(in srgb, var(--li-ink) 3%, transparent);
     }
 
@@ -390,7 +390,7 @@ interface Group {
     .summary {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
+      gap: var(--li-space-2xs);
     }
 
     .disclose {
@@ -398,10 +398,10 @@ interface Group {
       min-width: 0;
       display: flex;
       align-items: baseline;
-      gap: 0.5rem;
-      padding: 0.35rem 0.3rem;
+      gap: var(--li-space-sm);
+      padding: var(--li-space-xs);
       border: 0;
-      border-radius: 8px;
+      border-radius: var(--li-radius-md);
       background: none;
       color: inherit;
       font: inherit;
@@ -417,7 +417,7 @@ interface Group {
       flex: none;
       width: 0.9rem;
       color: var(--li-muted);
-      font-size: 0.7rem;
+      font-size: var(--li-text-xs);
     }
 
     .disclose .name {
@@ -427,7 +427,7 @@ interface Group {
       white-space: nowrap;
       text-overflow: ellipsis;
       font-family: var(--li-serif);
-      font-size: 0.98rem;
+      font-size: var(--li-text-lg);
       color: var(--li-ink);
     }
 
@@ -437,16 +437,16 @@ interface Group {
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
-      font-size: 0.75rem;
+      font-size: var(--li-text-xs);
       color: var(--li-muted);
     }
 
     .tag {
       flex: none;
-      padding: 0.05rem 0.45rem;
+      padding: var(--li-space-3xs) var(--li-space-sm);
       border: 1px solid var(--li-border);
-      border-radius: 999px;
-      font-size: 0.66rem;
+      border-radius: var(--li-radius-pill);
+      font-size: var(--li-text-xs);
       letter-spacing: 0.03em;
       text-transform: uppercase;
       color: var(--li-muted);
@@ -469,7 +469,7 @@ interface Group {
 
     .unfinished {
       margin: 0;
-      font-size: 0.78rem;
+      font-size: var(--li-text-sm);
       line-height: 1.5;
       color: var(--li-danger);
     }
@@ -477,7 +477,7 @@ interface Group {
     .entry header {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: var(--li-space-sm);
     }
 
     .title-field {
@@ -496,16 +496,16 @@ interface Group {
 
     .switches {
       display: flex;
-      gap: 1.2rem;
-      padding-top: 0.2rem;
+      gap: var(--li-space-lg);
+      padding-top: var(--li-space-2xs);
     }
 
     .scan {
       display: flex;
       align-items: flex-start;
-      gap: 1.2rem;
-      margin-top: 0.5rem;
-      padding-top: 0.8rem;
+      gap: var(--li-space-lg);
+      margin-top: var(--li-space-sm);
+      padding-top: var(--li-space-md);
       border-top: 1px solid var(--li-border);
     }
 

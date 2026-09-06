@@ -169,7 +169,96 @@ $contrast: (
   }
 
   --li-reading-size: 18px;
-  --li-radius: 14px;
+
+  // -------------------------------------------------------------------------
+  // The scales: how big, how far apart, how round, how lifted, how far forward.
+  // -------------------------------------------------------------------------
+  //
+  // A custom property on `:root` reaches through every component's emulated
+  // encapsulation, so a step costs the 83% of this app's CSS that is written
+  // inside a `@Component` nothing at all to use: no import, no mixin, just the
+  // name. That is the whole reason the scales live here rather than as Sass.
+  //
+  // The rule is the same for all five, and it is the rule that makes a scale a
+  // scale rather than a list: **take the nearest step.** Before there was one,
+  // eight font sizes lived between 0.65rem and 0.78rem and no reader could tell
+  // one from the next, and `--li-radius` was two of the sixty-six border-radius
+  // declarations in the app — which is what a token nobody is obliged to use is
+  // worth.
+  //
+  // A value off the scale needs a reason in a comment beside it. There are a
+  // few — a glyph sized to line up with the word next to it, two numbers that
+  // have to match a file which cannot read these properties — and each one says
+  // so where it is written.
+
+  // Type. Six steps, and the reading size above is a seventh that is not on the
+  // scale on purpose: the story is set at whatever Preferences says, and the app
+  // around it does not follow.
+  //
+  // `md` is the app's voice — a row, a button, a line of a list. `sm` is a note
+  // about something else, `xs` a label on it. `lg` is the name of a thing,
+  // `xl` a sheet's title, and `2xl` the one line on an otherwise empty page.
+  --li-text-xs: 0.72rem;
+  --li-text-sm: 0.8rem;
+  --li-text-md: 0.9rem;
+  --li-text-lg: 1rem;
+  --li-text-xl: 1.3rem;
+  --li-text-2xl: 1.9rem;
+
+  // Space. Seven steps at about 1.45 apart, which is far enough that two
+  // neighbours never look like a mistake and close enough to reach for.
+  //
+  // Four of the seven are the numbers the app already used most, so most of the
+  // conversion moved nothing; the rest moved by a pixel or two and the
+  // screenshots were retaken.
+  //
+  // `3xs` is a hairline nudge — an optical correction, not a gap. `xs` to `md`
+  // is the working range: what separates a label from its field, an icon from
+  // its word, a row from the next. `lg` and `xl` are the air around a block.
+  --li-space-3xs: 0.15rem;
+  --li-space-2xs: 0.25rem;
+  --li-space-xs: 0.35rem;
+  --li-space-sm: 0.5rem;
+  --li-space-md: 0.75rem;
+  --li-space-lg: 1.1rem;
+  --li-space-xl: 1.6rem;
+
+  // Radius. Three, and a pill.
+  //
+  // `sm` is a chip of a thing — a code span, a swatch. `md` is a control: a
+  // field, a button, a row you can press. `lg` is a card: a sheet, the composer,
+  // the things the rest of the app is drawn inside.
+  //
+  // The pill is a shape rather than a size, and `50%` — a circle — is the same:
+  // both stay literal, because rounding either to a step would stop it being
+  // the shape it is.
+  --li-radius-sm: 6px;
+  --li-radius-md: 10px;
+  --li-radius-lg: 14px;
+  --li-radius-pill: 999px;
+
+  // Shadow. Two, because there are two things a shadow ever says here: this is
+  // lifted off the page, or this is over it.
+  //
+  // Both are darker in the dark theme than the light one. A shadow is the
+  // absence of light and there is less of it to withhold on a dark page, so the
+  // same alpha that reads as a shadow on cream reads as nothing at all on ink.
+  --li-shadow-raised: 0 6px 18px light-dark(rgb(0 0 0 / 12%), rgb(0 0 0 / 40%));
+  --li-shadow-over: 0 24px 64px light-dark(rgb(0 0 0 / 18%), rgb(0 0 0 / 55%));
+
+  // Depth. Three, and the whole of the app's stacking.
+  //
+  // Nothing here competes with the CDK's overlays, which are in a container of
+  // their own at the end of <body> and start at 1000. These three order the
+  // page: the texture painted under everything, the app drawn on top of it, and
+  // the one thing — the chapter panel on a narrow window — that covers the app
+  // without leaving it.
+  //
+  // Numbered small and left with gaps. A fourth layer that has to go between
+  // two of these is a sign the layout is wrong, not that the numbers are.
+  --li-layer-under: 0;
+  --li-layer-page: 1;
+  --li-layer-over: 3;
 
   // How tall a sheet's content is allowed to get before it scrolls inside
   // itself. Seven of the sheets are long enough to need the cap; a card that is
@@ -196,15 +285,18 @@ $contrast: (
   // The gutter is the white space on each side of the column when the screen
   // is narrower than the measure. On a phone it is the whole of the page's
   // margin, so it is smaller: a paperback's, not a hardback's.
+  // The gutter is the one spacing in the app that genuinely wants to breathe,
+  // so it is the one written as a clamp. It only ever bites on a narrow screen
+  // — above about 36rem the measure is the smaller of the two and the column
+  // stops growing — which makes its whole range a phone-to-tablet ramp, and a
+  // breakpoint the wrong shape for it: a 360px phone and a 760px window are not
+  // the same margin, and a step says they are. A paperback's at the bottom, a
+  // hardback's by the time there is room for one.
   --li-measure: 34rem;
-  --li-gutter: 1.25rem;
+  --li-gutter: clamp(var(--li-space-lg), 4vw, var(--li-space-xl));
   --li-column: min(var(--li-measure), 100% - 2 * var(--li-gutter));
   --li-rail: 2rem;
-  --li-margin-gap: 0.7rem;
-
-  @include bp.phone {
-    --li-gutter: 1rem;
-  }
+  --li-margin-gap: var(--li-space-md);
 }
 
 // Two ways to ask for the stronger set, both of them the same two declarations.
@@ -247,29 +339,28 @@ $contrast: (
 html {
   // A sheet is titled in the reading face, at the size a title is set in.
   --mat-dialog-subhead-font: var(--li-serif);
-  --mat-dialog-subhead-size: 1.3rem;
+  --mat-dialog-subhead-size: var(--li-text-xl);
   --mat-dialog-subhead-weight: 400;
   --mat-dialog-subhead-tracking: 0;
   --mat-dialog-subhead-color: var(--li-ink);
 
   // The card a sheet is drawn on. The border beside these has no token, and is
   // a rule further down.
-  --mat-dialog-container-shape: var(--li-radius);
+  --mat-dialog-container-shape: var(--li-radius-lg);
   --mat-dialog-container-color: var(--li-surface);
-  --mat-dialog-container-elevation-shadow: 0 24px 64px
-    light-dark(rgb(0 0 0 / 18%), rgb(0 0 0 / 55%));
+  --mat-dialog-container-elevation-shadow: var(--li-shadow-over);
 
   // Material gives the gap under a title to the title, zeroing the top padding
   // of the content block that follows one. So the air a sheet wants between its
   // title and its first line is the title's own bottom padding, said here for
   // all of them rather than as a `padding-top` in the six that wanted a little
   // more of it than the 13px Material ships.
-  --mat-dialog-headline-padding: 0.4rem 1.5rem 1.1rem;
-  --mat-dialog-content-padding: 1.25rem 1.5rem;
-  --mat-dialog-with-actions-content-padding: 1.25rem 1.5rem 0;
+  --mat-dialog-headline-padding: var(--li-space-xs) var(--li-space-xl) var(--li-space-lg);
+  --mat-dialog-content-padding: var(--li-space-lg) var(--li-space-xl);
+  --mat-dialog-with-actions-content-padding: var(--li-space-lg) var(--li-space-xl) 0;
 
   // A hint under a Material field is a hint, in the size `.li-hint` is set in.
-  --mat-form-field-subscript-text-size: 0.8rem;
+  --mat-form-field-subscript-text-size: var(--li-text-sm);
 
   // The panels that fold Advanced away sit on the sheet rather than on a card
   // of their own; the two that want an edge draw their own border.
@@ -318,7 +409,7 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: var(--li-layer-under);
   background:
     radial-gradient(
       1200px 600px at 15% -10%,
@@ -334,7 +425,7 @@ body::before {
 
 app-root {
   position: relative;
-  z-index: 1;
+  z-index: var(--li-layer-page);
   display: block;
   height: 100%;
 }
@@ -353,8 +444,15 @@ app-root {
 }
 
 .booting-mark {
-  margin: 0 0 0.9rem;
+  margin: 0 0 var(--li-space-md);
   font-family: var(--li-serif);
+
+  // Off the type scale, and one of the two places in the app that is. These
+  // two lines are drawn again in `electron/splash.html`, a document of its own
+  // that never loads this stylesheet, so the desktop window's hand-over from
+  // the shell's page to this one is only invisible if the numbers are written
+  // twice and kept the same. The scale tops out at 1.9rem, which is a headline
+  // on a page; this is a mark on a title page.
   font-size: 2.6rem;
   font-weight: 400;
   letter-spacing: 0.04em;
@@ -363,7 +461,7 @@ app-root {
 .booting-line {
   margin: 0;
   color: var(--li-muted);
-  font-size: 0.95rem;
+  font-size: var(--li-text-lg);
 }
 
 // ---------------------------------------------------------------------------
@@ -449,7 +547,7 @@ app-root {
     font-size: 0.85em;
     background: color-mix(in srgb, var(--li-ink) 8%, transparent);
     padding: 0.12em 0.35em;
-    border-radius: 5px;
+    border-radius: var(--li-radius-sm);
   }
 
   pre {
@@ -457,7 +555,7 @@ app-root {
     padding: 0.85em 1em;
     overflow-x: auto;
     border: 1px solid var(--li-border);
-    border-radius: 10px;
+    border-radius: var(--li-radius-md);
     background: light-dark(#f2eee4, #16181e);
 
     code {
@@ -555,8 +653,8 @@ app-root {
 textarea:where(:not(.mat-mdc-input-element)) {
   --rows-min: 2;
   --rows-max: 12;
-  --field-pad-y: 0.6rem;
-  --field-pad-x: 0.75rem;
+  --field-pad-y: var(--li-space-sm);
+  --field-pad-x: var(--li-space-md);
   --field-border: 1px;
 
   field-sizing: content;
@@ -567,11 +665,11 @@ textarea:where(:not(.mat-mdc-input-element)) {
   flex-shrink: 0;
   padding: var(--field-pad-y) var(--field-pad-x);
   border: var(--field-border) solid var(--li-border);
-  border-radius: 10px;
+  border-radius: var(--li-radius-md);
   background: var(--li-surface-raised);
   color: var(--li-ink);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--li-text-md);
   line-height: 1.55;
   resize: none;
 
@@ -591,11 +689,11 @@ textarea:where(:not(.mat-mdc-input-element)) {
 .li-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.2rem 0.6rem;
+  gap: var(--li-space-xs);
+  padding: var(--li-space-2xs) var(--li-space-sm);
   border: 1px solid var(--li-border);
-  border-radius: 999px;
-  font-size: 0.72rem;
+  border-radius: var(--li-radius-pill);
+  font-size: var(--li-text-xs);
   letter-spacing: 0.02em;
   color: var(--li-muted);
   background: var(--li-surface);
@@ -606,16 +704,16 @@ textarea:where(:not(.mat-mdc-input-element)) {
 .li-choices {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
+  gap: var(--li-space-sm);
 }
 
 .li-choice {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.75rem 0.85rem;
+  gap: var(--li-space-2xs);
+  padding: var(--li-space-md);
   border: 1px solid var(--li-border);
-  border-radius: 12px;
+  border-radius: var(--li-radius-lg);
   background: var(--li-surface-raised);
   text-align: left;
   font: inherit;
@@ -623,7 +721,7 @@ textarea:where(:not(.mat-mdc-input-element)) {
 
   .name {
     font-family: var(--li-serif);
-    font-size: 1.05rem;
+    font-size: var(--li-text-lg);
     color: var(--li-ink);
   }
 
@@ -635,7 +733,7 @@ textarea:where(:not(.mat-mdc-input-element)) {
 
 .li-hint {
   color: var(--li-muted);
-  font-size: 0.8rem;
+  font-size: var(--li-text-sm);
   line-height: 1.5;
 }
 
@@ -698,7 +796,7 @@ textarea:where(:not(.mat-mdc-input-element)) {
   .mat-mdc-dialog-actions {
     position: sticky;
     bottom: 0;
-    z-index: 1;
+    z-index: var(--li-layer-page);
     border-top-color: var(--li-border);
     background: var(--li-surface);
   }

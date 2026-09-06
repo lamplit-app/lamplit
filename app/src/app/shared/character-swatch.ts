@@ -72,8 +72,8 @@ import { SettingsStore } from '../store/settings-store';
     .grid {
       display: grid;
       grid-template-columns: repeat(5, 1.4rem);
-      gap: 0.4rem;
-      padding: 0.55rem 0.6rem;
+      gap: var(--li-space-xs);
+      padding: var(--li-space-sm);
     }
 
     .choice {

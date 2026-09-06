@@ -73,8 +73,16 @@
         text-align: center;
       }
 
+      /*
+        The two lines below are `.booting-mark` and `.booting-line` in
+        `app/src/styles.scss`, written again because this document never loads
+        that stylesheet: the hand-over from this window to the app's own first
+        paint is only invisible if the numbers match. The app's side takes them
+        from its space and type scales; here they are the resolved values, and
+        the comment beside them there points back at this file.
+      */
       .booting-mark {
-        margin: 0 0 0.9rem;
+        margin: 0 0 0.75rem;
         font-family: var(--serif);
         font-size: 2.6rem;
         font-weight: 400;
@@ -84,7 +92,7 @@
       .booting-line {
         margin: 0;
         color: var(--muted);
-        font-size: 0.95rem;
+        font-size: 1rem;
       }
 
       /*
@@ -98,9 +106,9 @@
         top: 100%;
         right: 0;
         left: 0;
-        margin: 0.9rem 0 0;
+        margin: 0.75rem 0 0;
         color: var(--muted);
-        font-size: 0.95rem;
+        font-size: 1rem;
         opacity: 0;
         animation: appear 1.2s ease-out 8s forwards;
       }

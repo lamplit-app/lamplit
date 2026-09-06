@@ -74,17 +74,17 @@ export interface SceneDialogData {
     mat-dialog-content {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--li-space-sm);
     }
 
     .lead {
-      margin: 0 0 0.2rem;
+      margin: 0 0 var(--li-space-2xs);
     }
 
     /* Prose, written at reading size, because that is what it is. */
     .scene {
       font-family: var(--li-serif);
-      font-size: 1.02rem;
+      font-size: var(--li-text-lg);
       line-height: 1.65;
     }
 
@@ -94,7 +94,7 @@ export interface SceneDialogData {
 
     .cost {
       margin-right: auto;
-      padding-left: 0.5rem;
+      padding-left: var(--li-space-sm);
     }
   `,
 })

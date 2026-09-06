@@ -189,20 +189,20 @@ export interface ChapterClose {
     mat-dialog-content {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--li-space-sm);
     }
 
     /* The story so far is prose, and set as prose. */
     textarea {
       font-family: var(--li-serif);
-      font-size: 1rem;
+      font-size: var(--li-text-lg);
       line-height: 1.6;
     }
 
     .foot {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: var(--li-space-xs);
     }
 
     /* -- the proposals --------------------------------------------------- */
@@ -210,30 +210,30 @@ export interface ChapterClose {
     .proposals {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
-      padding: 0.6rem 0.75rem 0.7rem;
+      gap: var(--li-space-sm);
+      padding: var(--li-space-sm) var(--li-space-md) var(--li-space-md);
       border: 1px solid var(--li-border);
-      border-radius: 12px;
+      border-radius: var(--li-radius-lg);
     }
 
     .proposals header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0.6rem;
+      gap: var(--li-space-sm);
       min-height: 2rem;
     }
 
     .proposals .name {
       font-family: var(--li-sans);
-      font-size: 0.85rem;
+      font-size: var(--li-text-md);
       color: var(--li-ink-soft);
     }
 
     .reading {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: var(--li-space-xs);
     }
 
     .failed {
@@ -247,10 +247,10 @@ export interface ChapterClose {
     .proposal {
       display: flex;
       align-items: flex-start;
-      gap: 0.6rem;
-      padding: 0.5rem 0.6rem;
+      gap: var(--li-space-sm);
+      padding: var(--li-space-sm);
       border: 1px solid var(--li-border);
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       cursor: pointer;
     }
 
@@ -260,14 +260,14 @@ export interface ChapterClose {
     }
 
     .proposal input {
-      margin: 0.15rem 0 0;
+      margin: var(--li-space-3xs) 0 0;
       accent-color: var(--li-accent);
     }
 
     .proposal .body {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: var(--li-space-2xs);
       min-width: 0;
     }
 
@@ -275,21 +275,21 @@ export interface ChapterClose {
       display: flex;
       align-items: baseline;
       flex-wrap: wrap;
-      gap: 0.45rem;
+      gap: var(--li-space-sm);
     }
 
     .proposal .title {
       font-family: var(--li-sans);
-      font-size: 0.9rem;
+      font-size: var(--li-text-md);
       color: var(--li-ink);
     }
 
     .category {
-      padding: 0 0.35rem;
-      border-radius: 999px;
+      padding: 0 var(--li-space-xs);
+      border-radius: var(--li-radius-pill);
       background: color-mix(in srgb, var(--li-ink) 8%, transparent);
       font-family: var(--li-sans);
-      font-size: 0.65rem;
+      font-size: var(--li-text-xs);
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--li-muted);
@@ -298,22 +298,22 @@ export interface ChapterClose {
     .keys {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.3rem;
+      gap: var(--li-space-xs);
     }
 
     .key {
-      padding: 0 0.35rem;
+      padding: 0 var(--li-space-xs);
       border: 1px solid var(--li-border);
-      border-radius: 999px;
+      border-radius: var(--li-radius-pill);
       font-family: var(--li-sans);
-      font-size: 0.7rem;
+      font-size: var(--li-text-xs);
       color: var(--li-muted);
     }
 
     .proposal .content {
       margin: 0;
       font-family: var(--li-serif);
-      font-size: 0.92rem;
+      font-size: var(--li-text-md);
       line-height: 1.55;
       color: var(--li-ink-soft);
     }
@@ -322,18 +322,18 @@ export interface ChapterClose {
        overwrites, and nobody should have to remember what it overwrote. */
     .was {
       margin: 0;
-      padding-left: 0.6rem;
+      padding-left: var(--li-space-sm);
       border-left: 2px solid color-mix(in srgb, var(--li-muted) 40%, transparent);
       font-family: var(--li-serif);
-      font-size: 0.88rem;
+      font-size: var(--li-text-md);
       line-height: 1.5;
       color: var(--li-muted);
     }
 
     .was .tag {
-      margin-right: 0.4rem;
+      margin-right: var(--li-space-xs);
       font-family: var(--li-sans);
-      font-size: 0.65rem;
+      font-size: var(--li-text-xs);
       letter-spacing: 0.04em;
       text-transform: uppercase;
     }
@@ -344,33 +344,33 @@ export interface ChapterClose {
          folded to nothing under a long summary rather than scrolled to. */
       flex-shrink: 0;
       border: 1px solid var(--li-border);
-      border-radius: 12px;
+      border-radius: var(--li-radius-lg);
     }
 
     mat-panel-description {
       flex: none;
       color: var(--li-muted);
-      font-size: 0.8rem;
+      font-size: var(--li-text-sm);
     }
 
     .preset {
-      margin: 0 0 0.6rem;
-      padding: 0.7rem 0.85rem;
+      margin: 0 0 var(--li-space-sm);
+      padding: var(--li-space-md);
       border: 1px dashed var(--li-border);
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       font-family: var(--li-serif);
-      font-size: 0.9rem;
+      font-size: var(--li-text-md);
       line-height: 1.6;
       color: var(--li-ink-soft);
     }
 
     .error {
       margin: 0;
-      padding: 0.6rem 0.8rem;
+      padding: var(--li-space-sm) var(--li-space-md);
       border: 1px solid color-mix(in srgb, var(--li-danger) 40%, var(--li-border));
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       color: var(--li-danger);
-      font-size: 0.85rem;
+      font-size: var(--li-text-md);
       line-height: 1.5;
     }
   `,

@@ -39,8 +39,8 @@ import { chapterTitle } from '../../core/prompt-builder';
       margin: 0 auto;
       display: flex;
       align-items: center;
-      gap: 0.35rem;
-      padding: 0 0 0.15rem;
+      gap: var(--li-space-xs);
+      padding: 0 0 var(--li-space-3xs);
     }
 
     .here {
@@ -50,7 +50,7 @@ import { chapterTitle } from '../../core/prompt-builder';
       white-space: nowrap;
       text-overflow: ellipsis;
       font-family: var(--li-serif);
-      font-size: 0.8rem;
+      font-size: var(--li-text-sm);
       color: var(--li-muted);
     }
 

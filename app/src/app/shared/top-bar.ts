@@ -143,9 +143,9 @@ import { SaveStatusIndicator } from './save-status';
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
+      gap: var(--li-space-lg);
       height: 3.25rem;
-      padding: 0 0.75rem 0 1.1rem;
+      padding: 0 var(--li-space-md) 0 var(--li-space-lg);
       border-bottom: 1px solid var(--li-border);
       background: color-mix(in srgb, var(--li-surface) 82%, transparent);
       backdrop-filter: blur(10px);
@@ -156,15 +156,15 @@ import { SaveStatusIndicator } from './save-status';
     @include bp.phone {
       .bar {
         height: calc(3rem + env(safe-area-inset-top));
-        padding: env(safe-area-inset-top) calc(0.4rem + env(safe-area-inset-right)) 0
-          calc(0.5rem + env(safe-area-inset-left));
+        padding: env(safe-area-inset-top) calc(var(--li-space-xs) + env(safe-area-inset-right)) 0
+          calc(var(--li-space-sm) + env(safe-area-inset-left));
       }
     }
 
     .identity {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--li-space-sm);
       min-width: 0;
       overflow: hidden;
     }
@@ -175,7 +175,7 @@ import { SaveStatusIndicator } from './save-status';
     .mark {
       flex: none;
       font-family: var(--li-serif);
-      font-size: 1.05rem;
+      font-size: var(--li-text-lg);
       letter-spacing: 0.01em;
       white-space: nowrap;
       color: var(--li-ink);
@@ -195,8 +195,8 @@ import { SaveStatusIndicator } from './save-status';
     .where {
       display: flex;
       flex-direction: column;
-      gap: 0.1rem;
-      padding: 0.5rem 1rem 0.35rem;
+      gap: var(--li-space-3xs);
+      padding: var(--li-space-sm) var(--li-space-lg) var(--li-space-xs);
       max-width: 16rem;
     }
 
@@ -220,19 +220,19 @@ import { SaveStatusIndicator } from './save-status';
 
     .story {
       font-family: var(--li-serif);
-      font-size: 0.95rem;
+      font-size: var(--li-text-lg);
       color: var(--li-ink);
     }
 
     .chapter {
-      font-size: 0.85rem;
+      font-size: var(--li-text-md);
     }
 
     .actions {
       flex: none;
       display: flex;
       align-items: center;
-      gap: 0.15rem;
+      gap: var(--li-space-3xs);
     }
 
     /* Narrow windows keep the story and the model; the wordmark can go. And on
@@ -260,7 +260,7 @@ import { SaveStatusIndicator } from './save-status';
       display: inline-block;
       width: 7px;
       height: 7px;
-      margin-right: 0.45rem;
+      margin-right: var(--li-space-sm);
       border-radius: 50%;
       background: var(--li-muted);
     }
@@ -271,7 +271,7 @@ import { SaveStatusIndicator } from './save-status';
 
     .available {
       flex: none;
-      margin-right: 0.35rem;
+      margin-right: var(--li-space-xs);
       cursor: pointer;
       font-family: inherit;
       color: var(--li-accent);
@@ -286,7 +286,7 @@ import { SaveStatusIndicator } from './save-status';
     hr {
       border: 0;
       border-top: 1px solid var(--li-border);
-      margin: 0.25rem 0;
+      margin: var(--li-space-2xs) 0;
     }
   `,
 })

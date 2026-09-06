@@ -188,7 +188,7 @@ import { TextValue } from '../../shared/text-value';
        blurred behind it, because there is nothing behind it. The box draws its
        own border and that is the whole of the furniture. */
     .dock {
-      padding: 0.2rem 0 0;
+      padding: var(--li-space-2xs) 0 0;
     }
 
     .column {
@@ -196,7 +196,7 @@ import { TextValue } from '../../shared/text-value';
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 0.45rem;
+      gap: var(--li-space-sm);
     }
 
     .blocked {
@@ -205,9 +205,9 @@ import { TextValue } from '../../shared/text-value';
     }
 
     .box {
-      padding: 0.5rem 0.5rem 0.4rem 0.85rem;
+      padding: var(--li-space-sm) var(--li-space-sm) var(--li-space-xs) var(--li-space-md);
       border: 1px solid var(--li-border);
-      border-radius: var(--li-radius);
+      border-radius: var(--li-radius-lg);
       background: var(--li-surface-raised);
       transition: border-color 120ms ease;
     }
@@ -218,7 +218,7 @@ import { TextValue } from '../../shared/text-value';
 
     /* The page's own prose rules do the setting; the box only gives it room. */
     .prose {
-      padding: 0.15rem 0.35rem 0.25rem 0;
+      padding: var(--li-space-3xs) var(--li-space-xs) var(--li-space-2xs) 0;
     }
 
     /* Marks on the left, the two verbs on the right, under whatever is being
@@ -226,14 +226,14 @@ import { TextValue } from '../../shared/text-value';
     .footer {
       display: flex;
       align-items: center;
-      gap: 0.3rem;
-      margin-top: 0.25rem;
+      gap: var(--li-space-xs);
+      margin-top: var(--li-space-2xs);
     }
 
     .marks {
       display: flex;
       align-items: center;
-      gap: 0.1rem;
+      gap: var(--li-space-3xs);
       margin-right: auto;
     }
 
@@ -248,7 +248,7 @@ import { TextValue } from '../../shared/text-value';
       flex: none;
       display: flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: var(--li-space-xs);
     }
 
     /* Under the box, sharing its border, so the two fields read as one message
@@ -256,16 +256,16 @@ import { TextValue } from '../../shared/text-value';
     .direction {
       display: flex;
       align-items: baseline;
-      gap: 0.5rem;
-      margin-top: 0.35rem;
-      padding-top: 0.4rem;
+      gap: var(--li-space-sm);
+      margin-top: var(--li-space-xs);
+      padding-top: var(--li-space-xs);
       border-top: 1px solid color-mix(in srgb, var(--li-border) 70%, transparent);
     }
 
     .direction .tag {
       flex: none;
       font-family: var(--li-sans);
-      font-size: 0.7rem;
+      font-size: var(--li-text-xs);
       font-variant-caps: all-small-caps;
       letter-spacing: 0.06em;
       color: var(--li-muted);
@@ -283,20 +283,20 @@ import { TextValue } from '../../shared/text-value';
       border-radius: 0;
       background: none;
       font-family: var(--li-sans);
-      font-size: 0.9rem;
+      font-size: var(--li-text-md);
       font-style: italic;
       color: var(--li-ink-soft);
     }
 
     /* A quiet word, lit when what it stands for is on. */
     .quiet {
-      padding: 0.3rem 0.55rem;
+      padding: var(--li-space-xs) var(--li-space-sm);
       border: 1px solid transparent;
-      border-radius: 999px;
+      border-radius: var(--li-radius-pill);
       background: none;
       color: var(--li-muted);
       font-family: var(--li-sans);
-      font-size: 0.75rem;
+      font-size: var(--li-text-xs);
       letter-spacing: 0.02em;
       cursor: pointer;
     }
@@ -315,9 +315,9 @@ import { TextValue } from '../../shared/text-value';
 
     /* Each mark wears its own: the speech colour, the italic, the weight. */
     .mark {
-      padding: 0.25rem 0.5rem;
+      padding: var(--li-space-2xs) var(--li-space-sm);
       font-family: var(--li-serif);
-      font-size: 0.82rem;
+      font-size: var(--li-text-sm);
       letter-spacing: 0;
     }
 
@@ -345,7 +345,7 @@ import { TextValue } from '../../shared/text-value';
     .strip {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: var(--li-space-sm);
       min-height: 1.2rem;
     }
 
@@ -361,11 +361,11 @@ import { TextValue } from '../../shared/text-value';
     /* Big enough to be pressed at all, which the quiet words are not. */
     @include bp.touch {
       .quiet {
-        padding: 0.5rem 0.65rem;
+        padding: var(--li-space-sm) var(--li-space-md);
       }
 
       .mark {
-        padding: 0.5rem 0.6rem;
+        padding: var(--li-space-sm);
       }
     }
   `,

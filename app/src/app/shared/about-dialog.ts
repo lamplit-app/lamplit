@@ -55,13 +55,13 @@ import { DialogsService } from './dialogs.service';
 
     .version {
       font-family: var(--li-serif);
-      font-size: 1.35rem;
+      font-size: var(--li-text-xl);
       color: var(--li-ink);
     }
 
     .build {
-      margin-top: 0.15rem;
-      font-size: 0.82rem;
+      margin-top: var(--li-space-3xs);
+      font-size: var(--li-text-sm);
       color: var(--li-muted);
       /* A SHA and a run number are read character by character. */
       font-variant-numeric: tabular-nums;
@@ -70,9 +70,9 @@ import { DialogsService } from './dialogs.service';
     .data {
       display: flex;
       flex-direction: column;
-      gap: 0.1rem;
-      margin-top: 0.85rem;
-      font-size: 0.72rem;
+      gap: var(--li-space-3xs);
+      margin-top: var(--li-space-md);
+      font-size: var(--li-text-xs);
       letter-spacing: 0.02em;
       text-transform: uppercase;
       color: var(--li-muted);
@@ -80,7 +80,7 @@ import { DialogsService } from './dialogs.service';
 
     .path {
       font-family: var(--li-mono);
-      font-size: 0.78rem;
+      font-size: var(--li-text-sm);
       letter-spacing: 0;
       text-transform: none;
       color: var(--li-ink-soft);
@@ -89,17 +89,17 @@ import { DialogsService } from './dialogs.service';
     }
 
     .blurb {
-      margin-top: 1.1rem;
-      font-size: 0.9rem;
+      margin-top: var(--li-space-lg);
+      font-size: var(--li-text-md);
       line-height: 1.6;
       color: var(--li-ink-soft);
     }
 
     .links {
       display: flex;
-      gap: 0.5rem;
-      margin-top: 1.1rem;
-      font-size: 0.9rem;
+      gap: var(--li-space-sm);
+      margin-top: var(--li-space-lg);
+      font-size: var(--li-text-md);
     }
 
     .links span {

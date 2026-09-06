@@ -96,7 +96,7 @@ export interface NewStoryData extends StorySetup {
     mat-dialog-content {
       display: flex;
       flex-direction: column;
-      gap: 0.35rem;
+      gap: var(--li-space-xs);
     }
 
     mat-form-field {
@@ -104,8 +104,8 @@ export interface NewStoryData extends StorySetup {
     }
 
     .label {
-      margin-top: 0.35rem;
-      font-size: 0.82rem;
+      margin-top: var(--li-space-xs);
+      font-size: var(--li-text-sm);
       color: var(--li-ink);
     }
   `,

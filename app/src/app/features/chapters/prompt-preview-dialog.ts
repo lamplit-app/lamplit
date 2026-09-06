@@ -176,9 +176,9 @@ export interface PromptPreviewData {
     }
 
     .block {
-      margin: 0.6rem 0 0;
+      margin: var(--li-space-sm) 0 0;
       border: 1px solid var(--li-border);
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       background: var(--li-surface-raised);
       overflow: hidden;
     }
@@ -187,55 +187,55 @@ export interface PromptPreviewData {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      gap: 1rem;
-      padding: 0.4rem 0.7rem;
+      gap: var(--li-space-lg);
+      padding: var(--li-space-xs) var(--li-space-md);
       border-bottom: 1px solid var(--li-border);
       background: color-mix(in srgb, var(--li-accent) 6%, transparent);
     }
 
     .name {
-      font-size: 0.78rem;
+      font-size: var(--li-text-sm);
       letter-spacing: 0.03em;
       text-transform: uppercase;
       color: var(--li-ink-soft);
     }
 
     .tokens {
-      font-size: 0.72rem;
+      font-size: var(--li-text-xs);
       color: var(--li-muted);
     }
 
     .notes {
       margin: 0;
-      padding: 0 0.75rem 0.7rem 1.6rem;
+      padding: 0 var(--li-space-md) var(--li-space-md) var(--li-space-xl);
       font-family: var(--li-serif);
-      font-size: 0.86rem;
+      font-size: var(--li-text-md);
       line-height: 1.5;
       color: var(--li-ink-soft);
     }
 
     pre {
       margin: 0;
-      padding: 0.65rem 0.75rem;
+      padding: var(--li-space-md);
       white-space: pre-wrap;
       overflow-wrap: break-word;
       font-family: var(--li-serif);
-      font-size: 0.9rem;
+      font-size: var(--li-text-md);
       line-height: 1.55;
       color: var(--li-ink);
     }
 
     .lore {
       margin: 0;
-      padding: 0.5rem 0.75rem 0.6rem 1.6rem;
-      font-size: 0.85rem;
+      padding: var(--li-space-sm) var(--li-space-md) var(--li-space-sm) var(--li-space-xl);
+      font-size: var(--li-text-md);
       line-height: 1.6;
       color: var(--li-ink-soft);
     }
 
     .empty {
       margin: 0;
-      padding: 0.5rem 0.75rem;
+      padding: var(--li-space-sm) var(--li-space-md);
     }
 
     .warn {
@@ -246,12 +246,13 @@ export interface PromptPreviewData {
 
     .handle {
       flex: none;
-      margin: -0.15rem 0 -0.15rem -0.15rem;
-      padding: 0 0.15rem;
+      margin: calc(-1 * var(--li-space-3xs)) 0 calc(-1 * var(--li-space-3xs))
+        calc(-1 * var(--li-space-3xs));
+      padding: 0 var(--li-space-3xs);
       border: 0;
       background: none;
       color: var(--li-muted);
-      font-size: 0.95rem;
+      font-size: var(--li-text-lg);
       line-height: 1;
       cursor: grab;
     }
@@ -267,7 +268,7 @@ export interface PromptPreviewData {
       flex: none;
       width: 1.25rem;
       color: color-mix(in srgb, var(--li-muted) 55%, transparent);
-      font-size: 0.95rem;
+      font-size: var(--li-text-lg);
       line-height: 1;
       text-align: center;
     }
@@ -278,9 +279,9 @@ export interface PromptPreviewData {
 
     .why {
       margin: 0;
-      padding: 0.4rem 0.75rem 0.55rem;
+      padding: var(--li-space-xs) var(--li-space-md) var(--li-space-sm);
       border-top: 1px dashed color-mix(in srgb, var(--li-border) 80%, transparent);
-      font-size: 0.75rem;
+      font-size: var(--li-text-xs);
       line-height: 1.5;
       color: var(--li-muted);
     }
@@ -292,8 +293,8 @@ export interface PromptPreviewData {
     /* The dragged copy is a clone of the element, so it carries this
        component's own attribute with it and these rules still reach it. */
     .block.cdk-drag-preview {
-      border-radius: 10px;
-      box-shadow: 0 12px 32px light-dark(rgb(0 0 0 / 22%), rgb(0 0 0 / 55%));
+      border-radius: var(--li-radius-md);
+      box-shadow: var(--li-shadow-raised);
       overflow: hidden;
     }
 
@@ -305,7 +306,7 @@ export interface PromptPreviewData {
     .ghost {
       height: 100%;
       border: 1px dashed color-mix(in srgb, var(--li-accent) 55%, transparent);
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       background: color-mix(in srgb, var(--li-accent) 5%, transparent);
     }
 

@@ -38,7 +38,7 @@ import { Persistence } from '../store/persistence';
       align-items: center;
       justify-content: center;
       height: 100%;
-      padding: 2rem;
+      padding: var(--li-space-xl);
     }
 
     .panel {
@@ -48,16 +48,16 @@ import { Persistence } from '../store/persistence';
 
     h1 {
       font-family: var(--li-serif);
-      font-size: 1.5rem;
+      font-size: var(--li-text-xl);
       font-weight: 500;
-      margin: 0 0 1rem;
+      margin: 0 0 var(--li-space-lg);
       color: var(--li-ink);
     }
 
     p {
       color: var(--li-muted);
       line-height: 1.6;
-      margin: 0 0 0.9rem;
+      margin: 0 0 var(--li-space-md);
     }
 
     code {
@@ -68,13 +68,13 @@ import { Persistence } from '../store/persistence';
 
     .reason {
       font-family: var(--li-mono);
-      font-size: 0.78rem;
+      font-size: var(--li-text-sm);
       color: var(--li-danger);
-      margin-bottom: 1.4rem;
+      margin-bottom: var(--li-space-xl);
     }
 
     .how {
-      margin-bottom: 1.4rem;
+      margin-bottom: var(--li-space-xl);
     }
   `,
 })

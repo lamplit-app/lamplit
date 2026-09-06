@@ -49,7 +49,7 @@ import { MessageItem } from './message-item';
     .column {
       width: var(--li-column);
       margin: 0 auto;
-      padding: 1.25rem 0 0;
+      padding: var(--li-space-lg) 0 0;
     }
 
     .tail {

@@ -36,13 +36,13 @@ import { Persistence } from '../store/persistence';
     .status {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      padding: 0.15rem 0.5rem;
+      gap: var(--li-space-xs);
+      padding: var(--li-space-3xs) var(--li-space-sm);
       border: 0;
-      border-radius: 999px;
+      border-radius: var(--li-radius-pill);
       background: none;
       font: inherit;
-      font-size: 0.78rem;
+      font-size: var(--li-text-sm);
       color: var(--li-muted);
       cursor: default;
     }

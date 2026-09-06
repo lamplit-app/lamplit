@@ -47,25 +47,25 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
   `,
   styles: `
     .row {
-      padding: 0.35rem 0 0.15rem;
+      padding: var(--li-space-xs) 0 var(--li-space-3xs);
     }
 
     .head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
+      gap: var(--li-space-lg);
     }
 
     .label {
-      font-size: 0.85rem;
+      font-size: var(--li-text-md);
       color: var(--li-ink);
     }
 
     .controls {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--li-space-md);
     }
 
     mat-slider {
@@ -76,13 +76,13 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
     .exact {
       width: 5.5rem;
-      padding: 0.35rem 0.5rem;
+      padding: var(--li-space-xs) var(--li-space-sm);
       border: 1px solid var(--li-border);
-      border-radius: 8px;
+      border-radius: var(--li-radius-md);
       background: var(--li-surface-raised);
       color: var(--li-ink);
       font: inherit;
-      font-size: 0.82rem;
+      font-size: var(--li-text-sm);
       text-align: right;
     }
 
@@ -95,7 +95,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     }
 
     p.li-hint {
-      margin: 0.1rem 0 0;
+      margin: var(--li-space-3xs) 0 0;
     }
   `,
 })

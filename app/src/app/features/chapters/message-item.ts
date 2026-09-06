@@ -273,7 +273,7 @@ export interface MessageEdit {
 
     .message {
       position: relative;
-      padding: 0.9rem 0 1.1rem;
+      padding: var(--li-space-md) 0 var(--li-space-lg);
     }
 
     .message + .message {
@@ -281,7 +281,7 @@ export interface MessageEdit {
     }
 
     .message.user {
-      padding-left: 0.95rem;
+      padding-left: var(--li-space-lg);
       border-left: 2px solid color-mix(in srgb, var(--li-accent) 55%, transparent);
     }
 
@@ -300,10 +300,10 @@ export interface MessageEdit {
     .speaker {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
-      margin: 0 0 0.3rem;
+      gap: var(--li-space-xs);
+      margin: 0 0 var(--li-space-xs);
       font-family: var(--li-sans);
-      font-size: 0.7rem;
+      font-size: var(--li-text-xs);
       font-variant-caps: all-small-caps;
       letter-spacing: 0.04em;
       line-height: 1.2;
@@ -326,11 +326,11 @@ export interface MessageEdit {
     /* Indented under the prose it belongs to, in the interface font: a note
        in the author's hand, and nothing a reader could mistake for the text. */
     .direction {
-      margin: 0.55rem 0 0;
-      padding-left: 0.85rem;
+      margin: var(--li-space-sm) 0 0;
+      padding-left: var(--li-space-md);
       border-left: 2px solid color-mix(in srgb, var(--li-muted) 45%, transparent);
       font-family: var(--li-sans);
-      font-size: 0.85rem;
+      font-size: var(--li-text-md);
       font-style: italic;
       line-height: 1.5;
       color: var(--li-muted);
@@ -338,8 +338,8 @@ export interface MessageEdit {
 
     .tag {
       display: inline-block;
-      margin-right: 0.45rem;
-      font-size: 0.7rem;
+      margin-right: var(--li-space-sm);
+      font-size: var(--li-text-xs);
       font-style: normal;
       font-variant-caps: all-small-caps;
       letter-spacing: 0.06em;
@@ -352,7 +352,7 @@ export interface MessageEdit {
 
     .direction-edit .tag {
       display: block;
-      margin: 0 0 0.2rem;
+      margin: 0 0 var(--li-space-2xs);
     }
 
     .direction-edit textarea {
@@ -363,10 +363,10 @@ export interface MessageEdit {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0.75rem;
-      margin-top: 0.55rem;
+      gap: var(--li-space-md);
+      margin-top: var(--li-space-sm);
       font-family: var(--li-sans);
-      font-size: 0.7rem;
+      font-size: var(--li-text-xs);
       letter-spacing: 0.02em;
       color: var(--li-muted);
     }
@@ -386,11 +386,11 @@ export interface MessageEdit {
       height: 1.4rem;
       padding: 0;
       border: 0;
-      border-radius: 6px;
+      border-radius: var(--li-radius-sm);
       background: none;
       color: var(--li-muted);
       font: inherit;
-      font-size: 0.95rem;
+      font-size: var(--li-text-lg);
       line-height: 1;
       cursor: pointer;
       opacity: 0.45;
@@ -407,13 +407,13 @@ export interface MessageEdit {
     .rail {
       display: none;
       position: absolute;
-      top: 0.75rem;
+      top: var(--li-space-md);
       /* Right of the column by the gap, and padded back across it, so the
          pointer never leaves the message on its way to the icons. */
       right: calc(-1 * (var(--li-rail) + var(--li-margin-gap)));
       padding-left: var(--li-margin-gap);
       flex-direction: column;
-      gap: 0.1rem;
+      gap: var(--li-space-3xs);
       opacity: 0;
       transform: translateX(-0.2rem);
       transition:
@@ -437,7 +437,7 @@ export interface MessageEdit {
       height: var(--li-rail);
       padding: 0;
       border: 0;
-      border-radius: 8px;
+      border-radius: var(--li-radius-md);
       background: none;
       color: var(--li-muted);
       cursor: pointer;
@@ -495,33 +495,33 @@ export interface MessageEdit {
 
     .error {
       margin: 0;
-      padding: 0.7rem 0.9rem;
+      padding: var(--li-space-md);
       border: 1px solid color-mix(in srgb, var(--li-danger) 40%, var(--li-border));
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       background: color-mix(in srgb, var(--li-danger) 8%, transparent);
       color: var(--li-danger);
-      font-size: 0.85rem;
+      font-size: var(--li-text-md);
       line-height: 1.5;
     }
 
     .error-actions {
       display: flex;
-      gap: 0.3rem;
-      margin-top: 0.4rem;
+      gap: var(--li-space-xs);
+      margin-top: var(--li-space-xs);
     }
 
     .editor {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--li-space-sm);
     }
 
     /* Both fields with the border lit: a message is being edited. The prose
        editor is given the shared text field's frame, since it is not one. */
     .editor .prose {
-      padding: 0.6rem 0.75rem;
+      padding: var(--li-space-sm) var(--li-space-md);
       border: 1px solid var(--li-accent);
-      border-radius: 10px;
+      border-radius: var(--li-radius-md);
       background: var(--li-surface-raised);
     }
 
@@ -533,7 +533,7 @@ export interface MessageEdit {
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 0.4rem;
+      gap: var(--li-space-xs);
     }
 
     .editor-actions .li-hint {
@@ -542,8 +542,8 @@ export interface MessageEdit {
 
     .waiting {
       display: flex;
-      gap: 0.3rem;
-      margin: 0.25rem 0 0;
+      gap: var(--li-space-xs);
+      margin: var(--li-space-2xs) 0 0;
     }
 
     .waiting .dot {
@@ -592,7 +592,7 @@ export interface MessageEdit {
       .more {
         width: 2.75rem;
         height: 2.75rem;
-        margin-right: -0.6rem;
+        margin-right: calc(-1 * var(--li-space-sm));
         opacity: 1;
       }
     }
