@@ -82,6 +82,9 @@ export const READING_SIZE = '--li-reading-size';
  * `palette` is the page the story or the chapter asked for, and it sits between
  * the stylesheet and the colours set by hand — a preset is exactly that, and a
  * swatch the reader dragged themselves beats one a table chose for them.
+ *
+ * A page has two halves per theme, and which one is written is the one question
+ * here that is not a setting: see `wantsContrast`.
  */
 export function applyUi(
   root: HTMLElement,
@@ -92,9 +95,13 @@ export function applyUi(
   root.style.colorScheme = ui.theme;
 
   const preset = palette?.[ui.theme];
+  const strong = wantsContrast(root) ? palette?.contrast[ui.theme] : undefined;
   const overrides = ui.colours[ui.theme] ?? {};
   for (const { key } of THEME_COLOURS) {
-    const colour = overrides[key] || preset?.[key];
+    // A colour the reader chose themselves still wins, in a contrast mode as
+    // anywhere else: the stylesheet says the same thing by letting an inline
+    // override beat `:root[data-contrast='high']`.
+    const colour = overrides[key] || strong?.[key] || preset?.[key];
     if (colour) root.style.setProperty(propertyOf(key), colour);
     else root.style.removeProperty(propertyOf(key));
   }
@@ -108,6 +115,32 @@ export function applyUi(
   // Always, unlike the face: nothing reads this back to find out whether the
   // reader chose it, and a size is a size whether or not it is the shipped one.
   root.style.setProperty(READING_SIZE, `${ui.fontSize}px`);
+}
+
+/**
+ * Whether the page is being drawn at the stronger contrast — asked the two ways
+ * `styles.scss` asks it, and in the same order.
+ *
+ * The attribute is what an accessibility panel writes (#63, where the switch
+ * lives); the media query is the reader's own machine, which is the only one of
+ * the two that says yes today. Both, because the stylesheet honours both, and a
+ * page whose rules were chosen for a contrast mode by one door and not the
+ * other is a page that disagrees with the app around it.
+ *
+ * This is read when the settings effect runs rather than watched, so a reader
+ * who turns contrast up in Windows without touching Lamplit keeps the page's
+ * ordinary rules until something else changes — the stylesheet moves at once,
+ * a preset's inline border does not. #63 owns that gap: the switch it adds is a
+ * setting, and a setting runs the effect.
+ */
+function wantsContrast(root: HTMLElement): boolean {
+  if (root.dataset['contrast'] === 'high') return true;
+  // Asked for rather than assumed: the element a unit test hands over has a
+  // document behind it but not a browser's worth of window, and a page is not
+  // worth a thrown error for the sake of a question that has a safe answer.
+  const view = root.ownerDocument.defaultView;
+  if (typeof view?.matchMedia !== 'function') return false;
+  return view.matchMedia('(prefers-contrast: more)').matches;
 }
 
 /**

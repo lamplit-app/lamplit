@@ -16,6 +16,35 @@ import { ColourKey, OutboundMessage } from './models';
  * floors are the shipped theme's own, so a palette is never a worse page to
  * read on than the one Lamplit opens with.
  *
+ * That promise went false the moment #48 moved the shipped theme and left these
+ * where they were, which is why the light halves and all twenty rules moved
+ * again in #64. The shipped muted went from 3.35:1 to 4.86, and these stayed
+ * between 3.22 and 4.27 — all ten under the 4.5 WCAG AA asks of body text, with
+ * Verdant at 3.22 a page the model can choose for a reader who never opened
+ * Preferences. The same walk, one floor higher: the hue and the saturation are
+ * the ones each page was built with and only the lightness moved, so every page
+ * is still itself, read on a muted that clears 4.5 on all three of its papers.
+ * The dark halves were already over it and are untouched.
+ *
+ * The rules moved in both themes, and for the reason #48 gave when it moved the
+ * shipped one: at 1.17 to 1.46 they were hairlines nobody can see. All twenty
+ * are walked to 2:1 against their own papers, which is what the app's own face
+ * is — `$palette` in `styles.scss` sits at 1.88 to 2.33 — so a page's rules are
+ * drawn as firmly as the shipped ones and no more.
+ *
+ * `contrast` is the third of them, and it is a hole rather than a floor. The
+ * stronger palette a reader who has asked for more contrast gets is `$contrast`
+ * in `styles.scss`, and it is the rules and nothing else — but a preset writes
+ * `--li-border` inline on <html>, and an inline style beats every rule in the
+ * stylesheet, so a story with a page of its own silently lost the stronger
+ * border that mode was turned on for. Of the two ways out — the presets decline
+ * to say anything about the rules in a contrast mode, or they carry a stronger
+ * pair of their own — this is the second: a palette is a whole page, and a page
+ * with one foreign line ruled across it is not one. The names in here are the
+ * names `$contrast` moves, walked to the 3:1 WCAG 1.4.11 asks of anything that
+ * marks out a control. `theming.ts` is where the choice between the halves is
+ * made, and #63 is where the switch that asks for it will be.
+ *
  * The **tags** are the point of the table. A model never sees a colour: it is
  * given the scene, these names and what each one is for, and answers with one
  * name. So the tags are moods, settings, times and weather — the words a scene
@@ -24,6 +53,14 @@ import { ColourKey, OutboundMessage } from './models';
 
 /** A palette says something about every name; there is no half-dressed page. */
 export type PaletteColours = Record<ColourKey, string>;
+
+/**
+ * And the same page with its rules turned up: only the names a contrast mode
+ * moves, which is `$contrast`'s own list and is the rules alone. Everything
+ * else already clears its floor, and a mode asked for legibility should not
+ * repaint a page that is legible.
+ */
+export type ContrastColours = Partial<PaletteColours>;
 
 export interface PagePalette {
   /** Stored in settings and on the chapter, so it is part of the file format. */
@@ -35,6 +72,8 @@ export interface PagePalette {
   tags: readonly string[];
   light: PaletteColours;
   dark: PaletteColours;
+  /** What each half becomes for a reader who has asked for more contrast. */
+  contrast: { light: ContrastColours; dark: ContrastColours };
 }
 
 export const PAGE_PALETTES: readonly PagePalette[] = [
@@ -47,11 +86,11 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#f2f5f7',
       surface: '#fafbfc',
       'surface-raised': '#ffffff',
-      border: '#d8e0e8',
+      border: '#9db1c5',
       ink: '#1e2429',
       'ink-soft': '#404d59',
       action: '#333d47',
-      muted: '#6b8094',
+      muted: '#5e7183',
       accent: '#2a73a7',
       speech: '#2d3880',
       danger: '#a53327',
@@ -60,7 +99,7 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#0f141a',
       surface: '#171f27',
       'surface-raised': '#1d2832',
-      border: '#2d3d4d',
+      border: '#40576e',
       ink: '#e1e6ea',
       'ink-soft': '#acb8c3',
       action: '#cdd4db',
@@ -68,6 +107,10 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       accent: '#a5cde9',
       speech: '#acb3e2',
       danger: '#e8a39c',
+    },
+    contrast: {
+      light: { border: '#738fac' },
+      dark: { border: '#557492' },
     },
   },
   {
@@ -79,11 +122,11 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#f9f5f1',
       surface: '#fdfbfa',
       'surface-raised': '#ffffff',
-      border: '#ede0d4',
+      border: '#cda988',
       ink: '#2a241d',
       'ink-soft': '#5a4d3f',
       action: '#483d32',
-      muted: '#968069',
+      muted: '#7f6c59',
       accent: '#ae5929',
       speech: '#7f2f3c',
       danger: '#a72d25',
@@ -92,7 +135,7 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#1d140c',
       surface: '#2b1f12',
       'surface-raised': '#372818',
-      border: '#563d25',
+      border: '#735232',
       ink: '#eae6e1',
       'ink-soft': '#c4b8ab',
       action: '#dbd4cc',
@@ -100,6 +143,10 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       accent: '#eabea4',
       speech: '#e1adb6',
       danger: '#e9a09b',
+    },
+    contrast: {
+      light: { border: '#b78252' },
+      dark: { border: '#986c41' },
     },
   },
   {
@@ -111,11 +158,11 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#f3f3f7',
       surface: '#fbfafc',
       'surface-raised': '#ffffff',
-      border: '#dbdae7',
+      border: '#aeabc9',
       ink: '#201f28',
       'ink-soft': '#454356',
       action: '#373645',
-      muted: '#73708f',
+      muted: '#6e6b88',
       accent: '#ae298c',
       speech: '#217983',
       danger: '#ab2138',
@@ -124,7 +171,7 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#111018',
       surface: '#191825',
       'surface-raised': '#21202f',
-      border: '#333149',
+      border: '#504d72',
       ink: '#e3e2e9',
       'ink-soft': '#b0afc0',
       action: '#cfced9',
@@ -132,6 +179,10 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       accent: '#eaa4d8',
       speech: '#a5e2e9',
       danger: '#eb98a6',
+    },
+    contrast: {
+      light: { border: '#8b87b1' },
+      dark: { border: '#6b6799' },
     },
   },
   {
@@ -143,11 +194,11 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#f2f6f7',
       surface: '#fafcfc',
       'surface-raised': '#ffffff',
-      border: '#d9e4e8',
+      border: '#96b4bf',
       ink: '#1f2629',
       'ink-soft': '#425157',
       action: '#354146',
-      muted: '#6e8891',
+      muted: '#5c727a',
       accent: '#217d7a',
       speech: '#2f4c7f',
       danger: '#a34129',
@@ -156,7 +207,7 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#101719',
       surface: '#172226',
       'surface-raised': '#1e2c31',
-      border: '#2f444c',
+      border: '#3f5c66',
       ink: '#e2e7e9',
       'ink-soft': '#aebcc2',
       action: '#ced6da',
@@ -164,6 +215,10 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       accent: '#a6e7e5',
       speech: '#adc0e1',
       danger: '#e7ac9d',
+    },
+    contrast: {
+      light: { border: '#6893a3' },
+      dark: { border: '#537987' },
     },
   },
   {
@@ -175,11 +230,11 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#f5f3f7',
       surface: '#fbfafc',
       'surface-raised': '#ffffff',
-      border: '#e2dae7',
+      border: '#baa8c6',
       ink: '#251f29',
       'ink-soft': '#4f4257',
       action: '#3f3546',
-      muted: '#836e91',
+      muted: '#7b6788',
       accent: '#8d33a3',
       speech: '#31577d',
       danger: '#a52b27',
@@ -188,7 +243,7 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#151019',
       surface: '#201825',
       'surface-raised': '#291f30',
-      border: '#40304b',
+      border: '#614871',
       ink: '#e6e2e9',
       'ink-soft': '#baaec2',
       action: '#d5ceda',
@@ -196,6 +251,10 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       accent: '#d8aae4',
       speech: '#aec7e0',
       danger: '#e89e9c',
+    },
+    contrast: {
+      light: { border: '#9d82ae' },
+      dark: { border: '#816197' },
     },
   },
   {
@@ -207,11 +266,11 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#f3f7f2',
       surface: '#fbfcfa',
       'surface-raised': '#ffffff',
-      border: '#dce8d8',
+      border: '#96ba8a',
       ink: '#21291f',
       'ink-soft': '#465742',
       action: '#384635',
-      muted: '#75916e',
+      muted: '#5f7559',
       accent: '#288043',
       speech: '#896b24',
       danger: '#a33529',
@@ -220,7 +279,7 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#111a0f',
       surface: '#1a2717',
       'surface-raised': '#21321d',
-      border: '#344d2d',
+      border: '#43633a',
       ink: '#e3e9e2',
       'ink-soft': '#b2c2ae',
       action: '#d0dace',
@@ -228,6 +287,10 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       accent: '#aae4bb',
       speech: '#e7d4a6',
       danger: '#e7a49d',
+    },
+    contrast: {
+      light: { border: '#6a995b' },
+      dark: { border: '#58824c' },
     },
   },
   {
@@ -239,11 +302,11 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#f9f3f0',
       surface: '#fdfbf9',
       'surface-raised': '#ffffff',
-      border: '#eedcd3',
+      border: '#d3a58e',
       ink: '#2c211c',
       'ink-soft': '#5d473c',
       action: '#4b3930',
-      muted: '#9c7663',
+      muted: '#896757',
       accent: '#b24124',
       speech: '#8c6921',
       danger: '#a9232c',
@@ -252,7 +315,7 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#1d110b',
       surface: '#2c1a11',
       'surface-raised': '#392216',
-      border: '#583422',
+      border: '#7b4930',
       ink: '#ebe4e0',
       'ink-soft': '#c7b2a8',
       action: '#ddd0ca',
@@ -260,6 +323,10 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       accent: '#ecb1a2',
       speech: '#ead2a4',
       danger: '#ea999f',
+    },
+    contrast: {
+      light: { border: '#bf7c5a' },
+      dark: { border: '#a3613f' },
     },
   },
   {
@@ -271,11 +338,11 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#f4f5f6',
       surface: '#fbfbfb',
       'surface-raised': '#ffffff',
-      border: '#dee0e3',
+      border: '#aab0b7',
       ink: '#222326',
       'ink-soft': '#484c51',
       action: '#3a3c41',
-      muted: '#787e87',
+      muted: '#6a6f77',
       accent: '#40776c',
       speech: '#51406d',
       danger: '#9f3c2d',
@@ -284,7 +351,7 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#131416',
       surface: '#1c1e21',
       'surface-raised': '#24272b',
-      border: '#383c42',
+      border: '#50555e',
       ink: '#e4e5e7',
       'ink-soft': '#b3b7bc',
       action: '#d1d3d6',
@@ -292,6 +359,10 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       accent: '#b6d8d1',
       speech: '#c3b8d5',
       danger: '#e4a9a0',
+    },
+    contrast: {
+      light: { border: '#868d98' },
+      dark: { border: '#6a717d' },
     },
   },
   {
@@ -303,11 +374,11 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#f8f6f1',
       surface: '#fcfcfa',
       'surface-raised': '#ffffff',
-      border: '#ebe3d6',
+      border: '#c5ad88',
       ink: '#2b261d',
       'ink-soft': '#5c513d',
       action: '#494031',
-      muted: '#998666',
+      muted: '#7d6d53',
       accent: '#896b1a',
       speech: '#823d2b',
       danger: '#a52727',
@@ -316,7 +387,7 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#1b160d',
       surface: '#292114',
       'surface-raised': '#352b1a',
-      border: '#524328',
+      border: '#6a5734',
       ink: '#ebe7e0',
       'ink-soft': '#c6bba9',
       action: '#dcd6cb',
@@ -324,6 +395,10 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       accent: '#edd9a1',
       speech: '#e3b6ab',
       danger: '#e89c9c',
+    },
+    contrast: {
+      light: { border: '#a98853' },
+      dark: { border: '#8c7344' },
     },
   },
   {
@@ -335,11 +410,11 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#f8f1f4',
       surface: '#fcfafb',
       'surface-raised': '#ffffff',
-      border: '#ebd6dd',
+      border: '#d1a0b0',
       ink: '#291f22',
       'ink-soft': '#574249',
       action: '#46353a',
-      muted: '#916e7a',
+      muted: '#856570',
       accent: '#a72f6b',
       speech: '#542f7f',
       danger: '#a52f27',
@@ -348,7 +423,7 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       page: '#1b0d12',
       surface: '#29141b',
       'surface-raised': '#351a23',
-      border: '#522836',
+      border: '#7d3d52',
       ink: '#e9e2e4',
       'ink-soft': '#c2aeb4',
       action: '#daced2',
@@ -356,6 +431,10 @@ export const PAGE_PALETTES: readonly PagePalette[] = [
       accent: '#e6a7c7',
       speech: '#c5ade1',
       danger: '#e8a19c',
+    },
+    contrast: {
+      light: { border: '#bc768e' },
+      dark: { border: '#a7516e' },
     },
   },
 ];

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS } from './defaults';
 import { UiSettings } from './models';
+import { PAGE_PALETTES } from './page-palettes';
 import {
   AA_CONTRAST,
   READING_FAMILY,
@@ -74,6 +75,31 @@ describe('applyUi', () => {
 
     applyUi(root, ui({ font: 'serif' }));
     expect(root.style.getPropertyValue(READING_FAMILY)).toBe('');
+  });
+
+  it('writes a page as it is, and its stronger rules when contrast is asked for', () => {
+    const root = document.createElement('html');
+    const palette = PAGE_PALETTES[0];
+
+    applyUi(root, ui({ theme: 'light' }), palette);
+    expect(root.style.getPropertyValue(propertyOf('border'))).toBe(palette.light.border);
+
+    // The attribute an accessibility panel will write (#63); the reader's own
+    // machine is the other door and is not something jsdom can be asked about.
+    root.dataset['contrast'] = 'high';
+    applyUi(root, ui({ theme: 'light' }), palette);
+    expect(root.style.getPropertyValue(propertyOf('border'))).toBe(palette.contrast.light.border);
+    // And it is the rules alone: the page is the page it was.
+    expect(root.style.getPropertyValue(propertyOf('page'))).toBe(palette.light.page);
+  });
+
+  it('lets a rule the reader chose themselves beat the contrast half', () => {
+    const root = document.createElement('html');
+    root.dataset['contrast'] = 'high';
+    const colours = { light: { border: '#ff0000' } };
+    applyUi(root, ui({ theme: 'light', colours }), PAGE_PALETTES[0]);
+
+    expect(root.style.getPropertyValue(propertyOf('border'))).toBe('#ff0000');
   });
 
   it('ignores a name it does not know, rather than writing it out', () => {

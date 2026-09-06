@@ -257,11 +257,13 @@ At the top is the **page palette**: eleven swatches, the page as Lamplit ships i
 read a story on — Frost, Hearth, Nocturne, Tide, Dusk, Verdant, Ember, Pallor, Gilt and Bloom. One
 click sets every swatch below, in both themes at once, so a palette is a preset for this panel and
 nothing more. Each was built rather than picked: a hue per role, walked towards its own ink until
-the text, the dialogue, the accent and the errors all clear WCAG AA against all three of that
-theme's papers, so none of them is a worse page to read on than the one Lamplit opens with. Change
-a colour afterwards and yours wins — the row says **custom** while any of them is set, and
-**Reset** puts them back to the palette underneath. When the open chapter has a page of its own,
-the row says so and edits that chapter's instead of the story's; see
+every colour the story is set in — the text, the quiet furniture, the dialogue, the accent and the
+errors — clears WCAG AA against all three of that theme's papers, and until its rules are drawn as
+firmly as the ones Lamplit ships. None of them is a worse page to read on than the one it opens
+with, in either theme, and each has a stronger set of rules again for a machine asking for more
+contrast. Change a colour afterwards and yours wins — the row says **custom** while any of them is
+set, and **Reset** puts them back to the palette underneath. When the open chapter has a page of
+its own, the row says so and edits that chapter's instead of the story's; see
 [Story and world](story-and-world.md).
 
 ![Every colour the theme is built from](images/preferences-swatches.png)
