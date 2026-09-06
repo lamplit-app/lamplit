@@ -159,7 +159,7 @@ const SWIPE_DISTANCE = 48;
             @if (isOpen('persona')) {
               <div class="body">
                 <input
-                  class="line-field"
+                  type="text"
                   aria-label="Persona name"
                   placeholder="Who you are in this story"
                   [liText]="story().persona.name"
@@ -465,22 +465,6 @@ const SWIPE_DISTANCE = 48;
       flex-direction: column;
       gap: var(--li-space-sm);
       padding: 0 var(--li-space-md) var(--li-space-md);
-    }
-
-    .line-field {
-      width: 100%;
-      padding: var(--li-space-sm);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-md);
-      background: var(--li-surface-raised);
-      color: var(--li-ink);
-      font: inherit;
-      font-size: var(--li-text-md);
-    }
-
-    .line-field:focus {
-      outline: none;
-      border-color: color-mix(in srgb, var(--li-accent) 65%, var(--li-border));
     }
 
     .link,

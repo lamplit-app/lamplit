@@ -251,18 +251,19 @@ async function firstRun() {
   const { page, close } = await session();
   await shot(page, 'first-run-connection', 'the connection sheet a fresh install opens on');
 
-  await page.getByRole('combobox', { name: 'Provider' }).click();
-  await page.getByRole('option', { name: /Custom/ }).click();
+  await page.getByLabel('Provider').selectOption('custom');
   await page.getByLabel('Endpoint URL').fill(`http://127.0.0.1:${modelPort}/v1`);
   await page.getByRole('button', { name: 'Fetch models' }).click();
-  await page.getByRole('combobox', { name: 'Model' }).click();
-  await page.getByRole('option', { name: /Lamplighter Large/ }).click();
+  await page.getByLabel('Model', { exact: true }).selectOption(MODEL);
   await page.getByRole('button', { name: 'Test' }).click();
   await page.getByText(/The model answered/).waitFor();
   // The sheet is taller than the window and testing scrolls it to the answer.
   // A taller window for this one picture shows the whole thing rather than a
-  // slice of it; every other shot keeps the standard viewport.
-  await page.setViewportSize({ ...VIEWPORT, height: 1000 });
+  // slice of it; every other shot keeps the standard viewport. Material caps
+  // the scrolling part of a sheet at 65vh, so the window is what decides how
+  // much of it is drawn, and every field wearing a name of its own made this
+  // one about two hundred pixels taller than the window used to allow for.
+  await page.setViewportSize({ ...VIEWPORT, height: 1150 });
   await page.locator('mat-dialog-content').evaluate((el) => (el.scrollTop = 0));
   await page.waitForTimeout(300);
   await shot(page, 'connection', 'the connection modal, models fetched and tested');

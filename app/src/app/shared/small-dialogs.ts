@@ -1,8 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { Field } from './field';
 
 export interface TextPromptData {
   title: string;
@@ -14,20 +13,19 @@ export interface TextPromptData {
 /** One line of text, for naming a story or retitling a chapter. */
 @Component({
   selector: 'li-text-prompt-dialog',
-  imports: [MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
+  imports: [MatButtonModule, MatDialogModule, Field],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
     <mat-dialog-content>
-      <mat-form-field appearance="outline">
-        <mat-label>{{ data.label }}</mat-label>
+      <li-field [label]="data.label">
         <input
-          matInput
+          type="text"
           cdkFocusInitial
           [value]="draft()"
           (input)="draft.set(text($event))"
           (keydown.enter)="confirm()"
         />
-      </mat-form-field>
+      </li-field>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <!-- Bound rather than bare: a mat-dialog-close with no value closes with
@@ -38,7 +36,7 @@ export interface TextPromptData {
     </mat-dialog-actions>
   `,
   styles: `
-    mat-form-field {
+    li-field {
       width: 22rem;
       max-width: 100%;
     }

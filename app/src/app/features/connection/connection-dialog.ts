@@ -1,10 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
 import { ModelInfo, Provider } from '../../core/models';
 import {
   CUSTOM_PROVIDER_ID,
@@ -16,6 +13,7 @@ import {
 import { ModelClient } from '../../core/model-client';
 import { errorFromThrown } from '../../core/model-errors';
 import { SettingsStore } from '../../store/settings-store';
+import { Field } from '../../shared/field';
 
 interface ModelGroup {
   label: string;
@@ -40,14 +38,7 @@ export interface ConnectionData {
  */
 @Component({
   selector: 'li-connection-dialog',
-  imports: [
-    MatButtonModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-  ],
+  imports: [MatButtonModule, MatDialogModule, MatProgressSpinnerModule, Field],
   template: `
     <h2 mat-dialog-title>
       {{ insisting ? 'First, somewhere to send the story' : 'Connection' }}
@@ -61,47 +52,50 @@ export interface ConnectionData {
         </p>
       }
 
-      <mat-form-field appearance="outline">
-        <mat-label>Provider</mat-label>
-        <mat-select [value]="connection().provider" (valueChange)="setProvider($event)">
+      <li-field label="Provider">
+        <!-- Which one is chosen is said on the option rather than on the
+             select: a value bound on the select is written before the options
+             it names exist, and so lands on nothing. -->
+        <select (change)="setProvider(value($event))">
           @for (group of providerGroups; track group.label) {
-            <mat-optgroup [label]="group.label">
+            <optgroup [label]="group.label">
               @for (option of group.providers; track option.id) {
-                <mat-option [value]="option.id">{{ option.name }}</mat-option>
+                <option [value]="option.id" [selected]="option.id === connection().provider">
+                  {{ option.name }}
+                </option>
               }
-            </mat-optgroup>
+            </optgroup>
           }
-        </mat-select>
-      </mat-form-field>
+        </select>
+      </li-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Endpoint URL</mat-label>
+      <li-field label="Endpoint URL">
         <input
-          matInput
+          type="text"
           [value]="connection().baseUrl"
           [readonly]="urlIsFixed()"
           (input)="patch({ baseUrl: value($event) })"
           placeholder="https://host/v1"
         />
         @if (preset().note) {
-          <mat-hint>{{ preset().note }}</mat-hint>
+          <span class="li-hint">{{ preset().note }}</span>
         }
-      </mat-form-field>
+      </li-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>API key</mat-label>
-        <input
-          matInput
-          [type]="showKey() ? 'text' : 'password'"
-          autocomplete="off"
-          spellcheck="false"
-          [value]="connection().apiKey"
-          (input)="patch({ apiKey: value($event) })"
-        />
-        <button matIconButton matSuffix type="button" (click)="showKey.set(!showKey())">
-          {{ showKey() ? '🙈' : '👁' }}
-        </button>
-        <mat-hint>
+      <li-field label="API key">
+        <span class="key">
+          <input
+            [type]="showKey() ? 'text' : 'password'"
+            autocomplete="off"
+            spellcheck="false"
+            [value]="connection().apiKey"
+            (input)="patch({ apiKey: value($event) })"
+          />
+          <button matIconButton type="button" (click)="showKey.set(!showKey())">
+            {{ showKey() ? '🙈' : '👁' }}
+          </button>
+        </span>
+        <span class="li-hint">
           Kept on this machine, in plain text.
           @if (preset().keyOptional) {
             This one works without a key.
@@ -111,8 +105,8 @@ export interface ConnectionData {
               Get a key from {{ preset().name }}
             </a>
           }
-        </mat-hint>
-      </mat-form-field>
+        </span>
+      </li-field>
 
       @if (!preset().modelsFixed) {
         <div class="row">
@@ -139,37 +133,38 @@ export interface ConnectionData {
       </p>
 
       @if (connection().modelsCache.length) {
-        <mat-form-field appearance="outline">
-          <mat-label>Filter models</mat-label>
+        <li-field label="Filter models">
           <input
-            matInput
+            type="text"
             [value]="filter()"
             (input)="filter.set(value($event))"
             placeholder="e.g. claude, gpt, 70b"
           />
-        </mat-form-field>
+        </li-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Model</mat-label>
-          <mat-select [value]="connection().model" (valueChange)="patch({ model: $event })">
-            <!-- Without this the closed field shows the option's whole text,
-                 id and all: mat-select reads the option's textContent. -->
-            <mat-select-trigger>{{ selectedModelLabel() }}</mat-select-trigger>
+        <li-field label="Model">
+          <select (change)="patch({ model: value($event) })">
             @for (group of groups(); track group.label) {
-              <mat-optgroup [label]="group.label">
+              <optgroup [label]="group.label">
                 @for (model of group.models; track model.id) {
-                  <mat-option [value]="model.id">
+                  <option [value]="model.id" [selected]="model.id === connection().model">
                     {{ model.name ?? model.id }}
-                    @if (model.name) {
-                      <span class="mono">{{ model.id }}</span>
-                    }
-                  </mat-option>
+                  </option>
                 }
-              </mat-optgroup>
+              </optgroup>
             }
-          </mat-select>
-          <mat-hint>{{ matchCount() }} of {{ connection().modelsCache.length }} models</mat-hint>
-        </mat-form-field>
+          </select>
+          <!-- An option is one line of text and no more, so the id behind the
+               name is said here instead — and it is the string that goes in
+               the request, which is the one thing about this choice worth
+               being certain of. -->
+          <span class="li-hint">
+            {{ matchCount() }} of {{ connection().modelsCache.length }} models
+            @if (connection().model) {
+              · <span class="mono">{{ connection().model }}</span>
+            }
+          </span>
+        </li-field>
       }
 
       <div class="row">
@@ -222,11 +217,18 @@ export interface ConnectionData {
     mat-dialog-content {
       display: flex;
       flex-direction: column;
-      gap: var(--li-space-xs);
+      gap: var(--li-space-md);
     }
 
-    mat-form-field {
-      width: 100%;
+    /* The key and the eye that shows it, on one line inside the field. */
+    .key {
+      display: flex;
+      align-items: center;
+      gap: var(--li-space-2xs);
+    }
+
+    .key input {
+      min-width: 0;
     }
 
     .row {
@@ -238,7 +240,7 @@ export interface ConnectionData {
     }
 
     /* The "get a key" link lives in a hint, and hints inherit a muted grey. */
-    mat-hint a {
+    .li-hint a {
       color: var(--li-accent);
       white-space: nowrap;
     }
@@ -258,11 +260,8 @@ export interface ConnectionData {
     }
 
     .mono {
-      display: block;
       font-family: var(--li-mono);
       font-size: var(--li-text-xs);
-      color: var(--li-muted);
-      line-height: 1.2;
     }
   `,
 })
@@ -296,12 +295,6 @@ export class ConnectionDialog {
 
   protected readonly matchCount = computed(() => this.matches().length);
 
-  /** The chosen model's friendly name; the id belongs in the list, not here. */
-  protected readonly selectedModelLabel = computed(() => {
-    const id = this.connection().model;
-    return this.connection().modelsCache.find((m) => m.id === id)?.name ?? id;
-  });
-
   /** Grouped by `owned_by`, which is how these lists are actually read. */
   protected readonly groups = computed<ModelGroup[]>(() => {
     const byOwner = new Map<string, ModelInfo[]>();
@@ -323,7 +316,7 @@ export class ConnectionDialog {
   });
 
   protected value(event: Event): string {
-    return (event.target as HTMLInputElement).value;
+    return (event.target as HTMLInputElement | HTMLSelectElement).value;
   }
 
   protected patch(patch: Parameters<SettingsStore['patchConnection']>[0]): void {

@@ -14,21 +14,16 @@ test.describe('choosing a provider', () => {
     await expect(page.getByRole('dialog').getByText('Connection')).toBeVisible();
   });
 
-  /**
-   * The select's panel is an overlay with a backdrop of its own, so the next
-   * click has to wait for it to be gone or it lands on the backdrop instead.
-   */
-  async function choose(page: import('@playwright/test').Page, name: string | RegExp) {
-    await page.getByRole('dialog').getByRole('combobox', { name: 'Provider' }).click();
-    await page.getByRole('option', { name, exact: typeof name === 'string' }).click();
-    await expect(page.getByRole('option')).toHaveCount(0);
+  /** By id rather than by name: it is what the sheet stores, and it is short. */
+  async function choose(page: import('@playwright/test').Page, provider: string) {
+    await page.getByRole('dialog').getByLabel('Provider').selectOption(provider);
   }
 
   test('swaps the URL and the place to get a key', async ({ page }) => {
     const dialog = page.getByRole('dialog');
     const url = dialog.getByLabel('Endpoint URL');
 
-    await choose(page, 'OpenRouter');
+    await choose(page, 'openrouter');
     await expect(url).toHaveValue('https://openrouter.ai/api/v1');
     await expect(url).toHaveJSProperty('readOnly', true);
     await expect(dialog.getByRole('link', { name: /Get a key from OpenRouter/ })).toHaveAttribute(
@@ -36,7 +31,7 @@ test.describe('choosing a provider', () => {
       'https://openrouter.ai/keys',
     );
 
-    await choose(page, 'Anthropic');
+    await choose(page, 'anthropic');
     await expect(url).toHaveValue('https://api.anthropic.com/v1');
     await expect(dialog.getByRole('link', { name: /Get a key from Anthropic/ })).toBeVisible();
 
@@ -48,11 +43,11 @@ test.describe('choosing a provider', () => {
     const dialog = page.getByRole('dialog');
     const url = dialog.getByLabel('Endpoint URL');
 
-    await choose(page, 'Ollama');
+    await choose(page, 'ollama');
     await expect(url).toHaveValue('http://localhost:11434/v1');
     await expect(dialog.getByText('This one works without a key')).toBeVisible();
 
-    await choose(page, /^Custom/);
+    await choose(page, 'custom');
     await expect(url).toHaveJSProperty('readOnly', false);
     await url.fill(FAKE_API_URL);
     await dialog.getByRole('button', { name: 'Fetch models' }).click();
@@ -62,14 +57,13 @@ test.describe('choosing a provider', () => {
   test('gives Perplexity its built-in list instead of a Fetch button', async ({ page }) => {
     const dialog = page.getByRole('dialog');
 
-    await choose(page, 'Perplexity');
+    await choose(page, 'perplexity');
     await expect(dialog.getByRole('button', { name: /Fetch models|Refresh models/ })).toHaveCount(
       0,
     );
 
-    await dialog.getByRole('combobox', { name: 'Model' }).click();
-    await page.getByRole('option', { name: 'Sonar Pro' }).click();
-    await expect(dialog.getByRole('combobox', { name: 'Model' })).toContainText('Sonar Pro');
+    await dialog.getByLabel('Model', { exact: true }).selectOption('sonar-pro');
+    await expect(dialog.getByLabel('Model', { exact: true })).toContainText('Sonar Pro');
   });
 });
 

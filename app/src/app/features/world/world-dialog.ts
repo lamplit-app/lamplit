@@ -1,10 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -14,6 +11,7 @@ import { chapterTitle } from '../../core/prompt-builder';
 import { ChapterStore } from '../../store/chapter-store';
 import { StoryStore } from '../../store/story-store';
 import { EditorField } from '../../shared/editor-field';
+import { Field } from '../../shared/field';
 
 const CATEGORIES: { value: LoreCategory; label: string; plural: string }[] = [
   { value: 'fact', label: 'Fact', plural: 'Facts' },
@@ -33,14 +31,12 @@ interface Group {
   imports: [
     MatButtonModule,
     MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatMenuModule,
-    MatSelectModule,
     MatSlideToggleModule,
     MatExpansionModule,
     MatTabsModule,
     EditorField,
+    Field,
   ],
   template: `
     <h2 mat-dialog-title>The world of {{ story().title }}</h2>
@@ -123,15 +119,14 @@ interface Group {
         <mat-tab label="Lore">
           <div class="tab">
             <div class="lore-head">
-              <mat-form-field appearance="outline" class="search">
-                <mat-label>Search</mat-label>
+              <li-field label="Search" class="search">
                 <input
-                  matInput
+                  type="text"
                   [value]="filter()"
                   (input)="filter.set(value($event))"
                   placeholder="title or key"
                 />
-              </mat-form-field>
+              </li-field>
               <button matButton="outlined" [matMenuTriggerFor]="addMenu">Add an entry</button>
               <mat-menu #addMenu="matMenu">
                 @for (category of categories; track category.value) {
@@ -182,38 +177,40 @@ interface Group {
 
                   @if (isOpen(entry.id)) {
                     <header>
-                      <mat-form-field appearance="outline" class="title-field">
-                        <mat-label>Title</mat-label>
+                      <li-field label="Title" class="title-field">
                         <input
-                          matInput
+                          type="text"
                           [value]="entry.title"
                           (change)="stories.patchLore(entry.id, { title: value($event) })"
                         />
-                      </mat-form-field>
-                      <mat-form-field appearance="outline" class="category-field">
-                        <mat-label>Kind</mat-label>
-                        <mat-select
-                          [value]="entry.category"
-                          (valueChange)="stories.patchLore(entry.id, { category: $event })"
+                      </li-field>
+                      <li-field label="Kind" class="category-field">
+                        <select
+                          (change)="
+                            stories.patchLore(entry.id, { category: category(value($event)) })
+                          "
                         >
-                          @for (category of categories; track category.value) {
-                            <mat-option [value]="category.value">{{ category.label }}</mat-option>
+                          @for (option of categories; track option.value) {
+                            <option
+                              [value]="option.value"
+                              [selected]="option.value === entry.category"
+                            >
+                              {{ option.label }}
+                            </option>
                           }
-                        </mat-select>
-                      </mat-form-field>
+                        </select>
+                      </li-field>
                     </header>
 
-                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                      <mat-label>Keys</mat-label>
+                    <li-field label="Keys" hint="Comma separated. Any of them fires the entry.">
                       <input
-                        matInput
+                        type="text"
                         [value]="entry.keys.join(', ')"
                         [disabled]="entry.alwaysOn"
                         (change)="setKeys(entry, value($event))"
                         placeholder="tomas, keeper, old man"
                       />
-                      <mat-hint>Comma separated. Any of them fires the entry.</mat-hint>
-                    </mat-form-field>
+                    </li-field>
 
                     <li-editor-field
                       label="What is true (required)"
@@ -260,18 +257,19 @@ interface Group {
             }
 
             <footer class="scan">
-              <mat-form-field appearance="outline" class="depth">
-                <mat-label>Scan depth</mat-label>
+              <li-field
+                label="Scan depth"
+                class="depth"
+                hint="Recent messages searched, besides the scene and your draft."
+              >
                 <input
-                  matInput
                   type="number"
                   min="0"
                   max="50"
                   [value]="story().world.scan.depth"
                   (change)="setDepth(value($event))"
                 />
-                <mat-hint>Recent messages searched, besides the scene and your draft.</mat-hint>
-              </mat-form-field>
+              </li-field>
               <mat-slide-toggle
                 [checked]="story().world.scan.caseSensitive"
                 (change)="stories.patchScan({ caseSensitive: $event.checked })"
@@ -351,15 +349,16 @@ interface Group {
       color: var(--li-muted);
     }
 
+    /* The button sits on the box rather than on the field, which is a label
+       taller than the button is. */
     .lore-head {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       gap: var(--li-space-md);
     }
 
     .search {
       flex: 1;
-      margin-bottom: -1.25em;
     }
 
     .entry {
@@ -461,24 +460,21 @@ interface Group {
       color: var(--li-danger);
     }
 
+    /* The two of them are one row of two fields, and a field is a label over
+       a box, so they line up at the top rather than down the middle. */
     .entry header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: var(--li-space-sm);
     }
 
     .title-field {
       flex: 1;
-      margin-bottom: -1.25em;
     }
 
     .category-field {
+      flex: none;
       width: 9rem;
-      margin-bottom: -1.25em;
-    }
-
-    mat-form-field {
-      width: 100%;
     }
 
     .switches {
@@ -588,7 +584,12 @@ export class WorldDialog {
   }
 
   protected value(event: Event): string {
-    return (event.target as HTMLInputElement).value;
+    return (event.target as HTMLInputElement | HTMLSelectElement).value;
+  }
+
+  /** A select hands back a string; the four kinds are what it can be. */
+  protected category(value: string): LoreCategory {
+    return value as LoreCategory;
   }
 
   protected setKeys(entry: LoreEntry, raw: string): void {

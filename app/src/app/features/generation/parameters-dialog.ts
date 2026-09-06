@@ -2,14 +2,19 @@ import { Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { PARAM_RANGES } from '../../core/defaults';
 import { ReasoningEffort } from '../../core/models';
 import { formatTokens } from '../../core/tokens';
 import { SettingsStore } from '../../store/settings-store';
+import { Field } from '../../shared/field';
 import { ParamRow } from '../../shared/param-row';
+
+const EFFORTS: { value: ReasoningEffort; label: string }[] = [
+  { value: 'none', label: 'Not sent' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+];
 
 /**
  * Everything that shapes a reply, in one place. The two budgets sit together
@@ -17,15 +22,7 @@ import { ParamRow } from '../../shared/param-row';
  */
 @Component({
   selector: 'li-parameters-dialog',
-  imports: [
-    MatButtonModule,
-    MatDialogModule,
-    MatExpansionModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    ParamRow,
-  ],
+  imports: [MatButtonModule, MatDialogModule, MatExpansionModule, Field, ParamRow],
   template: `
     <h2 mat-dialog-title>Parameters</h2>
 
@@ -90,16 +87,14 @@ import { ParamRow } from '../../shared/param-row';
         />
       </div>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Stop sequences</mat-label>
+      <li-field label="Stop sequences" hint="Generation stops the moment one of these appears.">
         <textarea
-          matInput
+          style="--rows-min: 2; --rows-max: 8"
           [value]="stopText()"
           (change)="setStop(value($event))"
           placeholder="One per line"
         ></textarea>
-        <mat-hint>Generation stops the moment one of these appears.</mat-hint>
-      </mat-form-field>
+      </li-field>
 
       <mat-expansion-panel class="advanced">
         <mat-expansion-panel-header>
@@ -152,30 +147,27 @@ import { ParamRow } from '../../shared/param-row';
         </div>
 
         <div class="pair">
-          <mat-form-field appearance="outline">
-            <mat-label>Reasoning effort</mat-label>
-            <mat-select
-              [value]="params().reasoningEffort ?? 'none'"
-              (valueChange)="setReasoning($event)"
-            >
-              <mat-option value="none">Not sent</mat-option>
-              <mat-option value="low">Low</mat-option>
-              <mat-option value="medium">Medium</mat-option>
-              <mat-option value="high">High</mat-option>
-            </mat-select>
-          </mat-form-field>
+          <li-field label="Reasoning effort">
+            <select (change)="setReasoning(effort(value($event)))">
+              @for (option of efforts; track option.value) {
+                <option
+                  [value]="option.value"
+                  [selected]="option.value === (params().reasoningEffort ?? 'none')"
+                >
+                  {{ option.label }}
+                </option>
+              }
+            </select>
+          </li-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Seed</mat-label>
+          <li-field label="Seed" class="seed" hint="Same seed and prompt, same reply.">
             <input
-              matInput
               type="number"
               [value]="params().seed ?? ''"
               (change)="setSeed(value($event))"
               placeholder="random"
             />
-            <mat-hint>Same seed and prompt, same reply.</mat-hint>
-          </mat-form-field>
+          </li-field>
         </div>
       </mat-expansion-panel>
     </mat-dialog-content>
@@ -193,15 +185,6 @@ import { ParamRow } from '../../shared/param-row';
       max-height: var(--li-sheet-height);
     }
 
-    /* The one Material text box, sized to its lines like the plain ones: two
-       rows empty, eight at most, and scrolling past that. */
-    textarea[matInput] {
-      field-sizing: content;
-      min-height: 2lh;
-      max-height: 8lh;
-      resize: none;
-    }
-
     /* Two columns where there is room: the whole panel then fits on screen. */
     .grid {
       display: grid;
@@ -215,10 +198,6 @@ import { ParamRow } from '../../shared/param-row';
       border: 1px solid var(--li-border);
       border-radius: var(--li-radius-lg);
       background: color-mix(in srgb, var(--li-accent) 6%, transparent);
-    }
-
-    mat-form-field {
-      width: 100%;
     }
 
     .advanced {
@@ -240,12 +219,20 @@ import { ParamRow } from '../../shared/param-row';
       gap: var(--li-space-md);
       margin-top: var(--li-space-sm);
     }
+
+    /* Half the row each: a field is as wide as it is given, and neither of
+       these two has a width of its own to fall back on. */
+    .pair > * {
+      flex: 1;
+      min-width: 0;
+    }
   `,
 })
 export class ParametersDialog {
   protected readonly settings = inject(SettingsStore);
   protected readonly params = this.settings.generation;
   protected readonly ranges = PARAM_RANGES;
+  protected readonly efforts = EFFORTS;
 
   protected readonly stopText = computed(() => this.params().stop.join('\n'));
 
@@ -278,7 +265,7 @@ export class ParametersDialog {
   });
 
   protected value(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLTextAreaElement).value;
+    return (event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
   }
 
   protected patch(patch: Parameters<SettingsStore['patchGeneration']>[0]): void {
@@ -291,6 +278,11 @@ export class ParametersDialog {
       .map((line) => line.trim())
       .filter(Boolean);
     this.patch({ stop });
+  }
+
+  /** A select hands back a string; these four are the whole of what it can be. */
+  protected effort(value: string): ReasoningEffort {
+    return value as ReasoningEffort;
   }
 
   protected setReasoning(effort: ReasoningEffort): void {

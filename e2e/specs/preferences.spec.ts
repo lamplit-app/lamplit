@@ -128,8 +128,7 @@ test.describe('preferences', () => {
 
     await openPreferences(page);
     await page.getByRole('button', { name: 'Colours' }).first().click();
-    await page.getByRole('combobox', { name: 'Reading font' }).click();
-    await page.getByRole('option', { name: 'Monospace' }).click();
+    await page.getByLabel('Reading font').selectOption('mono');
     await page.getByRole('button', { name: 'Done' }).click();
     await expect(page.getByRole('heading', { name: 'Preferences' })).toBeHidden();
 

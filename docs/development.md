@@ -163,8 +163,10 @@ A few things are worth knowing before reading it:
 - **No SDK, no HTTP client, no state library.** `fetch`, a hand-written SSE parser, and
   `AbortController` for Stop.
 - **Angular 21, zoneless.** Signals throughout, the new control flow, `inject()`, standalone
-  components. Material is used for dialogs, menus, sliders, selects and tooltips; everything that
-  has to look good — the chat itself — is hand-written.
+  components. Material is used for dialogs, menus, tabs, sliders, switches and tooltips; everything
+  that has to look good — the chat itself, and every field in it — is hand-written. A field is a
+  label above a box (`li-field`, or `li-editor-field` where the box holds a paragraph), and the
+  frame round the box is one rule in `styles.scss` over `input`, `textarea` and `select` alike.
 
 ## Conventions
 

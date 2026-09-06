@@ -30,7 +30,7 @@ let nextId = 0;
     <div class="field">
       <span class="head">
         @if (label()) {
-          <label class="label" [attr.for]="id">{{ label() }}</label>
+          <label class="li-field-label" [attr.for]="id">{{ label() }}</label>
         }
         @if (dirty() && !readOnly()) {
           <button
@@ -73,17 +73,15 @@ let nextId = 0;
       gap: var(--li-space-xs);
     }
 
+    /* The row is held open so that the save mark appearing does not move the
+       box, and the name sits at the foot of it — the same step above the box
+       that li-field puts its own label, which is the point of both. */
     .head {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: space-between;
       gap: var(--li-space-lg);
       min-height: 1.4rem;
-    }
-
-    .label {
-      font-size: var(--li-text-sm);
-      color: var(--li-ink);
     }
 
     .save {

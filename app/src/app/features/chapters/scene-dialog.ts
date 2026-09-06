@@ -1,12 +1,11 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { ChapterStore } from '../../store/chapter-store';
 import { StoryStore } from '../../store/story-store';
 import { TOKEN_ESTIMATOR, formatTokens } from '../../core/tokens';
 import { countWords } from '../../shared/editor-field';
+import { Field } from '../../shared/field';
 import { firstLine } from '../../core/prompt-builder';
 import { buildPalettePrompt, paletteLabel } from '../../core/page-palettes';
 import { TextValue } from '../../shared/text-value';
@@ -26,7 +25,7 @@ export interface SceneDialogData {
  */
 @Component({
   selector: 'li-scene-dialog',
-  imports: [MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, TextValue],
+  imports: [MatButtonModule, MatDialogModule, Field, TextValue],
   template: `
     <h2 mat-dialog-title>Chapter {{ chapter().number }} — the scene</h2>
 
@@ -36,25 +35,28 @@ export interface SceneDialogData {
         three pages, whatever the chapter needs — it goes to the model exactly as written.
       </p>
 
-      <textarea
-        class="scene serif"
-        cdkFocusInitial
-        style="--rows-min: 4; --rows-max: 22"
-        [liText]="scene()"
-        (input)="scene.set(text($event))"
-        placeholder="A lighthouse gallery. Dusk, the first night of autumn. Mara is alone, and the lamp is already lit."
-      ></textarea>
+      <li-field label="The scene">
+        <textarea
+          class="scene serif"
+          cdkFocusInitial
+          style="--rows-min: 4; --rows-max: 22"
+          [liText]="scene()"
+          (input)="scene.set(text($event))"
+          placeholder="A lighthouse gallery. Dusk, the first night of autumn. Mara is alone, and the lamp is already lit."
+        ></textarea>
+      </li-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Chapter title (optional)</mat-label>
+      <li-field
+        label="Chapter title (optional)"
+        hint="Left blank, the chapter goes by the scene's first line."
+      >
         <input
-          matInput
+          type="text"
           [value]="title()"
           (input)="title.set(text($event))"
           [placeholder]="fallbackTitle()"
         />
-        <mat-hint>Left blank, the chapter goes by the scene's first line.</mat-hint>
-      </mat-form-field>
+      </li-field>
     </mat-dialog-content>
 
     <mat-dialog-actions>
@@ -74,15 +76,11 @@ export interface SceneDialogData {
     mat-dialog-content {
       display: flex;
       flex-direction: column;
-      gap: var(--li-space-sm);
+      gap: var(--li-space-md);
     }
 
     .lead {
       margin: 0 0 var(--li-space-2xs);
-    }
-
-    mat-form-field {
-      width: 100%;
     }
 
     .cost {

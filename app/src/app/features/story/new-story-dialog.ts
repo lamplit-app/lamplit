@@ -1,9 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { StoryMode } from '../../core/models';
+import { Field } from '../../shared/field';
 import { TextValue } from '../../shared/text-value';
 
 export interface StorySetup {
@@ -26,23 +25,22 @@ export interface NewStoryData extends StorySetup {
  */
 @Component({
   selector: 'li-new-story-dialog',
-  imports: [MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, TextValue],
+  imports: [MatButtonModule, MatDialogModule, Field, TextValue],
   template: `
     <h2 mat-dialog-title>{{ data.heading }}</h2>
 
     <mat-dialog-content>
-      <mat-form-field appearance="outline">
-        <mat-label>Title</mat-label>
+      <li-field label="Title">
         <input
-          matInput
+          type="text"
           cdkFocusInitial
           [value]="title()"
           (input)="title.set(text($event))"
           placeholder="Untitled story"
         />
-      </mat-form-field>
+      </li-field>
 
-      <span class="label">Who tells it</span>
+      <span class="li-label group">Who tells it</span>
       <div class="li-choices">
         <button
           type="button"
@@ -68,18 +66,19 @@ export interface NewStoryData extends StorySetup {
         </button>
       </div>
 
-      <span class="label">Who you play</span>
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput [value]="name()" (input)="name.set(text($event))" placeholder="Mara" />
-      </mat-form-field>
+      <span class="li-label group">Who you play</span>
+      <li-field label="Name">
+        <input type="text" [value]="name()" (input)="name.set(text($event))" placeholder="Mara" />
+      </li-field>
 
-      <textarea
-        style="--rows-min: 3; --rows-max: 12"
-        [liText]="description()"
-        (input)="description.set(text($event))"
-        placeholder="A marine biologist, thirty-one, back on the island after nine years."
-      ></textarea>
+      <li-field label="Description">
+        <textarea
+          style="--rows-min: 3; --rows-max: 12"
+          [liText]="description()"
+          (input)="description.set(text($event))"
+          placeholder="A marine biologist, thirty-one, back on the island after nine years."
+        ></textarea>
+      </li-field>
 
       <p class="li-hint">
         All of it can be changed later in Story, and in Role-play you add the cast there too. Next
@@ -96,17 +95,18 @@ export interface NewStoryData extends StorySetup {
     mat-dialog-content {
       display: flex;
       flex-direction: column;
-      gap: var(--li-space-xs);
+      gap: var(--li-space-md);
     }
 
-    mat-form-field {
-      width: 100%;
-    }
-
-    .label {
-      margin-top: var(--li-space-xs);
-      font-size: var(--li-text-sm);
-      color: var(--li-ink);
+    /* Naming the pair below it rather than a box, so it is set as the app sets
+       the name of a block — otherwise it is the same word in the same size as
+       the field labels under it and says nothing about what it covers. */
+    .group {
+      margin-top: var(--li-space-2xs);
+      /* Standing to what it names as close as a field label stands to its box,
+         which is a step tighter than the sheet's own gap. */
+      margin-bottom: calc(var(--li-space-xs) - var(--li-space-md));
+      color: var(--li-muted);
     }
   `,
 })

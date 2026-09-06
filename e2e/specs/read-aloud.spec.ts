@@ -63,8 +63,7 @@ test('the voice and the speed are the ones chosen in Preferences', async ({ page
   await waitForTurn(page);
 
   await openPreferences(page);
-  await page.getByRole('combobox', { name: 'Voice' }).click();
-  await page.getByRole('option', { name: /Autre Voix/ }).click();
+  await page.getByLabel('Voice').selectOption('Autre Voix');
   await page.getByRole('slider', { name: 'Reading speed' }).fill('1.4');
   await closePreferences(page);
 

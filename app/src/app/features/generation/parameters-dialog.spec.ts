@@ -43,18 +43,19 @@ describe('ParametersDialog', () => {
   }
 
   function stopBox(): HTMLTextAreaElement {
-    return (fixture.nativeElement as HTMLElement).querySelector('textarea[matinput]')!;
+    return (fixture.nativeElement as HTMLElement).querySelector('textarea')!;
   }
 
+  /** By its field, since every ParamRow on the sheet has a number box too. */
   function seedBox(): HTMLInputElement {
-    return (fixture.nativeElement as HTMLElement).querySelector('input[matinput][type="number"]')!;
+    return (fixture.nativeElement as HTMLElement).querySelector('.seed input')!;
   }
 
   /** A named row of the sheet, which is a ParamRow with its own two controls. */
   function row(label: string): Element {
     const host = fixture.nativeElement as HTMLElement;
     const found = [...host.querySelectorAll('li-param-row')].find(
-      (candidate) => candidate.querySelector('.label')?.textContent.trim() === label,
+      (candidate) => candidate.querySelector('.li-field-label')?.textContent.trim() === label,
     );
     if (!found) throw new Error(`no row called ${label}`);
     return found;

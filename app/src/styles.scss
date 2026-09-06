@@ -411,9 +411,6 @@ html {
   --mat-dialog-content-padding: var(--li-space-lg) var(--li-space-xl);
   --mat-dialog-with-actions-content-padding: var(--li-space-lg) var(--li-space-xl) 0;
 
-  // A hint under a Material field is a hint, in the size `.li-hint` is set in.
-  --mat-form-field-subscript-text-size: var(--li-text-sm);
-
   // The panels that fold Advanced away sit on the sheet rather than on a card
   // of their own; the two that want an edge draw their own border.
   --mat-expansion-container-background-color: transparent;
@@ -458,14 +455,6 @@ html {
   // colour behind it is how a button ends up looking pressed when it is not.
   --mat-button-text-container-shape: var(--li-radius-md);
   --mat-button-text-state-layer-color: var(--li-ink);
-}
-
-// The subscript wrapper has no colour of its own to set, so it inherits the
-// field's — the ink the value is typed in, which is far too loud for a note
-// about it. The error inside it keeps its own colour, which is the point of
-// setting this on the wrapper rather than on the hint.
-.mat-mdc-form-field-subscript-wrapper {
-  color: var(--li-muted);
 }
 
 * {
@@ -713,49 +702,31 @@ app-root {
 }
 
 // ---------------------------------------------------------------------------
-// Text fields. Every multi-line box the app draws itself: the scene, the lore,
-// a persona, the composer, a message being edited.
+// The box. Every place the app takes a word from the writer.
 // ---------------------------------------------------------------------------
 //
-// A box sizes itself to its text. `field-sizing` grows it on the line that
-// needs it and shrinks it when text is deleted, whether the text was typed or
-// arrived from code, with nothing measuring anything. Its bounds come in as
-// row counts on the element, `--rows-min` and `--rows-max`, and are converted
-// to heights in `lh`, the line-height the box is actually set in, so that
-// "eight rows" is eight lines whether the face is the serif at reading size or
-// the sans of a note.
+// One frame over the three elements that hold text, because a name typed on a
+// line, the paragraph under it and the kind chosen beside it are the same act
+// and used to be drawn three different ways: the app's own box, Material's
+// notched outline, and whatever square the operating system draws a select in.
+// The paper, the hairline, the corner and the accent that says "focused" are
+// declared once, here, and what is left in the rules below is only what the
+// element itself is — a textarea grows with its text, a select has to say that
+// it opens.
 //
-// The heights are border-box like everything else here, so the frame around
-// the text is counted in: `--field-pad-y` and `--field-border` are the vertical
-// padding and the border, written once and read back into the arithmetic. A
-// variant that draws a different frame (the composer, bare inside its own box)
-// restates them and the heights follow.
-//
-// A box never gives its height up to a flex column, either: in a dialog that
-// has run out of room the column scrolls, and the box stays the size of its
-// text. Without this a textarea, being a scroll container, is the first thing a
-// flex column squashes, and it is drawn short of what it asked for.
-//
-// A browser without `field-sizing` (Firefox before 152, Safari before 26.2)
-// gets a box `--rows-min` tall that scrolls inside itself. That is the whole of
-// the fallback.
-//
-// `:where()` keeps all of this at zero specificity, so a component's own rule
-// for its textarea wins by being one at all, and a `.story-prose` box keeps its
-// prose. Material's own fields do their own arithmetic and are left alone.
-textarea:where(:not(.mat-mdc-input-element)) {
-  --rows-min: 2;
-  --rows-max: 12;
+// A bare type selector each, so a component's own rule for one of its boxes
+// wins by being a class at all. The kinds of input are spelled out rather than
+// excluded, because the rest of what the app draws with an `<input>` — the
+// tick, the colour swatches, the slider thumbs — are not boxes of text and
+// want none of this.
+textarea,
+input:where(:not([type]), [type='text'], [type='password'], [type='search'], [type='number']),
+select {
   --field-pad-y: var(--li-space-sm);
   --field-pad-x: var(--li-space-md);
   --field-border: 1px;
 
-  field-sizing: content;
-  display: block;
   width: 100%;
-  min-height: calc(var(--rows-min) * 1lh + 2 * (var(--field-pad-y) + var(--field-border)));
-  max-height: calc(var(--rows-max) * 1lh + 2 * (var(--field-pad-y) + var(--field-border)));
-  flex-shrink: 0;
   padding: var(--field-pad-y) var(--field-pad-x);
   border: var(--field-border) solid var(--li-border);
   border-radius: var(--li-radius-md);
@@ -764,7 +735,6 @@ textarea:where(:not(.mat-mdc-input-element)) {
   font: inherit;
   font-size: var(--li-text-md);
   line-height: 1.55;
-  resize: none;
 
   &::placeholder {
     color: var(--li-muted);
@@ -774,6 +744,68 @@ textarea:where(:not(.mat-mdc-input-element)) {
     outline: none;
     border-color: color-mix(in srgb, var(--li-accent) 65%, var(--li-border));
   }
+
+  // Shown but not to be answered: the keys of an entry that is always on, and
+  // fires on nothing. The hairline goes quiet along with the text, so an empty
+  // one still reads as closed rather than as waiting.
+  &:disabled {
+    border-color: color-mix(in srgb, var(--li-border) 55%, transparent);
+    color: var(--li-muted);
+  }
+}
+
+// A box that holds more than one line sizes itself to its text. `field-sizing`
+// grows it on the line that needs it and shrinks it when text is deleted,
+// whether the text was typed or arrived from code, with nothing measuring
+// anything. Its bounds come in as row counts on the element, `--rows-min` and
+// `--rows-max`, and are converted to heights in `lh`, the line-height the box
+// is actually set in, so that "eight rows" is eight lines whether the face is
+// the serif at reading size or the sans of a note.
+//
+// The heights are border-box like everything else here, so the frame around
+// the text is counted in: they read back `--field-pad-y` and `--field-border`
+// from the rule above, which is where the frame is declared. A variant that
+// draws a different frame (the composer, bare inside its own box) restates
+// them and the heights follow.
+//
+// A box never gives its height up to a flex column, either: in a dialog that
+// has run out of room the column scrolls, and the box stays the size of its
+// text. Without this a textarea, being a scroll container, is the first thing a
+// flex column squashes, and it is drawn short of what it asked for.
+//
+// A browser without `field-sizing` (Firefox before 152, Safari before 26.2)
+// gets a box `--rows-min` tall that scrolls inside itself. That is the whole of
+// the fallback.
+textarea {
+  --rows-min: 2;
+  --rows-max: 12;
+
+  field-sizing: content;
+  display: block;
+  min-height: calc(var(--rows-min) * 1lh + 2 * (var(--field-pad-y) + var(--field-border)));
+  max-height: calc(var(--rows-max) * 1lh + 2 * (var(--field-pad-y) + var(--field-border)));
+  flex-shrink: 0;
+  resize: none;
+}
+
+// The one thing a select needs that a box of text does not: something that
+// says it opens. `appearance: none` is what takes the operating system's own
+// control away, which is the whole point of the rule — that control is the one
+// thing on a sheet the app cannot draw — and it takes the arrow with it. So
+// the arrow is two gradients over the paper: a caret in the colour a note is
+// set in, costing no request and no glyph.
+select {
+  appearance: none;
+  padding-right: calc(2 * var(--field-pad-x) + 0.3rem);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--li-muted) 50%),
+    linear-gradient(135deg, var(--li-muted) 50%, transparent 50%);
+  background-repeat: no-repeat;
+  background-position:
+    right calc(var(--field-pad-x) + 0.3rem) center,
+    right var(--field-pad-x) center;
+  background-size: 0.3rem 0.3rem;
+  cursor: pointer;
 }
 
 // The four boxes that hold the story rather than a note about it: the scene in
@@ -788,9 +820,9 @@ textarea:where(:not(.mat-mdc-input-element)) {
 // `--li-reading-family`: choosing mono to read in is a choice about the page,
 // and nothing has asked for a mono scene box.
 //
-// Same specificity as the block above — a type selector each, the rest inside
-// `:where()` — so this wins by coming after it, which is the only way one of
-// these two should ever beat the other.
+// Same specificity as the frame it varies — one type selector each, the rest
+// inside `:where()` — so this wins by coming after it, which is the only way
+// one of the two should ever beat the other.
 textarea:where(.serif) {
   font-family: var(--li-serif);
   font-size: var(--li-reading-size);
@@ -930,6 +962,19 @@ input[type='checkbox'] {
   color: var(--li-muted);
   font-size: var(--li-text-sm);
   line-height: 1.5;
+}
+
+// Naming a box: the word above it. The size a note is set in and the ink a
+// word is typed in, which is what tells it from the note under the box and
+// from the words in it.
+//
+// It is worn by `li-field`, by the editor field's own head — which has a save
+// mark to fit on the same line, so it draws the row itself — and by a
+// parameter row, whose name has a switch beside it for the same reason. One
+// word in one size above one frame, whichever of the three is drawing it.
+.li-field-label {
+  font-size: var(--li-text-sm);
+  color: var(--li-ink);
 }
 
 // ---------------------------------------------------------------------------

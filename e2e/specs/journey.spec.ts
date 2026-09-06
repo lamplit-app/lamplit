@@ -94,15 +94,13 @@ test.describe('a story from nothing, told by a narrator', () => {
 
   test('2 · takes an endpoint, lists its models, and proves the round trip', async () => {
     const sheet = page.getByRole('dialog');
-    await sheet.getByRole('combobox', { name: 'Provider' }).click();
-    await page.getByRole('option', { name: /Custom/ }).click();
+    await sheet.getByLabel('Provider').selectOption('custom');
     await sheet.getByLabel('Endpoint URL').fill(FAKE_API_URL);
 
     await sheet.getByRole('button', { name: 'Fetch models' }).click();
     await expect(sheet.getByText('3 models', { exact: true })).toBeVisible();
 
-    await sheet.getByRole('combobox', { name: 'Model' }).click();
-    await page.getByRole('option', { name: /Storyteller Large/ }).click();
+    await sheet.getByLabel('Model', { exact: true }).selectOption('fake/storyteller-large');
 
     await sheet.getByRole('button', { name: 'Test' }).click();
     await expect(sheet.getByText(/The model answered/)).toBeVisible({ timeout: 20_000 });

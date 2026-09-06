@@ -13,7 +13,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
   template: `
     <div class="row" [class.off]="!active()">
       <div class="head">
-        <span class="label">{{ label() }}</span>
+        <span class="li-field-label">{{ label() }}</span>
         @if (optional()) {
           <mat-slide-toggle [checked]="active()" (change)="toggle($event.checked)" />
         }
@@ -27,9 +27,12 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
             (valueChange)="valueChange.emit($event)"
           />
         </mat-slider>
+        <!-- The name above the row belongs to the row; this box is a second
+             way to set the same number and had nothing naming it at all. -->
         <input
           class="exact"
           type="number"
+          [attr.aria-label]="label()"
           [min]="min()"
           [max]="max()"
           [step]="step()"
@@ -57,9 +60,10 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
       gap: var(--li-space-lg);
     }
 
-    .label {
-      font-size: var(--li-text-md);
-      color: var(--li-ink);
+    /* Off, the name goes quiet with the box: nothing on this row is being
+       sent, and the row says so before the box does. */
+    .row.off .li-field-label {
+      color: var(--li-muted);
     }
 
     .controls {
@@ -74,24 +78,13 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
       margin: 0;
     }
 
+    /* The frame is the app's, from the globals; a number beside a slider
+       wants only to be narrower than a box of words, and read from the right. */
     .exact {
       width: 5.5rem;
       padding: var(--li-space-xs) var(--li-space-sm);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-md);
-      background: var(--li-surface-raised);
-      color: var(--li-ink);
-      font: inherit;
       font-size: var(--li-text-sm);
       text-align: right;
-    }
-
-    .exact:disabled {
-      color: var(--li-muted);
-    }
-
-    .row.off .label {
-      color: var(--li-muted);
     }
 
     p.li-hint {

@@ -2,8 +2,6 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { SPEECH_RATE } from '../../core/defaults';
@@ -18,6 +16,7 @@ import {
 } from '../../core/theming';
 import { characterColour, characterColourLabel } from '../../core/character-colours';
 import { PAGE_PALETTES, paletteLabel } from '../../core/page-palettes';
+import { Field } from '../../shared/field';
 import { ChapterStore } from '../../store/chapter-store';
 import { SettingsStore } from '../../store/settings-store';
 import { ShareStore } from '../../store/share-store';
@@ -40,10 +39,9 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     MatButtonModule,
     MatDialogModule,
     MatExpansionModule,
-    MatFormFieldModule,
-    MatSelectModule,
     MatSliderModule,
     MatSlideToggleModule,
+    Field,
   ],
   template: `
     <h2 mat-dialog-title>Preferences</h2>
@@ -105,21 +103,20 @@ import { ReadAloud } from '../../shared/read-aloud.service';
                 </p>
               </div>
 
-              <mat-form-field appearance="outline" class="font" subscriptSizing="dynamic">
-                <mat-label>Voice</mat-label>
-                <mat-select
-                  [value]="ui().voice"
-                  (valueChange)="settings.patchUi({ voice: $event })"
-                >
-                  <mat-option value="">This device's default</mat-option>
+              <li-field
+                label="Voice"
+                class="font"
+                hint="The voices this machine has. Nothing is sent anywhere to read."
+              >
+                <select (change)="settings.patchUi({ voice: value($event) })">
+                  <option value="" [selected]="!ui().voice">This device's default</option>
                   @for (voice of speech.voices(); track voice.name) {
-                    <mat-option [value]="voice.name"
-                      >{{ voice.name }} · {{ voice.lang }}</mat-option
-                    >
+                    <option [value]="voice.name" [selected]="voice.name === ui().voice">
+                      {{ voice.name }} · {{ voice.lang }}
+                    </option>
                   }
-                </mat-select>
-                <mat-hint>The voices this machine has. Nothing is sent anywhere to read.</mat-hint>
-              </mat-form-field>
+                </select>
+              </li-field>
 
               <label class="size">
                 Reading speed
@@ -186,15 +183,19 @@ import { ReadAloud } from '../../shared/read-aloud.service';
             }
           </div>
 
-          <mat-form-field appearance="outline" class="font" subscriptSizing="dynamic">
-            <mat-label>Reading font</mat-label>
-            <mat-select [value]="ui().font" (valueChange)="setFont($event)">
+          <li-field
+            label="Reading font"
+            class="font"
+            hint="The story itself, not the app around it."
+          >
+            <select (change)="setFont(value($event))">
               @for (font of fonts; track font.key) {
-                <mat-option [value]="font.key">{{ font.label }}</mat-option>
+                <option [value]="font.key" [selected]="font.key === ui().font">
+                  {{ font.label }}
+                </option>
               }
-            </mat-select>
-            <mat-hint>The story itself, not the app around it.</mat-hint>
-          </mat-form-field>
+            </select>
+          </li-field>
 
           <p class="li-hint editing">
             You are editing the <strong>{{ ui().theme }}</strong> theme. Switch it above and the
@@ -971,8 +972,13 @@ export class PreferencesDialog {
     this.settings.setColour(this.ui().theme, key, colour);
   }
 
-  protected setFont(font: ReadingFont): void {
-    this.settings.patchUi({ font });
+  protected value(event: Event): string {
+    return (event.target as HTMLSelectElement).value;
+  }
+
+  /** A select hands back a string; these three are the whole of what it can be. */
+  protected setFont(font: string): void {
+    this.settings.patchUi({ font: font as ReadingFont });
   }
 
   /**

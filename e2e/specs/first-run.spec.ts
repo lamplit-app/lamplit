@@ -30,15 +30,13 @@ test('asks for the connection, then who tells it, then for a scene', async ({ pa
   await page.keyboard.press('Escape');
   await expect(dialog.getByRole('heading', { name: /somewhere to send the story/ })).toBeVisible();
 
-  await dialog.getByRole('combobox', { name: 'Provider' }).click();
-  await page.getByRole('option', { name: /Custom/ }).click();
+  await dialog.getByLabel('Provider').selectOption('custom');
   await dialog.getByLabel('Endpoint URL').fill(FAKE_API_URL);
 
   await dialog.getByRole('button', { name: 'Fetch models' }).click();
   await expect(dialog.getByText('3 models', { exact: true })).toBeVisible();
 
-  await dialog.getByRole('combobox', { name: 'Model' }).click();
-  await page.getByRole('option', { name: /Storyteller Large/ }).click();
+  await dialog.getByLabel('Model', { exact: true }).selectOption('fake/storyteller-large');
 
   await dialog.getByRole('button', { name: 'Test' }).click();
   await expect(dialog.getByText(/The model answered/)).toBeVisible({ timeout: 20_000 });

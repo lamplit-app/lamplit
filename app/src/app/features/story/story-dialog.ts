@@ -1,8 +1,6 @@
 import { Component, ElementRef, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { DEFAULT_NARRATOR_PROMPT } from '../../core/defaults';
@@ -10,6 +8,7 @@ import { ReplyLength, RoleplayCasting, StoryMode } from '../../core/models';
 import { StoryStore } from '../../store/story-store';
 import { CharacterSwatch } from '../../shared/character-swatch';
 import { EditorField } from '../../shared/editor-field';
+import { Field } from '../../shared/field';
 
 export interface StoryDialogData {
   /** Opened from a cast row in the chapter panel: scroll to it and focus it. */
@@ -22,12 +21,11 @@ export interface StoryDialogData {
   imports: [
     MatButtonModule,
     MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatSlideToggleModule,
     MatTabsModule,
     CharacterSwatch,
     EditorField,
+    Field,
   ],
   template: `
     <h2 mat-dialog-title>{{ story().title }}</h2>
@@ -115,14 +113,13 @@ export interface StoryDialogData {
                         [character]="character"
                         (pick)="stories.setCharacterColour(character.id, $event)"
                       />
-                      <mat-form-field appearance="outline" class="name-field">
-                        <mat-label>Name</mat-label>
+                      <li-field label="Name" class="name-field">
                         <input
-                          matInput
+                          type="text"
                           [value]="character.name"
                           (change)="stories.patchCharacter(character.id, { name: value($event) })"
                         />
-                      </mat-form-field>
+                      </li-field>
                       <mat-slide-toggle
                         [checked]="character.enabled"
                         (change)="stories.patchCharacter(character.id, { enabled: $event.checked })"
@@ -158,14 +155,13 @@ export interface StoryDialogData {
         <mat-tab label="Persona">
           <div class="tab">
             <p class="li-hint">Who the reader is in this story. Always sent, in both modes.</p>
-            <mat-form-field appearance="outline">
-              <mat-label>Name</mat-label>
+            <li-field label="Name">
               <input
-                matInput
+                type="text"
                 [value]="story().persona.name"
                 (change)="setPersona({ name: value($event) })"
               />
-            </mat-form-field>
+            </li-field>
             <li-editor-field
               label="Description"
               [rows]="2"
@@ -290,19 +286,17 @@ export interface StoryDialogData {
       border-radius: var(--li-radius-lg);
     }
 
+    /* A swatch, a field, a switch and a button on one line: the field is a
+       label over a box and so the tallest of them, and the rest sit on the box
+       rather than in the middle of the pair. */
     .character header {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       gap: var(--li-space-md);
     }
 
     .name-field {
       flex: 1;
-      margin-bottom: -1.25em;
-    }
-
-    mat-form-field {
-      width: 100%;
     }
 
     .lengths {
