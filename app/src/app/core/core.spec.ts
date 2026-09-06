@@ -9,6 +9,7 @@ import {
 } from './model-errors';
 import { formatTokens, heuristicEstimator } from './tokens';
 import { renderMarkdown, renderStoryHtml } from './formatting';
+import { after } from './text';
 import { GenerationParams } from './models';
 
 /** A body split at awkward places, the way a real socket delivers it. */
@@ -537,6 +538,23 @@ describe('renderStoryHtml', () => {
  * message says, and that the cutting is what makes the worst message a model
  * can write affordable at all.
  */
+describe('the last mark that fits', () => {
+  it('lands past the whole mark, not past its first character', () => {
+    // Both cutters ask this, and one of them cuts at ', '. Past the comma
+    // alone leaves the next piece starting with the space.
+    expect(after('one, two, three', ', ')).toBe(10);
+    expect('one, two, three'.slice(10)).toBe('three');
+  });
+
+  it('is 0 when the mark is not there, so the caller can fall through', () => {
+    expect(after('one two three', ', ')).toBe(0);
+  });
+
+  it('counts a single-character mark the same way', () => {
+    expect(after('one two three', ' ')).toBe(8);
+  });
+});
+
 describe('renderStoryHtml, block by block', () => {
   const plain = { bookStyleDialogue: false };
   const book = { bookStyleDialogue: true };

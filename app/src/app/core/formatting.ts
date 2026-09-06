@@ -10,6 +10,7 @@ import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import { speechRuns } from './prose-markdown';
+import { after } from './text';
 
 // A story is not a codebase: register the handful of languages a fenced block
 // here plausibly holds rather than pulling in all of highlight.js.
@@ -327,12 +328,6 @@ function piecesOf(block: string): { text: string; gap: string }[] {
   }
 
   return pieces;
-}
-
-/** One past the last `mark` in `window`, or 0 when there is none. */
-function after(window: string, mark: string): number {
-  const at = window.lastIndexOf(mark);
-  return at < 0 ? 0 : at + 1;
 }
 
 /**

@@ -14,6 +14,8 @@
  * happened to be on when the message was drawn.
  */
 
+import { after } from './text';
+
 /** A link is what it says, not where it goes: `[the light](https://…)`. */
 const LINK = /!?\[([^\]]*)\]\([^)]*\)/g;
 /** A fence line — the code inside it stays, because dropping words is worse. */
@@ -126,10 +128,4 @@ function cut(sentence: string): string[] {
   }
   if (rest.trim()) pieces.push(rest.trim());
   return pieces;
-}
-
-/** One past the last `mark` in `window`, or 0 when there is none. */
-function after(window: string, mark: string): number {
-  const at = window.lastIndexOf(mark);
-  return at < 0 ? 0 : at + mark.length;
 }
