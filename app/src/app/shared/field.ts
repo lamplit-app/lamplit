@@ -62,3 +62,22 @@ export class Field implements AfterContentInit {
     }
   }
 }
+
+/**
+ * The string a box is holding, from the event it just fired.
+ *
+ * `$event.target` is an `EventTarget` and has no `.value`, so every
+ * `(input)` and `(change)` binding in the app has to say which kind of box it
+ * came from before it can read one. The cast is the whole of the work and it
+ * is the same cast every time — an input, a textarea and a select all keep a
+ * string there — so it is written here rather than once per component, where
+ * six copies had drifted into four different unions of those three.
+ *
+ * A function rather than a pipe or a directive: it is called from a template,
+ * where a component's own members are what is in scope, so each of the six
+ * holds it as one — `protected readonly value = fieldValue;` — and the
+ * templates go on reading `value($event)`.
+ */
+export function fieldValue(event: Event): string {
+  return (event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
+}

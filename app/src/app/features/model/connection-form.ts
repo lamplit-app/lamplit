@@ -12,7 +12,7 @@ import {
 import { ModelClient } from '../../core/model-client';
 import { errorFromThrown } from '../../core/model-errors';
 import { SettingsStore } from '../../store/settings-store';
-import { Field } from '../../shared/field';
+import { Field, fieldValue } from '../../shared/field';
 
 interface ModelGroup {
   label: string;
@@ -295,9 +295,7 @@ export class ConnectionForm {
       .sort((a, b) => a.label.localeCompare(b.label));
   });
 
-  protected value(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLSelectElement).value;
-  }
+  protected readonly value = fieldValue;
 
   protected patch(patch: Parameters<SettingsStore['patchConnection']>[0]): void {
     this.settings.patchConnection(patch);

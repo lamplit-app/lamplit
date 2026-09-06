@@ -4,7 +4,7 @@ import { PARAM_RANGES } from '../../core/defaults';
 import { ReasoningEffort } from '../../core/models';
 import { formatTokens } from '../../core/tokens';
 import { SettingsStore } from '../../store/settings-store';
-import { Field } from '../../shared/field';
+import { Field, fieldValue } from '../../shared/field';
 import { ParamRow } from '../../shared/param-row';
 
 const EFFORTS: { value: ReasoningEffort; label: string }[] = [
@@ -256,9 +256,7 @@ export class ParametersForm {
     return set.length ? `${set.join(', ')} set` : 'nothing set';
   });
 
-  protected value(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
-  }
+  protected readonly value = fieldValue;
 
   protected patch(patch: Parameters<SettingsStore['patchGeneration']>[0]): void {
     this.settings.patchGeneration(patch);

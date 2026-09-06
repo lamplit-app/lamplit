@@ -64,10 +64,6 @@ interface Row {
     </mat-dialog-actions>
   `,
   styles: `
-    mat-dialog-content {
-      max-height: var(--li-sheet-height);
-    }
-
     .row {
       display: flex;
       align-items: center;

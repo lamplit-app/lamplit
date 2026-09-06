@@ -17,7 +17,7 @@ import {
 } from '../../core/theming';
 import { characterColour, characterColourLabel } from '../../core/character-colours';
 import { PAGE_PALETTES, paletteLabel } from '../../core/page-palettes';
-import { Field } from '../../shared/field';
+import { Field, fieldValue } from '../../shared/field';
 import { ChapterStore } from '../../store/chapter-store';
 import { SettingsStore } from '../../store/settings-store';
 import { ShareStore } from '../../store/share-store';
@@ -498,10 +498,6 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     </mat-dialog-actions>
   `,
   styles: `
-    mat-dialog-content {
-      max-height: var(--li-sheet-height);
-    }
-
     mat-panel-description {
       flex: none;
       color: var(--li-muted);
@@ -970,7 +966,7 @@ export class PreferencesDialog {
   });
 
   protected setCharacterColour(id: string, event: Event): void {
-    this.stories.setCharacterColourOverride(id, (event.target as HTMLInputElement).value);
+    this.stories.setCharacterColourOverride(id, fieldValue(event));
   }
 
   /** The label wraps the input, so a click on the button would open it too. */
@@ -1101,13 +1097,11 @@ export class PreferencesDialog {
   }
 
   protected setColour(key: ColourKey, event: Event): void {
-    const colour = (event.target as HTMLInputElement).value;
+    const colour = fieldValue(event);
     this.settings.setColour(this.ui().theme, key, colour);
   }
 
-  protected value(event: Event): string {
-    return (event.target as HTMLSelectElement).value;
-  }
+  protected readonly value = fieldValue;
 
   /** A select hands back a string; these three are the whole of what it can be. */
   protected setFont(font: string): void {

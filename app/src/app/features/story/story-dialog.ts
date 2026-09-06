@@ -8,7 +8,7 @@ import { ReplyLength, RoleplayCasting, StoryMode } from '../../core/models';
 import { StoryStore } from '../../store/story-store';
 import { CharacterSwatch } from '../../shared/character-swatch';
 import { EditorField } from '../../shared/editor-field';
-import { Field } from '../../shared/field';
+import { Field, fieldValue } from '../../shared/field';
 
 export interface StoryDialogData {
   /** Opened from a cast row in the chapter panel: scroll to it and focus it. */
@@ -228,10 +228,6 @@ export interface StoryDialogData {
     </mat-dialog-actions>
   `,
   styles: `
-    mat-dialog-content {
-      max-height: var(--li-sheet-height);
-    }
-
     .tab {
       display: flex;
       flex-direction: column;
@@ -356,9 +352,7 @@ export class StoryDialog {
       });
   }
 
-  protected value(event: Event): string {
-    return (event.target as HTMLInputElement).value;
-  }
+  protected readonly value = fieldValue;
 
   protected setMode(mode: StoryMode): void {
     this.stories.patch({ mode });

@@ -11,7 +11,7 @@ import { chapterTitle } from '../../core/prompt-builder';
 import { ChapterStore } from '../../store/chapter-store';
 import { StoryStore } from '../../store/story-store';
 import { EditorField } from '../../shared/editor-field';
-import { Field } from '../../shared/field';
+import { Field, fieldValue } from '../../shared/field';
 
 const CATEGORIES: { value: LoreCategory; label: string; plural: string }[] = [
   { value: 'fact', label: 'Fact', plural: 'Facts' },
@@ -295,10 +295,6 @@ interface Group {
     </mat-dialog-actions>
   `,
   styles: `
-    mat-dialog-content {
-      max-height: var(--li-sheet-height);
-    }
-
     .tab {
       display: flex;
       flex-direction: column;
@@ -550,9 +546,7 @@ export class WorldDialog {
     return chapterTitle(chapter);
   }
 
-  protected value(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLSelectElement).value;
-  }
+  protected readonly value = fieldValue;
 
   /** A select hands back a string; the four kinds are what it can be. */
   protected category(value: string): LoreCategory {

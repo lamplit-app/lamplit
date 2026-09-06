@@ -63,10 +63,6 @@ export interface ModelData {
     </mat-dialog-actions>
   `,
   styles: `
-    mat-dialog-content {
-      max-height: var(--li-sheet-height);
-    }
-
     .tab {
       display: flex;
       flex-direction: column;

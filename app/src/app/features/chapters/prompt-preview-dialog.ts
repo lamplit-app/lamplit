@@ -171,10 +171,6 @@ export interface PromptPreviewData {
     </mat-dialog-actions>
   `,
   styles: `
-    mat-dialog-content {
-      max-height: var(--li-sheet-height);
-    }
-
     .block {
       margin: var(--li-space-sm) 0 0;
       border: 1px solid var(--li-border);

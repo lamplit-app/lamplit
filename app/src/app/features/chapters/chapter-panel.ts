@@ -8,6 +8,7 @@ import { firstLine, isOneAtATime } from '../../core/prompt-builder';
 import { DialogsService } from '../../shared/dialogs.service';
 import { CharacterSwatch } from '../../shared/character-swatch';
 import { EditorField } from '../../shared/editor-field';
+import { fieldValue } from '../../shared/field';
 import { TextValue } from '../../shared/text-value';
 import { ChapterStore } from '../../store/chapter-store';
 import { SettingsStore } from '../../store/settings-store';
@@ -732,9 +733,7 @@ export class ChapterPanel {
     if (this.open() && this.overlay()) this.close();
   }
 
-  protected value(event: Event): string {
-    return (event.target as HTMLInputElement).value;
-  }
+  protected readonly value = fieldValue;
 
   protected describe(description: string): string {
     return firstLine(description, 60) || 'No description yet';

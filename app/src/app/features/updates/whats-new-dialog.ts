@@ -88,10 +88,6 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
     </mat-dialog-actions>
   `,
   styles: `
-    mat-dialog-content {
-      max-height: var(--li-sheet-height);
-    }
-
     .running {
       margin: 0 0 var(--li-space-md);
     }

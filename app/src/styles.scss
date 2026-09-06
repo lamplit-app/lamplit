@@ -298,15 +298,16 @@ $contrast: (
   --li-layer-page: 1;
   --li-layer-over: 3;
 
-  // How tall a sheet's content is allowed to get before it scrolls inside
-  // itself. Seven of the sheets are long enough to need the cap; a card that is
-  // all but the height of the window is not a card any more. The rest are
-  // shorter than Material's own 65vh and never reach it.
+  // How tall a dialog's content is allowed to get before it scrolls inside
+  // itself. The long ones need the cap — a card that is all but the height of
+  // the window is not a card any more — and the short ones stop well before
+  // it, as they already stopped before Material's own 65vh.
   //
   // Written once because seven sheets asking for four slightly different
-  // fractions of the viewport is seven chances to disagree, and none of the
-  // four was chosen over the others. The phone layout drops the cap entirely: a
-  // sheet is the screen, so there is nothing for it to be a fraction of.
+  // fractions of the viewport was seven chances to disagree, and none of the
+  // four was chosen over the others. It is applied once too, beside the other
+  // dialog-surface rules. The phone layout drops the cap entirely: a sheet is
+  // the screen, so there is nothing for it to be a fraction of.
   --li-sheet-height: min(78vh, 46rem);
 
   // The reading column, and the margin beside it.
@@ -1363,13 +1364,30 @@ input[type='checkbox'] {
   border: 1px solid var(--li-border);
 }
 
+// The cap, over every dialog at once.
+//
+// This rule was `mat-dialog-content { max-height: var(--li-sheet-height) }`,
+// byte for byte, in the styles of seven components, which is a global rule
+// that had not been moved yet. Two classes rather than one, because Material
+// sets 65vh on `.mat-mdc-dialog-content` and something has to beat it; the
+// scoped copies had been beating it by the attribute Angular adds to each.
+//
+// It reaches the shorter dialogs too — the confirmations, About, the scene and
+// the new-story forms — and changes nothing about them: none has ever had
+// enough in it to reach a cap, which is why none asked for one. What it means
+// is that a dialog that grows long later scrolls at the height every other one
+// scrolls at, with nobody having to remember to say so.
+.mat-mdc-dialog-container .mat-mdc-dialog-content {
+  max-height: var(--li-sheet-height);
+}
+
 // ---------------------------------------------------------------------------
 // Saying when a sheet has more in it than it is showing.
 // ---------------------------------------------------------------------------
 //
-// Seven sheets cap their content and scroll inside it, and a scrollport that
-// clips says nothing about what it clipped: four sheets cut a sentence in half
-// in the review's screenshots, and Preferences overflowed its cap by 37px on an
+// A capped sheet scrolls inside itself, and a scrollport that clips says
+// nothing about what it clipped: four sheets cut a sentence in half in the
+// review's screenshots, and Preferences overflowed its cap by 37px on an
 // install with nothing written in it. The thumb can be seen now, which is a
 // hairline on the far edge of a card and the last thing anybody reads; a phone
 // has no thumb at all.
@@ -1462,11 +1480,11 @@ input[type='checkbox'] {
 
   // 65vh of a floating card; the whole of what is left of a sheet.
   //
-  // Seven of the sheets cap their own content at `--li-sheet-height` so that a
-  // long one does not become a column of text with a card drawn round it. That
-  // is the right answer for a card and the wrong one for a sheet. Their rule is
-  // scoped, and so a class and an element; two classes beats it, in the one
-  // place rather than seven times over.
+  // A dialog's content is capped at `--li-sheet-height` above, so that a long
+  // one does not become a column of text with a card drawn round it. That is
+  // the right answer for a card and the wrong one for a sheet. The same
+  // selector as the rule that sets it and further down the file, which is all
+  // it takes to be the one that lands.
   .mat-mdc-dialog-container .mat-mdc-dialog-content {
     max-height: none;
   }
