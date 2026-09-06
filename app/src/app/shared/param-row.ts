@@ -28,14 +28,17 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
           />
         </mat-slider>
         <!-- The name above the row belongs to the row; this box is a second
-             way to set the same number and had nothing naming it at all. -->
+             way to set the same number and had nothing naming it at all.
+             It is text, not type=number: a number box formats and parses in
+             the browser's own language, so a French or German desktop would
+             show 0,9 in an otherwise en_GB app. Written out here the app
+             always shows 0.9, and takes either separator back. -->
         <input
           class="exact"
-          type="number"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
           [attr.aria-label]="label()"
-          [min]="min()"
-          [max]="max()"
-          [step]="step()"
           [disabled]="!active()"
           [value]="active() ? value() : ''"
           [attr.placeholder]="active() ? null : 'not sent'"
@@ -114,12 +117,14 @@ export class ParamRow {
   }
 
   protected commitExact(event: Event): void {
-    const raw = (event.target as HTMLInputElement).value;
+    const raw = (event.target as HTMLInputElement).value.trim();
     if (raw === '') {
       if (this.optional()) this.valueChange.emit(undefined);
       return;
     }
-    const parsed = Number(raw);
+    // A decimal comma is what half of Europe types, and the box no longer
+    // refuses it on the app's behalf.
+    const parsed = Number(raw.replace(',', '.'));
     if (!Number.isFinite(parsed)) return;
     this.valueChange.emit(Math.min(this.max(), Math.max(this.min(), parsed)));
   }

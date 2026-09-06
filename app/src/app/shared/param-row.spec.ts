@@ -75,6 +75,21 @@ describe('ParamRow', () => {
     expect(emitted).toEqual([]);
   });
 
+  it('takes a decimal comma, the way a French or German desktop types one', () => {
+    open();
+    typeExact('0,9');
+    expect(emitted).toEqual([0.9]);
+  });
+
+  it('writes the number in the app’s language, not the browser’s', () => {
+    open({ value: 0.9 });
+    // A type=number box formats and parses in the browser's UI locale, so on
+    // a non-English desktop it would show 0,9 in an otherwise en_GB app.
+    expect(exact().type).toBe('text');
+    expect(exact().getAttribute('inputmode')).toBe('decimal');
+    expect(exact().value).toBe('0.9');
+  });
+
   it('reads an emptied box on an optional row as: do not send this at all', () => {
     open({ optional: true, value: 40 });
     typeExact('');
