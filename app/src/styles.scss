@@ -1039,6 +1039,52 @@ input[type='checkbox'] {
   }
 }
 
+// A switch small enough to live on a row: a track, a knob, and nothing written
+// on it.
+//
+// Material's slide-toggle is the app's switch everywhere there is room for one
+// — under Preferences, in the world sheet, beside a sampling parameter — and it
+// is themed to the app's palette above. This is the other case, and it is here
+// beside that theming rather than inside the one component that draws it,
+// because "what does a switch look like in this app" should have one place to
+// be read and not two.
+//
+// The row it is on already carries a colour, a name, a line of description and
+// two buttons; Material's control is taller than the whole row. So: the track,
+// and a knob that slides the track's width less the knob and the two ends. The
+// three numbers move together or the knob stops short of the far end, which is
+// why the travel is written beside the sizes rather than near the animation.
+.li-switch {
+  flex: none;
+  width: 1.55rem;
+  height: 0.85rem;
+  padding: 0;
+  border: 1px solid var(--li-border);
+  border-radius: var(--li-radius-pill);
+  background: var(--li-surface);
+  cursor: pointer;
+
+  &[aria-checked='true'] {
+    border-color: color-mix(in srgb, var(--li-accent) 55%, var(--li-border));
+    background: color-mix(in srgb, var(--li-accent) 30%, transparent);
+  }
+}
+
+.li-knob {
+  display: block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: var(--li-space-3xs);
+  border-radius: 50%;
+  background: var(--li-muted);
+  transition: transform 120ms ease;
+}
+
+.li-switch[aria-checked='true'] .li-knob {
+  transform: translateX(0.62rem);
+  background: var(--li-accent);
+}
+
 // A Material button that has to fit the room there is, rather than the room its
 // label would like.
 //
@@ -1097,6 +1143,26 @@ input[type='checkbox'] {
   line-height: 1.5;
 }
 
+// Something that has to be read before going on: a request that came back an
+// error, a colour the reader has overridden into illegibility. A ring and a
+// wash in the danger colour, at one strength — the two that draw this box had
+// written the ring at 40% and at 45% of the same ink, which is two people
+// choosing the same thing twice and getting it slightly different.
+//
+// What is said inside it stays with the caller, and the two are not saying the
+// same kind of thing: the model's failure is spoken in the danger colour
+// because the words are the alarm, and a note about a palette is spoken in the
+// ordinary ink because the ring is.
+.li-warning {
+  padding: var(--li-space-sm) var(--li-space-md);
+  border: 1px solid color-mix(in srgb, var(--li-danger) 45%, var(--li-border));
+  border-radius: var(--li-radius-md);
+  background: color-mix(in srgb, var(--li-danger) 8%, transparent);
+  color: var(--li-ink-soft);
+  font-size: var(--li-text-sm);
+  line-height: 1.5;
+}
+
 // Naming a box: the word above it. The size a note is set in and the ink a
 // word is typed in, which is what tells it from the note under the box and
 // from the words in it.
@@ -1108,6 +1174,135 @@ input[type='checkbox'] {
 .li-field-label {
   font-size: var(--li-text-sm);
   color: var(--li-ink);
+}
+
+// One line, with an ellipsis where it ran out.
+//
+// Fifteen rules in nine files wrote the same three properties, and most of the
+// things wearing them are flex items — where the three do nothing at all on
+// their own, because a flex item's minimum width is its content and there is
+// never any overflow to put an ellipsis on. So the fourth property travels
+// with them. They are one idea and they only work as a set.
+//
+// The box, the colour and the size stay with whatever wears the class: a
+// chapter title, a lore entry's keys and a character's one-line description
+// are all "as much of this as fits", and none of them looks alike.
+.li-one-line {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+// A word that acts, with nothing drawn round it: "Back to the default", "Add a
+// character", the About sheet's Release notes.
+//
+// A `<button>` arrives with the operating system's font, a border, a grey fill
+// and a default cursor, and every one of these was undoing all four by hand.
+// What is left to say is that it is a word you can press — the accent, and the
+// underline that appears under the pointer.
+.li-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--li-accent);
+  font: inherit;
+  font-size: var(--li-text-sm);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// A glyph you can press, with nothing drawn round it until the pointer is on
+// it: the message rail's five actions and the chapter panel's close and edit.
+//
+// The two were written apart and came out almost the same — the same reset,
+// the same muted ink, the same tint underneath on hover — differing in the
+// hover colour, which nobody chose, and in whether a keyboard could see the
+// hover at all, which one of them had and the other had not.
+//
+// What is left to the caller is the size and the corner: out in the margin
+// these are rail-sized with a soft square corner, and in the panel they are
+// small and round beside a name. Neither is the other, and both are this.
+.li-icon-button {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--li-muted);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    color: var(--li-ink);
+    background: color-mix(in srgb, var(--li-ink) 8%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+// The name of the thing the reader is in: a story, a chapter, a lore entry,
+// the chapter panel's own head. Set in the reading face, because all four are
+// words the reader wrote rather than words the app did.
+.li-title {
+  font-family: var(--li-serif);
+  font-size: var(--li-text-lg);
+  color: var(--li-ink);
+}
+
+// A row that folds: the caret, the name, and what the row says while it is
+// folded. The chapter panel's four sections and the world sheet's lore entries
+// are the same object drawn twice — a heading you press, laid out on a
+// baseline so the name and the aside beside it sit on one line.
+//
+// The room round it stays with the caller, because one of them is a band
+// across a panel and the other is a line inside a card. The hover is here: it
+// is the app's quiet row tint, the same one the palette tiles and the colour
+// swatches use, and the panel was the only place asking for it in the accent.
+.li-disclose {
+  display: flex;
+  align-items: baseline;
+  gap: var(--li-space-sm);
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--li-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--li-ink) 5%, transparent);
+  }
+}
+
+// What a folding row says while it is folded: the first line of the scene, the
+// keys that fire a lore entry. It is given the rest of the row, and it is the
+// quietest thing on it — the row's own name is what is being read.
+.li-aside {
+  flex: 1;
+  font-size: var(--li-text-xs);
+  color: var(--li-muted);
+}
+
+// Which way it is folded. Held at a fixed width because ▾ and ▸ are not the
+// same width, and a name that steps sideways when a section opens is the fold
+// moving the thing it is folding.
+.li-caret {
+  flex: none;
+  width: 0.9rem;
+  color: var(--li-muted);
+  font-size: var(--li-text-xs);
 }
 
 // ---------------------------------------------------------------------------
@@ -1304,6 +1499,22 @@ button {
   .mat-mdc-menu-item {
     min-height: 2.75rem;
   }
+
+  // The switch and its knob grow in step, so that it still reads as one thing
+  // sliding rather than a knob rattling about in a wider track.
+  .li-switch {
+    width: 2.1rem;
+    height: 1.15rem;
+  }
+
+  .li-knob {
+    width: 0.68rem;
+    height: 0.68rem;
+  }
+
+  .li-switch[aria-checked='true'] .li-knob {
+    transform: translateX(0.84rem);
+  }
 }
 
 // The scrollbar sits inside the reading column; keep it out of the way, but
@@ -1321,10 +1532,10 @@ button {
 // ---------------------------------------------------------------------------
 //
 // Five rules in the app animate something. Three of them move it — the knob of
-// the panel's in-scene switch, the message rail sliding in from the margin,
-// and a block sliding out of the way of the one being dragged in the prompt
-// preview — and two fade: the waiting dots pulsing, and the save dot settling
-// after a write. Only the two in `message-item.ts` had ever been turned down,
+// the small switch a cast row carries, the message rail sliding in from the
+// margin, and a block sliding out of the way of the one being dragged in the
+// prompt preview — and two fade: the waiting dots pulsing, and the save dot
+// settling after a write. Only the two in `message-item.ts` had ever been turned down,
 // because turning it down is something the person writing the animation has to
 // remember at the moment they write it, and three times out of five nobody
 // did.

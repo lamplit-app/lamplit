@@ -35,7 +35,7 @@ import { DialogsService } from './dialogs.service';
       <p class="links">
         <!-- In the app rather than on GitHub: the notes of every release are
              already here, and reading them should not need a browser tab. -->
-        <button type="button" class="as-link" (click)="openNotes()">Release notes</button>
+        <button type="button" class="as-link li-link" (click)="openNotes()">Release notes</button>
         <span aria-hidden="true">·</span>
         <a [href]="issues" target="_blank" rel="noreferrer noopener">Report a problem</a>
       </p>
@@ -101,13 +101,11 @@ import { DialogsService } from './dialogs.service';
       color: var(--li-muted);
     }
 
+    /* Underlined at rest rather than under the pointer, which is the one thing
+       li-link leaves to the caller: these three sit in a row with real anchors
+       and have to look like the ones either side of them. */
     .as-link {
-      padding: 0;
-      border: 0;
-      background: none;
-      font: inherit;
-      color: var(--li-accent);
-      cursor: pointer;
+      font-size: inherit;
       text-decoration: underline;
     }
   `,

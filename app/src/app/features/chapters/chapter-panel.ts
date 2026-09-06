@@ -55,29 +55,45 @@ const SWIPE_DISTANCE = 48;
 
       <aside class="panel" aria-label="This chapter">
         <header class="top">
-          <span class="what">This chapter</span>
-          <button
-            type="button"
-            class="icon"
-            aria-label="Close the chapter panel"
-            matTooltip="Close it (Ctrl+.)"
-            (click)="close()"
-          >
-            ›
-          </button>
+          <span class="what li-title li-one-line">This chapter</span>
+          <!-- Full screen, a chevron pointing right points at nothing, and
+               there is no keyboard to press Ctrl+. on. The way out is a word,
+               at the size a thumb lands on. It still answers to the whole
+               sentence, which is what a reader hearing the sheet read out
+               needs and what the one word has no room to say. -->
+          @if (layout.phone()) {
+            <button
+              type="button"
+              class="close li-link"
+              aria-label="Close the chapter panel"
+              (click)="close()"
+            >
+              Close
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="icon li-icon-button"
+              aria-label="Close the chapter panel"
+              matTooltip="Close it (Ctrl+.)"
+              (click)="close()"
+            >
+              ›
+            </button>
+          }
         </header>
 
         <div class="scroll">
           <section class="block" data-section="scene">
             <button
               type="button"
-              class="head"
+              class="head li-disclose"
               [attr.aria-expanded]="isOpen('scene')"
               (click)="toggleSection('scene')"
             >
-              <span class="mark">{{ isOpen('scene') ? '▾' : '▸' }}</span>
+              <span class="li-caret">{{ isOpen('scene') ? '▾' : '▸' }}</span>
               <span class="name">Scene</span>
-              <span class="aside">{{ sceneLabel() }}</span>
+              <span class="aside li-aside li-one-line">{{ sceneLabel() }}</span>
             </button>
             @if (isOpen('scene')) {
               <div class="body">
@@ -99,13 +115,13 @@ const SWIPE_DISTANCE = 48;
             <section class="block" data-section="narrator">
               <button
                 type="button"
-                class="head"
+                class="head li-disclose"
                 [attr.aria-expanded]="isOpen('narrator')"
                 (click)="toggleSection('narrator')"
               >
-                <span class="mark">{{ isOpen('narrator') ? '▾' : '▸' }}</span>
+                <span class="li-caret">{{ isOpen('narrator') ? '▾' : '▸' }}</span>
                 <span class="name">Narrator</span>
-                <span class="aside">{{
+                <span class="aside li-aside li-one-line">{{
                   story().narrator.useDefault ? 'default' : 'your own'
                 }}</span>
               </button>
@@ -125,7 +141,7 @@ const SWIPE_DISTANCE = 48;
                       The instructions Lamplit ships with. Write into them and they become yours.
                     </p>
                   } @else {
-                    <button type="button" class="link" (click)="backToDefault()">
+                    <button type="button" class="li-link" (click)="backToDefault()">
                       Back to the default
                     </button>
                   }
@@ -137,13 +153,13 @@ const SWIPE_DISTANCE = 48;
           <section class="block" data-section="persona">
             <button
               type="button"
-              class="head"
+              class="head li-disclose"
               [attr.aria-expanded]="isOpen('persona')"
               (click)="toggleSection('persona')"
             >
-              <span class="mark">{{ isOpen('persona') ? '▾' : '▸' }}</span>
+              <span class="li-caret">{{ isOpen('persona') ? '▾' : '▸' }}</span>
               <span class="name">Persona</span>
-              <span class="aside">{{ story().persona.name }}</span>
+              <span class="aside li-aside li-one-line">{{ story().persona.name }}</span>
             </button>
             @if (isOpen('persona')) {
               <div class="body">
@@ -169,13 +185,13 @@ const SWIPE_DISTANCE = 48;
             <section class="block" data-section="cast">
               <button
                 type="button"
-                class="head"
+                class="head li-disclose"
                 [attr.aria-expanded]="isOpen('cast')"
                 (click)="toggleSection('cast')"
               >
-                <span class="mark">{{ isOpen('cast') ? '▾' : '▸' }}</span>
+                <span class="li-caret">{{ isOpen('cast') ? '▾' : '▸' }}</span>
                 <span class="name">Cast</span>
-                <span class="aside">{{ castLabel() }}</span>
+                <span class="aside li-aside li-one-line">{{ castLabel() }}</span>
               </button>
               @if (isOpen('cast')) {
                 <div class="body">
@@ -204,24 +220,30 @@ const SWIPE_DISTANCE = 48;
                           [matTooltip]="playTooltip(character.enabled)"
                           (click)="play(character.id)"
                         >
-                          <span class="cast-name">
+                          <span class="cast-name li-one-line">
                             {{ character.name || 'Unnamed' }}
                             @if (isPlaying(character.id)) {
                               <span class="tag li-chip">playing</span>
                             }
                           </span>
-                          <span class="cast-line">{{ describe(character.description) }}</span>
+                          <span class="cast-line li-one-line">{{
+                            describe(character.description)
+                          }}</span>
                         </button>
                       } @else {
                         <span class="who">
-                          <span class="cast-name">{{ character.name || 'Unnamed' }}</span>
-                          <span class="cast-line">{{ describe(character.description) }}</span>
+                          <span class="cast-name li-one-line">{{
+                            character.name || 'Unnamed'
+                          }}</span>
+                          <span class="cast-line li-one-line">{{
+                            describe(character.description)
+                          }}</span>
                         </span>
                       }
 
                       <button
                         type="button"
-                        class="in-scene"
+                        class="li-switch"
                         role="switch"
                         [attr.aria-checked]="character.enabled"
                         [attr.aria-label]="
@@ -232,12 +254,12 @@ const SWIPE_DISTANCE = 48;
                         "
                         (click)="setInScene(character.id, !character.enabled)"
                       >
-                        <span class="knob"></span>
+                        <span class="li-knob"></span>
                       </button>
 
                       <button
                         type="button"
-                        class="icon"
+                        class="icon li-icon-button"
                         [attr.aria-label]="'Edit ' + (character.name || 'this character')"
                         matTooltip="Open this character in the Story sheet"
                         (click)="edit(character.id)"
@@ -250,7 +272,7 @@ const SWIPE_DISTANCE = 48;
                       No characters yet. Without them the model plays whoever the scene needs.
                     </p>
                   }
-                  <button type="button" class="add" (click)="add()">Add a character</button>
+                  <button type="button" class="add li-link" (click)="add()">Add a character</button>
                 </div>
               }
             </section>
@@ -265,7 +287,7 @@ const SWIPE_DISTANCE = 48;
         matTooltip="The scene, the narrator, your persona and the cast (Ctrl+.)"
         (click)="setOpen(true)"
       >
-        <span class="mark">‹</span>
+        <span class="li-caret">‹</span>
         <span class="edge">This chapter</span>
       </button>
     }
@@ -381,13 +403,15 @@ const SWIPE_DISTANCE = 48;
 
     .what {
       flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      font-family: var(--li-serif);
-      font-size: var(--li-text-lg);
-      color: var(--li-ink);
+    }
+
+    /* The word that closes the sheet, at the size a finger is aimed with —
+       44px, which is what both Apple and Google call a target. */
+    .close {
+      flex: none;
+      min-height: 2.75rem;
+      padding: 0 var(--li-space-md);
+      font-size: var(--li-text-md);
     }
 
     .scroll {
@@ -407,29 +431,12 @@ const SWIPE_DISTANCE = 48;
       border-bottom: 1px solid color-mix(in srgb, var(--li-border) 70%, transparent);
     }
 
+    /* A band across the panel, so it takes the whole width; the rest of what
+       a folding row is is in li-disclose. */
     .head {
-      display: flex;
-      align-items: baseline;
-      gap: var(--li-space-sm);
       width: 100%;
       padding: var(--li-space-sm) var(--li-space-md);
-      border: 0;
-      background: none;
-      color: var(--li-ink);
-      font: inherit;
       font-size: var(--li-text-sm);
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .head:hover {
-      background: color-mix(in srgb, var(--li-accent) 7%, transparent);
-    }
-
-    .mark {
-      flex: none;
-      color: var(--li-muted);
-      font-size: var(--li-text-xs);
     }
 
     .head .name {
@@ -437,16 +444,10 @@ const SWIPE_DISTANCE = 48;
       letter-spacing: 0.02em;
     }
 
-    /* What the section says with nothing unfolded. */
+    /* What the section says with nothing unfolded, held against the far edge
+       so that four of them read down a column. */
     .aside {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
       text-align: right;
-      color: var(--li-muted);
-      font-size: var(--li-text-xs);
     }
 
     .body {
@@ -456,21 +457,9 @@ const SWIPE_DISTANCE = 48;
       padding: 0 var(--li-space-md) var(--li-space-md);
     }
 
-    .link,
-    .add {
+    /* The stack stretches what is in it; a word does not want the width. */
+    .body > .li-link {
       align-self: flex-start;
-      padding: 0;
-      border: 0;
-      background: none;
-      color: var(--li-accent);
-      font: inherit;
-      font-size: var(--li-text-sm);
-      cursor: pointer;
-    }
-
-    .link:hover,
-    .add:hover {
-      text-decoration: underline;
     }
 
     .add {
@@ -513,38 +502,6 @@ const SWIPE_DISTANCE = 48;
       vertical-align: 1px;
     }
 
-    /* A switch small enough to live on a row: track, knob, nothing written. */
-    .in-scene {
-      flex: none;
-      width: 1.55rem;
-      height: 0.85rem;
-      padding: 0;
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-pill);
-      background: var(--li-surface);
-      cursor: pointer;
-    }
-
-    .in-scene[aria-checked='true'] {
-      border-color: color-mix(in srgb, var(--li-accent) 55%, var(--li-border));
-      background: color-mix(in srgb, var(--li-accent) 30%, transparent);
-    }
-
-    .knob {
-      display: block;
-      width: 0.5rem;
-      height: 0.5rem;
-      margin-left: var(--li-space-3xs);
-      border-radius: 50%;
-      background: var(--li-muted);
-      transition: transform 120ms ease;
-    }
-
-    .in-scene[aria-checked='true'] .knob {
-      transform: translateX(0.62rem);
-      background: var(--li-accent);
-    }
-
     .who {
       flex: 1;
       min-width: 0;
@@ -562,43 +519,25 @@ const SWIPE_DISTANCE = 48;
     }
 
     .cast-name {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
       font-size: var(--li-text-md);
       color: var(--li-ink);
     }
 
     .cast-line {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
       font-size: var(--li-text-xs);
       color: var(--li-muted);
     }
 
+    /* Round, and small enough to sit on a cast row beside a name. */
     .icon {
-      flex: none;
       width: 1.6rem;
       height: 1.6rem;
-      border: 0;
       border-radius: 50%;
-      background: none;
-      color: var(--li-muted);
-      font: inherit;
       font-size: var(--li-text-md);
-      line-height: 1;
-      cursor: pointer;
     }
 
-    .icon:hover {
-      color: var(--li-ink);
-      background: color-mix(in srgb, var(--li-accent) 14%, transparent);
-    }
-
-    /* Everything in here is sized for a pointer that lands on one pixel. A
-       finger does not, so the three controls a row carries grow — the switch
-       and its knob in step, so it still reads as one thing sliding. */
+    /* Sized for a pointer that lands on one pixel; a finger does not. The
+       switch on a row grows in the globals, with the rest of the app's. */
     @include bp.touch {
       .head {
         padding: var(--li-space-md);
@@ -608,20 +547,6 @@ const SWIPE_DISTANCE = 48;
         width: 2.25rem;
         height: 2.25rem;
         font-size: var(--li-text-lg);
-      }
-
-      .in-scene {
-        width: 2.1rem;
-        height: 1.15rem;
-      }
-
-      .knob {
-        width: 0.68rem;
-        height: 0.68rem;
-      }
-
-      .in-scene[aria-checked='true'] .knob {
-        transform: translateX(0.84rem);
       }
     }
   `,

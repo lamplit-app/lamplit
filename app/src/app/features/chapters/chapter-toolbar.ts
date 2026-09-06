@@ -13,7 +13,7 @@ import { chapterTitle } from '../../core/prompt-builder';
   imports: [MatTooltipModule],
   template: `
     <div class="row">
-      <span class="here" [matTooltip]="chapters.chapter().scene">{{ label() }}</span>
+      <span class="here li-one-line" [matTooltip]="chapters.chapter().scene">{{ label() }}</span>
 
       <!-- Closed chapters are continued from the dock, which says so already. -->
       @if (!chapters.isClosed()) {
@@ -45,10 +45,6 @@ import { chapterTitle } from '../../core/prompt-builder';
 
     .here {
       flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
       font-family: var(--li-serif);
       font-size: var(--li-text-sm);
       color: var(--li-muted);

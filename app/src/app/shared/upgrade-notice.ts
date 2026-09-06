@@ -20,7 +20,7 @@ import { SettingsStore } from '../store/settings-store';
   template: `
     @if (from()) {
       <aside class="notice" role="status">
-        <span class="what">
+        <span class="li-one-line">
           Lamplit was upgraded to <b>{{ builds.version() }}</b>
         </span>
         <a
@@ -46,13 +46,6 @@ import { SettingsStore } from '../store/settings-store';
       background: color-mix(in srgb, var(--li-accent) 12%, var(--li-surface));
       font-size: var(--li-text-md);
       color: var(--li-ink);
-    }
-
-    .what {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     .notes {

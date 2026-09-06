@@ -222,7 +222,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
           <div class="row-head">
             <span class="row-name">Page palette</span>
             @if (customised()) {
-              <span class="tag">custom</span>
+              <span class="tag li-pill">custom</span>
             }
           </div>
           <p class="li-hint palette-lead">
@@ -253,7 +253,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
                   </span>
                   <span class="dot" [style.background]="option.accent"></span>
                 </span>
-                <span class="palette-label">{{ option.label }}</span>
+                <span class="palette-label li-one-line">{{ option.label }}</span>
               </button>
             }
           </div>
@@ -286,7 +286,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
           </div>
 
           @if (contrastWarning()) {
-            <p class="warning" role="status">{{ contrastWarning() }}</p>
+            <p class="warning li-warning" role="status">{{ contrastWarning() }}</p>
           }
 
           <div class="reset">
@@ -376,7 +376,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
               </div>
 
               @if (share.error()) {
-                <p class="warning" role="status">{{ share.error() }}</p>
+                <p class="warning li-warning" role="status">{{ share.error() }}</p>
               }
 
               @if (share.on()) {
@@ -390,7 +390,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
                         @for (option of share.addresses(); track option) {
                           <button
                             type="button"
-                            class="address"
+                            class="address li-pill"
                             [class.on]="option === shownAddress()"
                             (click)="chosenAddress.set(option)"
                           >
@@ -422,13 +422,13 @@ import { ReadAloud } from '../../shared/read-aloud.service';
                     </div>
                   </div>
                 } @else {
-                  <p class="warning" role="status">
+                  <p class="warning li-warning" role="status">
                     This computer has no network address at the moment, so there is nothing for a
                     phone to open. Join a Wi-Fi network and switch this off and on again.
                   </p>
                 }
 
-                <p class="warning">
+                <p class="warning li-warning">
                   <strong>A phone that has scanned the code can do everything you can here</strong>
                   — read and change every story, and read your API key, which Lamplit keeps as plain
                   text. The traffic between them is plain HTTP across your own network and is not
@@ -437,7 +437,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
                 </p>
 
                 @if (modelIsHere()) {
-                  <p class="warning">
+                  <p class="warning li-warning">
                     Your endpoint is <code>{{ connection().baseUrl }}</code
                     >, which is this computer. The story is sent to the model by the browser showing
                     it, so a phone will reach Lamplit but not the model, and writing will fail
@@ -562,11 +562,6 @@ import { ReadAloud } from '../../shared/read-aloud.service';
 
     .editing {
       margin: var(--li-space-lg) 0 var(--li-space-md);
-
-      strong {
-        color: var(--li-ink);
-        font-weight: 600;
-      }
     }
 
     .row-head {
@@ -576,29 +571,29 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       margin: var(--li-space-md) 0 var(--li-space-xs);
     }
 
-    .row-name {
+    .row-name,
+    .name {
       font-size: var(--li-text-md);
       color: var(--li-ink);
     }
 
     /* Said rather than implied: a preset with your own colours over it is not
-       that preset any more, and Reset is the only way back to one. */
+       that preset any more, and Reset is the only way back to one. The ring is
+       the accent's, which is what tells it from the pills that only report. */
     .tag {
-      padding: var(--li-space-3xs) var(--li-space-xs);
-      border: 1px solid color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
-      border-radius: var(--li-radius-pill);
-      color: var(--li-muted);
-      font-size: var(--li-text-xs);
-      letter-spacing: 0.02em;
+      border-color: color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
     }
 
     .palette-lead {
       margin: 0 0 var(--li-space-md);
+    }
 
-      strong {
-        color: var(--li-ink);
-        font-weight: 600;
-      }
+    /* Which chapter, and which palette: the one word in either sentence that
+       the reader is looking for. */
+    .editing strong,
+    .palette-lead strong {
+      color: var(--li-ink);
+      font-weight: 600;
     }
 
     .palettes {
@@ -621,10 +616,6 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       font-size: var(--li-text-xs);
       text-align: center;
       cursor: pointer;
-
-      &:hover {
-        background: color-mix(in srgb, var(--li-ink) 5%, transparent);
-      }
 
       &.on {
         color: var(--li-ink);
@@ -686,10 +677,10 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       border-radius: 50%;
     }
 
-    .palette-label {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    /* The app's quiet row tint, on the two things here that are pressed. */
+    .palette:hover,
+    .swatch:hover {
+      background: color-mix(in srgb, var(--li-ink) 5%, transparent);
     }
 
     .swatches {
@@ -710,10 +701,6 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       border: 1px solid transparent;
       border-radius: var(--li-radius-md);
       cursor: pointer;
-
-      &:hover {
-        background: color-mix(in srgb, var(--li-ink) 5%, transparent);
-      }
 
       /* A changed colour says so, so that Reset is not the only way to tell. */
       &.custom {
@@ -765,20 +752,8 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       min-width: 0;
     }
 
-    .name {
-      font-size: var(--li-text-md);
-      color: var(--li-ink);
-    }
-
     .warning {
       margin: var(--li-space-md) 0 0;
-      padding: var(--li-space-sm) var(--li-space-md);
-      border: 1px solid color-mix(in srgb, var(--li-danger) 45%, var(--li-border));
-      border-radius: var(--li-radius-md);
-      color: var(--li-ink-soft);
-      font-size: var(--li-text-sm);
-      line-height: 1.5;
-      background: color-mix(in srgb, var(--li-danger) 8%, transparent);
     }
 
     .reset {
@@ -820,15 +795,10 @@ import { ReadAloud } from '../../shared/read-aloud.service';
       gap: var(--li-space-xs);
     }
 
+    /* An address is read off one screen and typed into another, so it is a
+       step larger than a pill that is only glanced at. */
     .address {
-      padding: var(--li-space-3xs) var(--li-space-sm);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-pill);
-      background: none;
-      color: var(--li-muted);
-      font: inherit;
       font-size: var(--li-text-sm);
-      cursor: pointer;
 
       &.on {
         border-color: color-mix(in srgb, var(--li-accent) 60%, transparent);

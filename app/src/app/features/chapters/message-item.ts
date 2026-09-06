@@ -88,7 +88,7 @@ export interface MessageEdit {
         </div>
       } @else {
         @if (error()) {
-          <p class="error">{{ error() }}</p>
+          <p class="error li-warning">{{ error() }}</p>
           <div class="error-actions">
             <!-- Offered, never taken: pressing this changes the setting and
                  sends nothing. "Try again" is still the press that spends. -->
@@ -162,7 +162,7 @@ export interface MessageEdit {
              pointer across the page to read never hides the words under it. -->
         <div class="rail">
           <button
-            class="act"
+            class="act li-icon-button"
             type="button"
             [disabled]="streaming()"
             (click)="startEdit()"
@@ -177,7 +177,7 @@ export interface MessageEdit {
 
           @if (isUser()) {
             <button
-              class="act"
+              class="act li-icon-button"
               type="button"
               [disabled]="busy()"
               (click)="replay.emit()"
@@ -192,7 +192,7 @@ export interface MessageEdit {
             </button>
           } @else if (!error()) {
             <button
-              class="act"
+              class="act li-icon-button"
               type="button"
               [disabled]="busy()"
               (click)="regenerate.emit()"
@@ -209,7 +209,7 @@ export interface MessageEdit {
 
           @if (canListen()) {
             <button
-              class="act"
+              class="act li-icon-button"
               type="button"
               [class.on]="listening()"
               [disabled]="streaming()"
@@ -233,7 +233,7 @@ export interface MessageEdit {
           }
 
           <button
-            class="act"
+            class="act li-icon-button"
             type="button"
             (click)="copy()"
             [matTooltip]="copied() ? 'Copied' : 'Copy the raw text'"
@@ -255,7 +255,7 @@ export interface MessageEdit {
           </button>
 
           <button
-            class="act"
+            class="act li-icon-button"
             type="button"
             (click)="remove.emit()"
             matTooltip="Delete this message"
@@ -426,29 +426,12 @@ export interface MessageEdit {
       pointer-events: auto;
     }
 
+    /* Rail-sized, with a corner soft enough not to draw a box round a glyph
+       that is only there while the pointer is in the margin. */
     .act {
-      display: flex;
-      align-items: center;
-      justify-content: center;
       width: var(--li-rail);
       height: var(--li-rail);
-      padding: 0;
-      border: 0;
       border-radius: var(--li-radius-md);
-      background: none;
-      color: var(--li-muted);
-      cursor: pointer;
-    }
-
-    .act:hover:not(:disabled),
-    .act:focus-visible {
-      color: var(--li-ink);
-      background: color-mix(in srgb, var(--li-ink) 8%, transparent);
-    }
-
-    .act:disabled {
-      opacity: 0.35;
-      cursor: default;
     }
 
     /* The one action with a state: it is doing something until it is pressed
@@ -489,15 +472,12 @@ export interface MessageEdit {
       }
     }
 
+    /* Spoken in the danger colour rather than the ordinary ink, and at the
+       size the story is read at: here the words are the alarm. */
     .error {
       margin: 0;
-      padding: var(--li-space-md);
-      border: 1px solid color-mix(in srgb, var(--li-danger) 40%, var(--li-border));
-      border-radius: var(--li-radius-md);
-      background: color-mix(in srgb, var(--li-danger) 8%, transparent);
       color: var(--li-danger);
       font-size: var(--li-text-md);
-      line-height: 1.5;
     }
 
     .error-actions {

@@ -149,15 +149,17 @@ interface Group {
                   <div class="summary">
                     <button
                       type="button"
-                      class="disclose"
+                      class="disclose li-disclose"
                       [attr.aria-expanded]="isOpen(entry.id)"
                       (click)="toggle(entry.id)"
                     >
-                      <span class="caret" aria-hidden="true">{{
+                      <span class="li-caret" aria-hidden="true">{{
                         isOpen(entry.id) ? '▾' : '▸'
                       }}</span>
-                      <span class="name">{{ entry.title.trim() || 'Untitled entry' }}</span>
-                      <span class="keys">{{ summaryOf(entry) }}</span>
+                      <span class="name li-title li-one-line">{{
+                        entry.title.trim() || 'Untitled entry'
+                      }}</span>
+                      <span class="keys li-aside li-one-line">{{ summaryOf(entry) }}</span>
                       @if (!entry.enabled) {
                         <span class="tag li-chip">off</span>
                       }
@@ -382,52 +384,17 @@ interface Group {
       gap: var(--li-space-2xs);
     }
 
+    /* The row it takes, and the corner the hover is drawn into; the rest of
+       what a folding row is is in li-disclose. */
     .disclose {
       flex: 1;
-      min-width: 0;
-      display: flex;
-      align-items: baseline;
-      gap: var(--li-space-sm);
       padding: var(--li-space-xs);
-      border: 0;
       border-radius: var(--li-radius-md);
-      background: none;
-      color: inherit;
-      font: inherit;
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .disclose:hover {
-      background: color-mix(in srgb, var(--li-ink) 5%, transparent);
-    }
-
-    .caret {
-      flex: none;
-      width: 0.9rem;
-      color: var(--li-muted);
-      font-size: var(--li-text-xs);
     }
 
     .disclose .name {
       flex: none;
       max-width: 16rem;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      font-family: var(--li-serif);
-      font-size: var(--li-text-lg);
-      color: var(--li-ink);
-    }
-
-    .keys {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      font-size: var(--li-text-xs);
-      color: var(--li-muted);
     }
 
     .tag {

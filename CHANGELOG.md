@@ -434,7 +434,9 @@ Below 48rem there is now one layout, for one purpose — carry on the story you 
 - **The story runs edge to edge**, with the box to write in at the end of it, exactly as it does on
   the computer.
 - **The chapter panel is a sheet**, opened from that menu or pulled in from the right-hand edge,
-  and closed by the back gesture. Playing one character at a time works from it as it always has.
+  and closed by the back gesture or by **Close** in its corner — a word a thumb can hit, where a
+  sheet filling the screen used to offer a chevron pointing off the side of it. Playing one
+  character at a time works from it as it always has.
 - **Every sheet is the whole screen**, with its buttons where a thumb is rather than at the end of
   a scroll, and nothing is left under the address bar, the home bar or the notch.
 - **Enter makes a new line and Send sends**, because a phone keyboard has no Shift+Enter to break

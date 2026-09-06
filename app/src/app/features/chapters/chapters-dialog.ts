@@ -31,15 +31,15 @@ interface Row {
           <button class="open" type="button" (click)="open(row)">
             <span class="line">
               <span class="number">{{ row.chapter.number }}</span>
-              <span class="title">{{ row.title || 'Untitled chapter' }}</span>
+              <span class="title li-title li-one-line">{{ row.title || 'Untitled chapter' }}</span>
               <span class="state li-chip" [class.closed]="row.chapter.status === 'closed'">
                 {{ row.chapter.status }}
               </span>
             </span>
             @if (row.opening !== row.title) {
-              <span class="opening">{{ row.opening || 'No scene yet' }}</span>
+              <span class="opening li-one-line">{{ row.opening || 'No scene yet' }}</span>
             }
-            <span class="counts">
+            <span class="counts li-one-line">
               {{ row.messages }} {{ row.messages === 1 ? 'message' : 'messages' }} ·
               {{ row.words }} words
             </span>
@@ -116,13 +116,6 @@ interface Row {
 
     .title {
       flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      font-family: var(--li-serif);
-      font-size: var(--li-text-lg);
-      color: var(--li-ink);
     }
 
     .state {
@@ -140,9 +133,6 @@ interface Row {
     .opening,
     .counts {
       padding-left: calc(1.4rem + var(--li-space-sm));
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
       color: var(--li-muted);
     }
 

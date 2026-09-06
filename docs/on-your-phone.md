@@ -73,7 +73,7 @@ app, and all of it to duplicate a button that is already on the keyboard.
 
 The scene, the narrator, your persona and the cast are all here, as a sheet over the story rather
 than a column beside it. Open it from the menu, or pull it in from the right-hand edge of the
-screen. The back gesture closes it, as does the **›** in its corner.
+screen. The back gesture closes it, as does **Close** in its corner.
 
 ![The chapter panel as a sheet](images/phone-panel.png)
 

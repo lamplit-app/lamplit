@@ -49,8 +49,8 @@ import { SaveStatusIndicator } from './save-status';
           @if (layout.phone()) {
             <span class="mark">Lamplit</span>
           } @else {
-            <span class="label">
-              <span class="story">{{ stories.story().title }}</span
+            <span class="label li-one-line">
+              <span class="story li-title">{{ stories.story().title }}</span
               >&ngsp;·&ngsp;<span class="chapter">{{ chapterLabel() }}</span>
             </span>
           }
@@ -60,8 +60,8 @@ import { SaveStatusIndicator } from './save-status';
                the other stories says it first. -->
           @if (layout.phone()) {
             <div class="where" role="presentation">
-              <span class="story">{{ stories.story().title }}</span>
-              <span class="chapter">{{ chapterLabel() }}</span>
+              <span class="story li-title li-one-line">{{ stories.story().title }}</span>
+              <span class="chapter li-one-line">{{ chapterLabel() }}</span>
             </div>
             <hr />
           }
@@ -224,28 +224,11 @@ import { SaveStatusIndicator } from './save-status';
       max-width: 16rem;
     }
 
-    .where .story,
-    .where .chapter {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
     /* One line that ellipsises as a whole: story first, chapter trimmed. */
     .label {
       display: block;
-      min-width: 0;
       max-width: 100%;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
       color: var(--li-muted);
-    }
-
-    .story {
-      font-family: var(--li-serif);
-      font-size: var(--li-text-lg);
-      color: var(--li-ink);
     }
 
     .chapter {

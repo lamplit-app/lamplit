@@ -41,7 +41,8 @@ export interface ChapterClose {
     TextValue,
   ],
   template: `
-    <h2 mat-dialog-title>Close {{ heading() }}</h2>
+    <!-- A chapter named after a long opening line must not wrap the header. -->
+    <h2 mat-dialog-title class="li-one-line">Close {{ heading() }}</h2>
 
     <mat-dialog-content>
       <p class="li-hint">
@@ -179,13 +180,6 @@ export interface ChapterClose {
     </mat-dialog-actions>
   `,
   styles: `
-    /* A chapter named after a long opening line must not wrap the header. */
-    h2 {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
     mat-dialog-content {
       display: flex;
       flex-direction: column;

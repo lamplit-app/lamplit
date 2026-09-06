@@ -50,7 +50,7 @@ test('the page, the bar and the panel have nothing left to animate', async ({ pa
   // switch, which slides across its track, and the rail of actions, which
   // slides in from the margin. Named here so that an empty list below is the
   // answer to a question and not the absence of one.
-  await expect(chapterPanel(page).locator('.in-scene .knob').first()).toBeVisible();
+  await expect(chapterPanel(page).locator('.li-switch .li-knob').first()).toBeVisible();
   await expect(page.locator('article[data-role] .rail').first()).toBeAttached();
 
   expect(await moving(page)).toEqual([]);
