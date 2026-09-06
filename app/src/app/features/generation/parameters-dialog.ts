@@ -27,7 +27,7 @@ import { ParamRow } from '../../shared/param-row';
     ParamRow,
   ],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">Parameters</h2>
+    <h2 mat-dialog-title>Parameters</h2>
 
     <mat-dialog-content>
       <section class="budgets">
@@ -190,8 +190,7 @@ import { ParamRow } from '../../shared/param-row';
       display: flex;
       flex-direction: column;
       gap: 0.25rem;
-      /* Tall enough that Advanced is reachable without hunting for a scrollbar. */
-      max-height: min(78vh, 46rem) !important;
+      max-height: var(--li-sheet-height);
     }
 
     /* The one Material text box, sized to its lines like the plain ones: two
@@ -228,7 +227,6 @@ import { ParamRow } from '../../shared/param-row';
          folded to nothing at the bottom rather than scrolled to. */
       flex-shrink: 0;
       margin: 0.6rem 0 0.2rem;
-      background: transparent !important;
     }
 
     mat-panel-description {

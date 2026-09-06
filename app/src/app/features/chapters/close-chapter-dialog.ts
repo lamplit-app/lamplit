@@ -41,7 +41,7 @@ export interface ChapterClose {
     TextValue,
   ],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">Close {{ heading() }}</h2>
+    <h2 mat-dialog-title>Close {{ heading() }}</h2>
 
     <mat-dialog-content>
       <p class="li-hint">
@@ -190,7 +190,6 @@ export interface ChapterClose {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      padding-top: 0.25rem !important;
     }
 
     /* The story so far is prose, and set as prose. */
@@ -344,9 +343,8 @@ export interface ChapterClose {
          squashes anything that clips when it runs out of room: it would be
          folded to nothing under a long summary rather than scrolled to. */
       flex-shrink: 0;
-      background: transparent !important;
       border: 1px solid var(--li-border);
-      border-radius: 12px !important;
+      border-radius: 12px;
     }
 
     mat-panel-description {

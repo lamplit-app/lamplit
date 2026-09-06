@@ -16,7 +16,7 @@ export interface TextPromptData {
   selector: 'li-text-prompt-dialog',
   imports: [MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">{{ data.title }}</h2>
+    <h2 mat-dialog-title>{{ data.title }}</h2>
     <mat-dialog-content>
       <mat-form-field appearance="outline">
         <mat-label>{{ data.label }}</mat-label>
@@ -41,10 +41,6 @@ export interface TextPromptData {
     mat-form-field {
       width: 22rem;
       max-width: 100%;
-    }
-
-    mat-dialog-content {
-      padding-top: 0.5rem !important;
     }
   `,
 })
@@ -81,7 +77,7 @@ export interface ConfirmData {
   selector: 'li-confirm-dialog',
   imports: [MatButtonModule, MatDialogModule],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">{{ data.title }}</h2>
+    <h2 mat-dialog-title>{{ data.title }}</h2>
     <mat-dialog-content>
       <p>{{ data.message }}</p>
     </mat-dialog-content>

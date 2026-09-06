@@ -28,7 +28,7 @@ export interface NewStoryData extends StorySetup {
   selector: 'li-new-story-dialog',
   imports: [MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, TextValue],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">{{ data.heading }}</h2>
+    <h2 mat-dialog-title>{{ data.heading }}</h2>
 
     <mat-dialog-content>
       <mat-form-field appearance="outline">
@@ -97,7 +97,6 @@ export interface NewStoryData extends StorySetup {
       display: flex;
       flex-direction: column;
       gap: 0.35rem;
-      padding-top: 0.5rem !important;
     }
 
     mat-form-field {

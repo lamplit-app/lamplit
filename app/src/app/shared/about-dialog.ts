@@ -16,7 +16,7 @@ import { DialogsService } from './dialogs.service';
   selector: 'li-about-dialog',
   imports: [MatButtonModule, MatDialogModule],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">Lamplit</h2>
+    <h2 mat-dialog-title>Lamplit</h2>
     <mat-dialog-content>
       <p class="version">{{ version() }}</p>
       <p class="build">{{ build() }}</p>

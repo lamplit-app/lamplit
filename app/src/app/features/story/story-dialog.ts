@@ -30,7 +30,7 @@ export interface StoryDialogData {
     EditorField,
   ],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">{{ story().title }}</h2>
+    <h2 mat-dialog-title>{{ story().title }}</h2>
 
     <mat-dialog-content>
       <mat-tab-group>
@@ -231,8 +231,7 @@ export interface StoryDialogData {
   `,
   styles: `
     mat-dialog-content {
-      max-height: min(74vh, 44rem) !important;
-      padding-top: 0 !important;
+      max-height: var(--li-sheet-height);
     }
 
     .tab {

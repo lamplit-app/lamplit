@@ -28,7 +28,7 @@ export interface SceneDialogData {
   selector: 'li-scene-dialog',
   imports: [MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, TextValue],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">Chapter {{ chapter().number }} — the scene</h2>
+    <h2 mat-dialog-title>Chapter {{ chapter().number }} — the scene</h2>
 
     <mat-dialog-content>
       <p class="li-hint lead">
@@ -75,7 +75,6 @@ export interface SceneDialogData {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      padding-top: 0.25rem !important;
     }
 
     .lead {

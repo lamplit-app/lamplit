@@ -120,6 +120,17 @@ $palette: (
   --li-reading-size: 18px;
   --li-radius: 14px;
 
+  // How tall a sheet's content is allowed to get before it scrolls inside
+  // itself. Seven of the sheets are long enough to need the cap; a card that is
+  // all but the height of the window is not a card any more. The rest are
+  // shorter than Material's own 65vh and never reach it.
+  //
+  // Written once because seven sheets asking for four slightly different
+  // fractions of the viewport is seven chances to disagree, and none of the
+  // four was chosen over the others. The phone layout drops the cap entirely: a
+  // sheet is the screen, so there is nothing for it to be a fraction of.
+  --li-sheet-height: min(78vh, 46rem);
+
   // The reading column, and the margin beside it.
   //
   // A page has margins so that the marks about the text are not on top of it.
@@ -143,6 +154,57 @@ $palette: (
   @include bp.phone {
     --li-gutter: 1rem;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Material's own tokens. Everything the library draws for us, set once.
+// ---------------------------------------------------------------------------
+//
+// A Material component reads a custom property at the point it draws, so
+// setting the property is the whole of the override: no selector to write, no
+// specificity to win, and nothing for a later version of the library to beat.
+// A rule of our own is the other way round — Material styles its title with
+// `.mat-mdc-dialog-container .mat-mdc-dialog-title`, and one hand-written class
+// loses to it silently, which is how fifteen sheets came to be titled in
+// `system-ui` while their stylesheet said serif.
+html {
+  // A sheet is titled in the reading face, at the size a title is set in.
+  --mat-dialog-subhead-font: var(--li-serif);
+  --mat-dialog-subhead-size: 1.3rem;
+  --mat-dialog-subhead-weight: 400;
+  --mat-dialog-subhead-tracking: 0;
+  --mat-dialog-subhead-color: var(--li-ink);
+
+  // The card a sheet is drawn on. The border beside these has no token, and is
+  // a rule further down.
+  --mat-dialog-container-shape: var(--li-radius);
+  --mat-dialog-container-color: var(--li-surface);
+  --mat-dialog-container-elevation-shadow: 0 24px 64px
+    light-dark(rgb(0 0 0 / 18%), rgb(0 0 0 / 55%));
+
+  // Material gives the gap under a title to the title, zeroing the top padding
+  // of the content block that follows one. So the air a sheet wants between its
+  // title and its first line is the title's own bottom padding, said here for
+  // all of them rather than as a `padding-top` in the six that wanted a little
+  // more of it than the 13px Material ships.
+  --mat-dialog-headline-padding: 0.4rem 1.5rem 1.1rem;
+  --mat-dialog-content-padding: 1.25rem 1.5rem;
+  --mat-dialog-with-actions-content-padding: 1.25rem 1.5rem 0;
+
+  // A hint under a Material field is a hint, in the size `.li-hint` is set in.
+  --mat-form-field-subscript-text-size: 0.8rem;
+
+  // The panels that fold Advanced away sit on the sheet rather than on a card
+  // of their own; the two that want an edge draw their own border.
+  --mat-expansion-container-background-color: transparent;
+}
+
+// The subscript wrapper has no colour of its own to set, so it inherits the
+// field's — the ink the value is typed in, which is far too loud for a note
+// about it. The error inside it keeps its own colour, which is the point of
+// setting this on the wrapper rather than on the hint.
+.mat-mdc-form-field-subscript-wrapper {
+  color: var(--li-muted);
 }
 
 * {
@@ -494,23 +556,15 @@ textarea:where(:not(.mat-mdc-input-element)) {
   }
 }
 
-.li-dialog-title {
-  font-family: var(--li-serif);
-  font-size: 1.3rem;
-  margin: 0;
-}
-
 .li-hint {
   color: var(--li-muted);
   font-size: 0.8rem;
   line-height: 1.5;
 }
 
+// The one thing about the card that Material has no token for.
 .mat-mdc-dialog-surface {
-  border-radius: var(--li-radius) !important;
   border: 1px solid var(--li-border);
-  background: var(--li-surface) !important;
-  box-shadow: 0 24px 64px light-dark(rgb(0 0 0 / 18%), rgb(0 0 0 / 55%)) !important;
 }
 
 .cdk-overlay-dark-backdrop {
@@ -539,8 +593,12 @@ textarea:where(:not(.mat-mdc-input-element)) {
     max-height: 100dvh !important;
   }
 
+  // There are no corners to round on a sheet that is the whole screen.
+  html {
+    --mat-dialog-container-shape: 0;
+  }
+
   .mat-mdc-dialog-surface {
-    border-radius: 0 !important;
     border: 0;
     // The bar the phone draws over the foot of the screen, and the notch.
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
@@ -549,14 +607,13 @@ textarea:where(:not(.mat-mdc-input-element)) {
 
   // 65vh of a floating card; the whole of what is left of a sheet.
   //
-  // Seven of the sheets cap their own content at a fraction of the viewport so
-  // that a long one does not become a column of text with a card drawn round
-  // it. That is the right answer for a card and the wrong one for a sheet, and
-  // it is written as `!important` in each of their component styles — which is
-  // scoped, and so more specific than one class. Two classes beats it, and
-  // beats it in the one place rather than seven times over.
+  // Seven of the sheets cap their own content at `--li-sheet-height` so that a
+  // long one does not become a column of text with a card drawn round it. That
+  // is the right answer for a card and the wrong one for a sheet. Their rule is
+  // scoped, and so a class and an element; two classes beats it, in the one
+  // place rather than seven times over.
   .mat-mdc-dialog-container .mat-mdc-dialog-content {
-    max-height: none !important;
+    max-height: none;
   }
 
   // Sticky rather than merely last: a sheet whose content scrolls still has

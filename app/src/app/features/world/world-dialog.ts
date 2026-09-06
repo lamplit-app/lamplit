@@ -43,7 +43,7 @@ interface Group {
     EditorField,
   ],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">The world of {{ story().title }}</h2>
+    <h2 mat-dialog-title>The world of {{ story().title }}</h2>
 
     <mat-dialog-content>
       <mat-tab-group>
@@ -294,8 +294,7 @@ interface Group {
   `,
   styles: `
     mat-dialog-content {
-      max-height: min(74vh, 46rem) !important;
-      padding-top: 0 !important;
+      max-height: var(--li-sheet-height);
     }
 
     .tab {
@@ -319,9 +318,8 @@ interface Group {
     }
 
     .instruction {
-      background: transparent !important;
       border: 1px solid var(--li-border);
-      border-radius: 12px !important;
+      border-radius: 12px;
     }
 
     mat-panel-description {

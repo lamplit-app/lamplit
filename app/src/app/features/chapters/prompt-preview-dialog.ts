@@ -38,7 +38,7 @@ export interface PromptPreviewData {
   selector: 'li-prompt-preview-dialog',
   imports: [DragDropModule, MatButtonModule, MatDialogModule, MatTooltipModule],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">What the model sees</h2>
+    <h2 mat-dialog-title>What the model sees</h2>
 
     <mat-dialog-content>
       <p class="li-hint">
@@ -172,7 +172,7 @@ export interface PromptPreviewData {
   `,
   styles: `
     mat-dialog-content {
-      max-height: min(74vh, 44rem) !important;
+      max-height: var(--li-sheet-height);
     }
 
     .block {

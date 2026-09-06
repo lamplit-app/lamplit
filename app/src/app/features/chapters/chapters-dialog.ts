@@ -23,7 +23,7 @@ interface Row {
   selector: 'li-chapters-dialog',
   imports: [MatButtonModule, MatDialogModule, MatMenuModule],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">{{ stories.story().title }}</h2>
+    <h2 mat-dialog-title>{{ stories.story().title }}</h2>
 
     <mat-dialog-content>
       @for (row of rows(); track row.chapter.id) {
@@ -65,7 +65,7 @@ interface Row {
   `,
   styles: `
     mat-dialog-content {
-      max-height: min(70vh, 40rem) !important;
+      max-height: var(--li-sheet-height);
     }
 
     .row {

@@ -49,7 +49,7 @@ export interface ConnectionData {
     MatSelectModule,
   ],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">
+    <h2 mat-dialog-title>
       {{ insisting ? 'First, somewhere to send the story' : 'Connection' }}
     </h2>
 
@@ -223,7 +223,6 @@ export interface ConnectionData {
       display: flex;
       flex-direction: column;
       gap: 0.35rem;
-      padding-top: 0.5rem !important;
     }
 
     mat-form-field {

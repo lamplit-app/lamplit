@@ -30,7 +30,7 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
   selector: 'li-whats-new-dialog',
   imports: [MatButtonModule, MatDialogModule, MatProgressSpinnerModule],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">{{ heading() }}</h2>
+    <h2 mat-dialog-title>{{ heading() }}</h2>
 
     <mat-dialog-content>
       @if (releases().length) {
@@ -89,7 +89,7 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
   `,
   styles: `
     mat-dialog-content {
-      max-height: min(74vh, 44rem) !important;
+      max-height: var(--li-sheet-height);
     }
 
     .running {
@@ -197,10 +197,12 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
       color: var(--li-ink-soft);
     }
 
-    .links {
+    /* Named by its element as well as its class: the rule for a paragraph of
+       the how above is a class and an element, and a lone class loses to it. */
+    p.links {
       display: flex;
       gap: 0.5rem;
-      margin-top: 0.6rem !important;
+      margin-top: 0.6rem;
       font-size: 0.86rem;
     }
 

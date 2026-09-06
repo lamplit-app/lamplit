@@ -46,7 +46,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
     MatSlideToggleModule,
   ],
   template: `
-    <h2 mat-dialog-title class="li-dialog-title">Preferences</h2>
+    <h2 mat-dialog-title>Preferences</h2>
 
     <mat-dialog-content>
       <mat-accordion multi>
@@ -421,13 +421,7 @@ import { ReadAloud } from '../../shared/read-aloud.service';
   `,
   styles: `
     mat-dialog-content {
-      /* Tall enough that Advanced is reachable without hunting for a scrollbar. */
-      max-height: min(78vh, 46rem) !important;
-      padding-top: 0.5rem !important;
-    }
-
-    mat-expansion-panel {
-      background: transparent !important;
+      max-height: var(--li-sheet-height);
     }
 
     mat-panel-description {
