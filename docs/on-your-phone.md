@@ -87,14 +87,13 @@ Deliberately missing, not missing yet:
 | | |
 |---|---|
 | Preferences | text size, book style, theme, colours, the reading voice |
-| Parameters | temperature, the context budget, response length |
-| Connection | which endpoint answers, and with which model |
+| Model | which endpoint answers and with which model, and the parameters it is asked with |
 | About, What's new | which build this is, and what changed in it |
 | The prompt preview | developer mode's, and about the app rather than the story |
 
 Every one of them is set up once, on the computer, and lives in `settings.json` beside your
 stories — so the phone is already reading the answers. Putting them on a 390-pixel screen would be
-five more sheets to get lost in, on the device least likely to be where you make those decisions.
+four more sheets to get lost in, on the device least likely to be where you make those decisions.
 
 ## Add it to the home screen
 

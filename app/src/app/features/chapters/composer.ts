@@ -577,7 +577,7 @@ export class Composer {
         this.chapters.continueChapter(chapter.id);
         break;
       case 'connection':
-        void this.dialogs.openConnection();
+        void this.dialogs.openModel();
         break;
     }
   }

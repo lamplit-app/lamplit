@@ -4,6 +4,7 @@ import {
   composer,
   FAKE_API_URL,
   fillProse,
+  openPreferences,
   systemOf,
   waitForTurn,
 } from './helpers';
@@ -220,7 +221,7 @@ test.describe('a story from nothing, told by a narrator', () => {
     // that has wanted it — so it is switched on here, through the interface,
     // the way anyone else would.
     await expect(contextPill()).toHaveCount(0);
-    await page.getByRole('button', { name: 'Preferences' }).click();
+    await openPreferences(page);
     const preferences = page.getByRole('dialog');
     await preferences.getByRole('button', { name: 'Advanced' }).click();
     await preferences.getByRole('switch', { name: /^Developer mode/ }).click();

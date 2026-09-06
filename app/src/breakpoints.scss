@@ -24,16 +24,21 @@
 //
 // Three of them are one thing happening in stages: the top bar running out of
 // room and giving up what it can spare, in the order it can spare it. The
-// indicator's word goes at 74rem, the wordmark at 61rem, and at 48rem what is
+// indicator's word goes at 61rem, the wordmark at 49rem, and at 48rem what is
 // left stops being a bar of named buttons at all. Reading them in this order is
 // the only way to see that ladder; it was invisible while they sat in three
 // different files.
 //
-// The panel's width is in among them by arithmetic rather than by kind, and the
-// margin's is under them all.
-
-/// The save indicator keeps its word rather than standing as a dot on its own.
-$save-label-width: 74rem;
+// Both were 12rem wider — 74rem and 61rem — and both moved together, by exactly
+// what Parameters and Preferences were taking up before they left the bar
+// (6.01rem and 6.17rem, and the two gaps beside them: 12.5rem measured at the
+// browser's default size). The order is the same and the numbers are the same
+// question asked of a shorter bar: each threshold is still the window width at
+// which the title has as little room as it used to have there. What that
+// arithmetic says about the middle rung is said under it.
+//
+// The panel's width is over them now rather than in among them, by the same
+// arithmetic and not by any change of kind, and the margin's is under them all.
 
 /// Room for the panel beside the page rather than over it.
 ///
@@ -48,8 +53,19 @@ $save-label-width: 74rem;
 /// `core/layout.ts` reads it back, the same way the phone width is handed over.
 $panel-push-width: 69rem;
 
+/// The save indicator keeps its word rather than standing as a dot on its own.
+$save-label-width: 61rem;
+
 /// Room in the bar for the wordmark as well as the story and the model.
-$wordmark-width: 61rem;
+///
+/// One rem above the phone width, and that is the honest answer rather than a
+/// tidy one: with three named buttons on the bar instead of five, the wordmark
+/// now survives almost exactly as far down as the bar itself does. The rung is
+/// still here, and still in the same place in the order, because the two
+/// questions are different — a desktop window this narrow keeps its bar and
+/// loses a word from it — but it is a rem wide, and the next name to leave the
+/// bar is the one that closes it.
+$wordmark-width: 49rem;
 
 /// The phone layout: this width and under.
 ///

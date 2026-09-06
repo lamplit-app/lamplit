@@ -27,6 +27,10 @@ test('asks for the connection, then who tells it, then for a scene', async ({ pa
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('heading', { name: /somewhere to send the story/ })).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Done' })).toBeDisabled();
+  // The Model sheet's other tab is not offered here: a sheet insisting on an
+  // endpoint before the app can be used at all has no business putting sampling
+  // sliders beside the question.
+  await expect(dialog.getByRole('tab')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(dialog.getByRole('heading', { name: /somewhere to send the story/ })).toBeVisible();
 

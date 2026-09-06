@@ -60,7 +60,10 @@ which is how you reach a model running on your own machine.) Paste the key, pres
 models**, choose one, and — worth doing once — press **Test**, which makes one real round trip and
 tells you whether the whole path works.
 
-![The connection modal with models fetched and tested](images/connection.png)
+Afterwards the same form is behind the model's name in the top bar — as the **Connection** tab of
+**Model**, with **Parameters** beside it — and **Ctrl/Cmd+K** opens it from anywhere:
+
+![The same form afterwards, as the Connection tab of Model](images/connection.png)
 
 More on all of this in [Models and parameters](models-and-parameters.md).
 
@@ -105,7 +108,9 @@ Some things worth knowing straight away:
 | **Enter** | send |
 | **Shift+Enter** | new line |
 | **Ctrl/Cmd+Enter** | regenerate the last answer |
-| **Ctrl/Cmd+K** | open Connection |
+| **Ctrl/Cmd+K** | open Model — the connection, and its parameters |
+| **Ctrl/Cmd+.** | the chapter panel, in and out |
+| **Ctrl/Cmd+,** | open Preferences |
 | **Escape** | close a modal — everything in it is already saved |
 
 - **Stop** appears while an answer is streaming, and keeps whatever arrived before you pressed it.

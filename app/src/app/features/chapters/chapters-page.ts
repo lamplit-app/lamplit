@@ -59,9 +59,7 @@ const PINNED_SLACK = 96;
                   Lamplit talks straight from this page to any OpenAI-compatible endpoint. Point it
                   at one and start writing.
                 </p>
-                <button matButton="filled" (click)="dialogs.openConnection()">
-                  Connect a model
-                </button>
+                <button matButton="filled" (click)="dialogs.openModel()">Connect a model</button>
               } @else {
                 <h1>{{ title() }}</h1>
                 <p class="scene">{{ chapters.chapter().scene }}</p>

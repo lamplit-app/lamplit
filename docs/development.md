@@ -13,8 +13,9 @@ app/        Angular 21 workspace — standalone components, signals, zoneless
   store/      signal stores (one per document type), and the persistence layer
               they write through: the session's documents, and the server
   features/   chapters (page, message list, composer, scene sheet, chapters
-              list, close chapter, prompt preview), connection, generation,
-              story, world
+              list, close chapter, prompt preview), model (the connection and
+              the parameters, as the two tabs of one sheet), preferences,
+              story, updates, world
   shared/     top bar, save indicator, dialog openers, editor field, controls
 server/     Express 5 — JSON documents on disk, the built app in front of them,
             a dependency-free zip writer, and the build stamp (version.js: which

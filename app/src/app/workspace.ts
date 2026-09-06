@@ -163,7 +163,7 @@ export class Workspace {
    * scene, because a chapter without one cannot be written into.
    */
   private async askWhatIsMissing(): Promise<void> {
-    if (!this.settings.isConnected()) await this.dialogs.openConnection(true);
+    if (!this.settings.isConnected()) await this.dialogs.openModel(true);
     if (this.chapters.chapter().scene.trim()) return;
     if (this.neverWrittenIn()) await this.dialogs.setUpFirstStory();
     await this.dialogs.openScene(this.chapters.chapter().id, true);
@@ -187,10 +187,10 @@ export class Workspace {
    *
    * A sheet over the page is a different thing to be typing into: Ctrl+Enter in
    * the scene box would regenerate the last reply behind it, and Ctrl+K would
-   * open a second Connection sheet on top of the first. Anything that has
-   * already been dealt with — a menu answering Escape, a dialog its own
-   * shortcut — is left alone for the same reason. And a key held down repeats
-   * dozens of times a second, which for these three is never what was meant.
+   * open a second Model sheet on top of the first. Anything that has already
+   * been dealt with — a menu answering Escape, a dialog its own shortcut — is
+   * left alone for the same reason. And a key held down repeats dozens of times
+   * a second, which for these four is never what was meant.
    */
   protected onKey(event: KeyboardEvent): void {
     if (!(event.ctrlKey || event.metaKey)) return;
@@ -200,12 +200,18 @@ export class Workspace {
       void this.chapters.retryLast();
     } else if (event.key.toLowerCase() === 'k') {
       event.preventDefault();
-      void this.dialogs.openConnection();
+      void this.dialogs.openModel();
     } else if (event.key === '.') {
       // The chapter panel, in and out. A shortcut rather than a trip to a menu
       // because it is meant to be opened for one edit and shut again.
       event.preventDefault();
       this.settings.setSidebarOpen(!this.settings.ui().sidebarOpen);
+    } else if (event.key === ',') {
+      // The key every editor uses for its settings, and Preferences is behind
+      // the ⋯ menu now rather than on the bar — a click further away, so it
+      // gets the shortcut that costs no clicks at all.
+      event.preventDefault();
+      void this.dialogs.openPreferences();
     }
   }
 }

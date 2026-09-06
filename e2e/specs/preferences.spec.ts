@@ -260,10 +260,12 @@ test.describe('preferences', () => {
     // A text button has no fill and no border, so its state layer is the whole
     // of what hovering it draws. Material shapes that layer `corner-full`,
     // which put a violet pill round a word in the top bar.
-    const layerShape = await page.getByRole('button', { name: 'Preferences' }).evaluate((el) => {
-      const layer = el.querySelector('.mat-mdc-button-persistent-ripple')!;
-      return getComputedStyle(layer, '::before').borderRadius;
-    });
+    const layerShape = await page
+      .getByRole('button', { name: 'Story', exact: true })
+      .evaluate((el) => {
+        const layer = el.querySelector('.mat-mdc-button-persistent-ripple')!;
+        return getComputedStyle(layer, '::before').borderRadius;
+      });
     expect(layerShape).not.toMatch(/9999px|50%/);
 
     await openPreferences(page);

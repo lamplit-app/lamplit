@@ -7,6 +7,24 @@ person who wrote the code. A section is written as the work happens, under
 
 ## Unreleased
 
+**The top bar names three things, and all three are the story.** *Story*, *World*, *Chapters* and
+the **⋯** menu, and nothing else. Two of the six words on it were never about the story being
+written, and both have moved to where they belong:
+
+- **The model carries its parameters.** The model name in the bar — and **Ctrl/Cmd+K** — opens
+  **Model**, one sheet with two tabs: **Connection**, as it was, and **Parameters**, as it was.
+  They were four buttons apart with nothing to say they belonged together, though they are the same
+  paragraph of the same `settings.json`. The sheet a fresh install opens on is unchanged: the
+  connection form alone, with no tab strip and no way past it until there is somewhere to send the
+  story.
+- **Preferences is behind ⋯**, with *About Lamplit*, where the rest of the app is — and it takes
+  **Ctrl/Cmd+,**, the key every editor gives its settings, to make back the click. The menu is
+  three groups now: this chapter, then the app, then About.
+- **The bar gives up less, later.** The save indicator keeps its word down to a window 12rem
+  narrower than before, and the wordmark down to a rem above the phone layout.
+- The phone's bar and its one menu are unchanged. Preferences and the model were never offered
+  there, and still are not.
+
 **A read through the whole of it, and the things that read found.** Nothing here is a feature; all
 of it is something that was wrong. The ones you could have noticed:
 

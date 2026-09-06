@@ -257,18 +257,6 @@ async function firstRun() {
   await page.getByLabel('Model', { exact: true }).selectOption(MODEL);
   await page.getByRole('button', { name: 'Test' }).click();
   await page.getByText(/The model answered/).waitFor();
-  // The sheet is taller than the window and testing scrolls it to the answer.
-  // A taller window for this one picture shows the whole thing rather than a
-  // slice of it; every other shot keeps the standard viewport. Material caps
-  // the scrolling part of a sheet at 65vh, so the window is what decides how
-  // much of it is drawn, and every field wearing a name of its own made this
-  // one about two hundred pixels taller than the window used to allow for.
-  await page.setViewportSize({ ...VIEWPORT, height: 1150 });
-  await page.locator('mat-dialog-content').evaluate((el) => (el.scrollTop = 0));
-  await page.waitForTimeout(300);
-  await shot(page, 'connection', 'the connection modal, models fetched and tested');
-  await page.setViewportSize(VIEWPORT);
-
   await page.getByRole('button', { name: 'Done' }).click();
   await page.getByRole('heading', { name: 'Your first story' }).waitFor();
   await shot(page, 'first-run-story', 'who tells the story, and who you play');
@@ -370,9 +358,26 @@ async function theApp() {
   await shot(page, 'story-persona', 'who you play');
   await escape(page);
 
-  await page.getByRole('button', { name: 'Parameters' }).click();
+  // The model, and everything about how it is asked: one sheet with two tabs,
+  // opened from the model's own name in the bar.
+  //
+  // The sheet is taller than the window and testing scrolls it to the answer.
+  // A taller window for these two pictures shows the whole thing rather than a
+  // slice of it; every other shot keeps the standard viewport. Material caps
+  // the scrolling part of a sheet at 65vh, so the window is what decides how
+  // much of it is drawn, and every field wearing a name of its own made this
+  // one about two hundred pixels taller than the window used to allow for.
+  await page.getByRole('button', { name: /Lamplighter Large/ }).click();
+  await page.getByRole('button', { name: 'Test' }).click();
+  await page.getByText(/The model answered/).waitFor();
+  await page.setViewportSize({ ...VIEWPORT, height: 1150 });
+  await page.locator('mat-dialog-content').evaluate((el) => (el.scrollTop = 0));
+  await page.waitForTimeout(400);
+  await shot(page, 'connection', 'the Connection tab: provider, endpoint, key, model, tested');
+  await page.getByRole('tab', { name: 'Parameters' }).click();
   await page.waitForTimeout(500);
-  await shot(page, 'parameters', 'the sampling set, and the context budget');
+  await shot(page, 'parameters', 'the Parameters tab: the sampling set, and the context budget');
+  await page.setViewportSize(VIEWPORT);
   await escape(page);
 
   await page.getByRole('button', { name: 'Chapters' }).click();
@@ -382,7 +387,7 @@ async function theApp() {
 
   // Preferences: Reading as it opens, then the colours behind the second
   // section, then the light theme the first one can switch to.
-  await page.getByRole('button', { name: 'Preferences' }).click();
+  await openPreferences(page);
   await page.waitForTimeout(400);
   await shot(page, 'preferences', 'text size, book style, theme');
   // Reading folded away so the whole palette is in the frame at once.
@@ -410,7 +415,7 @@ async function theApp() {
   await escape(page);
   await page.waitForTimeout(500);
   await shot(page, 'light', 'the same chapter, light');
-  await page.getByRole('button', { name: 'Preferences' }).click();
+  await openPreferences(page);
   await page.getByRole('switch', { name: 'Dark theme' }).click();
   await escape(page);
   await page.waitForTimeout(400);
@@ -469,7 +474,7 @@ async function theApp() {
 
   // The one time the backend is visible: when it stops answering.
   await context.setOffline(true);
-  await page.getByRole('button', { name: 'Preferences' }).click();
+  await openPreferences(page);
   await page.getByRole('switch', { name: 'Show token counts' }).click();
   await escape(page);
   await page.getByRole('button', { name: 'Offline' }).waitFor({ timeout: 20_000 });
@@ -638,9 +643,15 @@ async function switchStory(page, title) {
   await page.waitForTimeout(600);
 }
 
+/** Preferences, which is behind ⋯ now rather than named on the bar. */
+async function openPreferences(page) {
+  await page.getByRole('button', { name: 'More actions' }).click();
+  await page.getByRole('menuitem', { name: /^Preferences/ }).click();
+}
+
 /** Developer mode, through the interface, because that is where it lives. */
 async function setDeveloperMode(page, on) {
-  await page.getByRole('button', { name: 'Preferences' }).click();
+  await openPreferences(page);
   const sheet = page.getByRole('dialog');
   await sheet.getByRole('button', { name: 'Advanced' }).click();
   const toggle = sheet.getByRole('switch', { name: /^Developer mode/ });

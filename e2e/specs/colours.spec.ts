@@ -1,6 +1,6 @@
 import { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { openPanel, STORY_ID } from './helpers';
+import { openPanel, openPreferences, STORY_ID } from './helpers';
 
 /**
  * A colour per character: handed out without anyone choosing, kept across a
@@ -126,7 +126,7 @@ test('a colour of their own is set under Preferences, and given back there', asy
   await app.open({ mode: 'roleplay', characters: CAST });
   await openPanel(page);
 
-  await page.getByRole('button', { name: 'Preferences' }).click();
+  await openPreferences(page);
   const sheet = page.getByRole('dialog');
   await sheet.getByRole('button', { name: 'Colours' }).click();
 

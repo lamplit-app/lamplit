@@ -340,8 +340,9 @@ test.describe('parameters', () => {
       temperature: 0.9,
     });
 
-    await page.getByRole('button', { name: 'Parameters' }).click();
+    await page.keyboard.press('Control+k');
     const dialog = page.getByRole('dialog');
+    await dialog.getByRole('tab', { name: 'Parameters' }).click();
     const advanced = dialog.getByRole('button', { name: /Advanced/ });
     await advanced.scrollIntoViewIfNeeded();
     await advanced.click();

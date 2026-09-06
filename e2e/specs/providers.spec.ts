@@ -11,7 +11,7 @@ test.describe('choosing a provider', () => {
   test.beforeEach(async ({ page, app }) => {
     await app.open();
     await page.keyboard.press('Control+k');
-    await expect(page.getByRole('dialog').getByText('Connection')).toBeVisible();
+    await expect(page.getByRole('dialog').getByRole('tab', { name: 'Connection' })).toBeVisible();
   });
 
   /** By id rather than by name: it is what the sheet stores, and it is short. */
@@ -68,11 +68,11 @@ test.describe('choosing a provider', () => {
 });
 
 /**
- * Ctrl+K is the way to the Connection sheet, and one sheet is what it opens.
- * A shortcut that answers while its own sheet is on screen stacks a second
- * one over the first — and a key held down stacks one per repeat.
+ * Ctrl+K is the way to the Model sheet, and one sheet is what it opens. A
+ * shortcut that answers while its own sheet is on screen stacks a second one
+ * over the first — and a key held down stacks one per repeat.
  */
-test('opens one Connection sheet however many times it is asked for', async ({ page, app }) => {
+test('opens one Model sheet however many times it is asked for', async ({ page, app }) => {
   await app.open();
 
   await page.keyboard.press('Control+k');

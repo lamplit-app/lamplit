@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ParametersDialog } from './parameters-dialog';
+import { ParametersForm } from './parameters-form';
 import { SettingsStore } from '../../store/settings-store';
 import { KEYS } from '../../store/documents';
 import { STORAGE_BACKEND, StorageBackend } from '../../store/storage';
@@ -24,14 +24,14 @@ class InMemoryStorage implements StorageBackend {
 }
 
 /**
- * Everything on this sheet ends up in the JSON body of the next request, so
- * the two free-text fields are the ones worth pinning: a stop sequence and a
- * seed are typed rather than dragged, and an endpoint given `"seed": 4.7` or
+ * Everything on this tab ends up in the JSON body of the next request, so the
+ * two free-text fields are the ones worth pinning: a stop sequence and a seed
+ * are typed rather than dragged, and an endpoint given `"seed": 4.7` or
  * `"stop": ["", "  "]` answers with a 400 rather than a story.
  */
-describe('ParametersDialog', () => {
+describe('ParametersForm', () => {
   let storage: InMemoryStorage;
-  let fixture: ReturnType<typeof TestBed.createComponent<ParametersDialog>>;
+  let fixture: ReturnType<typeof TestBed.createComponent<ParametersForm>>;
 
   const params = () => TestBed.inject(SettingsStore).generation();
 
@@ -46,12 +46,12 @@ describe('ParametersDialog', () => {
     return (fixture.nativeElement as HTMLElement).querySelector('textarea')!;
   }
 
-  /** By its field, since every ParamRow on the sheet has a number box too. */
+  /** By its field, since every ParamRow on the tab has a number box too. */
   function seedBox(): HTMLInputElement {
     return (fixture.nativeElement as HTMLElement).querySelector('.seed input')!;
   }
 
-  /** A named row of the sheet, which is a ParamRow with its own two controls. */
+  /** A named row of the tab, which is a ParamRow with its own two controls. */
   function row(label: string): Element {
     const host = fixture.nativeElement as HTMLElement;
     const found = [...host.querySelectorAll('li-param-row')].find(
@@ -73,7 +73,7 @@ describe('ParametersDialog', () => {
     TestBed.configureTestingModule({
       providers: [{ provide: STORAGE_BACKEND, useValue: storage }],
     });
-    fixture = TestBed.createComponent(ParametersDialog);
+    fixture = TestBed.createComponent(ParametersForm);
     fixture.detectChanges();
   });
 

@@ -319,9 +319,17 @@ export function pageColour(page: Page): Promise<string> {
   return page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 }
 
-/** Opens Preferences, which arrives with Reading already open. */
+/**
+ * Opens Preferences, which arrives with Reading already open.
+ *
+ * Behind the ⋯ menu rather than named on the bar: it is the app being set up
+ * rather than the story being written. Ctrl+, opens the same sheet, and
+ * `preferences.spec.ts` is where that is checked; every other spec that wants
+ * the sheet comes through the menu, the way a reader would.
+ */
 export async function openPreferences(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Preferences' }).click();
+  await page.getByRole('button', { name: 'More actions' }).click();
+  await page.getByRole('menuitem', { name: /^Preferences/ }).click();
   await expect(page.getByRole('heading', { name: 'Preferences' })).toBeVisible();
 }
 

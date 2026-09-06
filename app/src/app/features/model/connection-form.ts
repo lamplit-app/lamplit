@@ -1,6 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, booleanAttribute, computed, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ModelInfo, Provider } from '../../core/models';
 import {
@@ -27,179 +26,167 @@ interface Status {
 
 const IDLE: Status = { kind: 'idle', message: '' };
 
-/** Opened from the top bar, or as the first thing a fresh install asks. */
-export interface ConnectionData {
-  insisting: boolean;
-}
-
 /**
  * Provider, URL, key, model. Every change is written to settings immediately,
- * so closing the modal — however it closes — has already saved.
+ * so closing the sheet — however it closes — has already saved.
+ *
+ * The body alone: the Connection tab of the Model sheet, and the whole of the
+ * first-run sheet. The title, the tab strip and Done belong to `ModelDialog`,
+ * which is the one place that knows which of those two this is.
  */
 @Component({
-  selector: 'li-connection-dialog',
-  imports: [MatButtonModule, MatDialogModule, MatProgressSpinnerModule, Field],
+  selector: 'li-connection-form',
+  imports: [MatButtonModule, MatProgressSpinnerModule, Field],
   template: `
-    <h2 mat-dialog-title>
-      {{ insisting ? 'First, somewhere to send the story' : 'Connection' }}
-    </h2>
+    @if (insisting()) {
+      <p class="lede">
+        Lamplit writes with a model of your choosing and keeps nothing of its own. Point it at an
+        endpoint and pick one; the story comes next.
+      </p>
+    }
 
-    <mat-dialog-content>
-      @if (insisting) {
-        <p class="lede">
-          Lamplit writes with a model of your choosing and keeps nothing of its own. Point it at an
-          endpoint and pick one; the story comes next.
-        </p>
+    <li-field label="Provider">
+      <!-- Which one is chosen is said on the option rather than on the
+           select: a value bound on the select is written before the options
+           it names exist, and so lands on nothing. -->
+      <select (change)="setProvider(value($event))">
+        @for (group of providerGroups; track group.label) {
+          <optgroup [label]="group.label">
+            @for (option of group.providers; track option.id) {
+              <option [value]="option.id" [selected]="option.id === connection().provider">
+                {{ option.name }}
+              </option>
+            }
+          </optgroup>
+        }
+      </select>
+    </li-field>
+
+    <li-field label="Endpoint URL">
+      <input
+        type="text"
+        [value]="connection().baseUrl"
+        [readonly]="urlIsFixed()"
+        (input)="patch({ baseUrl: value($event) })"
+        placeholder="https://host/v1"
+      />
+      @if (preset().note) {
+        <span class="li-hint">{{ preset().note }}</span>
       }
+    </li-field>
 
-      <li-field label="Provider">
-        <!-- Which one is chosen is said on the option rather than on the
-             select: a value bound on the select is written before the options
-             it names exist, and so lands on nothing. -->
-        <select (change)="setProvider(value($event))">
-          @for (group of providerGroups; track group.label) {
+    <li-field label="API key">
+      <span class="key">
+        <input
+          [type]="showKey() ? 'text' : 'password'"
+          autocomplete="off"
+          spellcheck="false"
+          [value]="connection().apiKey"
+          (input)="patch({ apiKey: value($event) })"
+        />
+        <button matIconButton type="button" (click)="showKey.set(!showKey())">
+          {{ showKey() ? '🙈' : '👁' }}
+        </button>
+      </span>
+      <span class="li-hint">
+        Kept on this machine, in plain text.
+        @if (preset().keyOptional) {
+          This one works without a key.
+        }
+        @if (preset().keyUrl) {
+          <a [href]="preset().keyUrl" target="_blank" rel="noreferrer">
+            Get a key from {{ preset().name }}
+          </a>
+        }
+      </span>
+    </li-field>
+
+    @if (!preset().modelsFixed) {
+      <div class="row">
+        <button
+          matButton="outlined"
+          (click)="fetchModels()"
+          [disabled]="fetchStatus().kind === 'busy'"
+        >
+          {{ connection().modelsCache.length ? 'Refresh models' : 'Fetch models' }}
+        </button>
+        @if (fetchStatus().kind === 'busy') {
+          <mat-spinner diameter="18" />
+        }
+        <span class="status" [class.bad]="fetchStatus().kind === 'error'">
+          {{ fetchStatus().message }}
+        </span>
+      </div>
+    }
+
+    <p class="note">
+      Prefer a model that does not think before it writes: reasoning models pause first and you pay
+      for the pause, which for storytelling buys little. Your provider's list says which is which.
+    </p>
+
+    @if (connection().modelsCache.length) {
+      <li-field label="Filter models">
+        <input
+          type="text"
+          [value]="filter()"
+          (input)="filter.set(value($event))"
+          placeholder="e.g. claude, gpt, 70b"
+        />
+      </li-field>
+
+      <li-field label="Model">
+        <select (change)="patch({ model: value($event) })">
+          @for (group of groups(); track group.label) {
             <optgroup [label]="group.label">
-              @for (option of group.providers; track option.id) {
-                <option [value]="option.id" [selected]="option.id === connection().provider">
-                  {{ option.name }}
+              @for (model of group.models; track model.id) {
+                <option [value]="model.id" [selected]="model.id === connection().model">
+                  {{ model.name ?? model.id }}
                 </option>
               }
             </optgroup>
           }
         </select>
-      </li-field>
-
-      <li-field label="Endpoint URL">
-        <input
-          type="text"
-          [value]="connection().baseUrl"
-          [readonly]="urlIsFixed()"
-          (input)="patch({ baseUrl: value($event) })"
-          placeholder="https://host/v1"
-        />
-        @if (preset().note) {
-          <span class="li-hint">{{ preset().note }}</span>
-        }
-      </li-field>
-
-      <li-field label="API key">
-        <span class="key">
-          <input
-            [type]="showKey() ? 'text' : 'password'"
-            autocomplete="off"
-            spellcheck="false"
-            [value]="connection().apiKey"
-            (input)="patch({ apiKey: value($event) })"
-          />
-          <button matIconButton type="button" (click)="showKey.set(!showKey())">
-            {{ showKey() ? '🙈' : '👁' }}
-          </button>
-        </span>
+        <!-- An option is one line of text and no more, so the id behind the
+             name is said here instead — and it is the string that goes in
+             the request, which is the one thing about this choice worth
+             being certain of. -->
         <span class="li-hint">
-          Kept on this machine, in plain text.
-          @if (preset().keyOptional) {
-            This one works without a key.
-          }
-          @if (preset().keyUrl) {
-            <a [href]="preset().keyUrl" target="_blank" rel="noreferrer">
-              Get a key from {{ preset().name }}
-            </a>
+          {{ matchCount() }} of {{ connection().modelsCache.length }} models
+          @if (connection().model) {
+            · <span class="mono">{{ connection().model }}</span>
           }
         </span>
       </li-field>
+    }
 
-      @if (!preset().modelsFixed) {
-        <div class="row">
-          <button
-            matButton="outlined"
-            (click)="fetchModels()"
-            [disabled]="fetchStatus().kind === 'busy'"
-          >
-            {{ connection().modelsCache.length ? 'Refresh models' : 'Fetch models' }}
-          </button>
-          @if (fetchStatus().kind === 'busy') {
-            <mat-spinner diameter="18" />
-          }
-          <span class="status" [class.bad]="fetchStatus().kind === 'error'">
-            {{ fetchStatus().message }}
-          </span>
-        </div>
-      }
-
-      <p class="note">
-        Prefer a model that does not think before it writes: reasoning models pause first and you
-        pay for the pause, which for storytelling buys little. Your provider's list says which is
-        which.
-      </p>
-
-      @if (connection().modelsCache.length) {
-        <li-field label="Filter models">
-          <input
-            type="text"
-            [value]="filter()"
-            (input)="filter.set(value($event))"
-            placeholder="e.g. claude, gpt, 70b"
-          />
-        </li-field>
-
-        <li-field label="Model">
-          <select (change)="patch({ model: value($event) })">
-            @for (group of groups(); track group.label) {
-              <optgroup [label]="group.label">
-                @for (model of group.models; track model.id) {
-                  <option [value]="model.id" [selected]="model.id === connection().model">
-                    {{ model.name ?? model.id }}
-                  </option>
-                }
-              </optgroup>
-            }
-          </select>
-          <!-- An option is one line of text and no more, so the id behind the
-               name is said here instead — and it is the string that goes in
-               the request, which is the one thing about this choice worth
-               being certain of. -->
-          <span class="li-hint">
-            {{ matchCount() }} of {{ connection().modelsCache.length }} models
-            @if (connection().model) {
-              · <span class="mono">{{ connection().model }}</span>
-            }
-          </span>
-        </li-field>
-      }
-
-      <div class="row">
-        <button
-          matButton="outlined"
-          (click)="test()"
-          [disabled]="testStatus().kind === 'busy' || !settings.isConnected()"
-        >
-          Test
-        </button>
-        @if (testStatus().kind === 'busy') {
-          <mat-spinner diameter="18" />
-        }
-        <span
-          class="status"
-          [class.good]="testStatus().kind === 'ok'"
-          [class.bad]="testStatus().kind === 'error'"
-        >
-          {{ testStatus().message }}
-        </span>
-      </div>
-    </mat-dialog-content>
-
-    <mat-dialog-actions align="end">
-      @if (insisting) {
-        <!-- The app is unusable without this, and the composer says so until it
-             is answered — but a modal with no way out would be worse. -->
-        <button matButton mat-dialog-close>Not now</button>
-      }
-      <button matButton="filled" mat-dialog-close [disabled]="insisting && !settings.isConnected()">
-        Done
+    <div class="row">
+      <button
+        matButton="outlined"
+        (click)="test()"
+        [disabled]="testStatus().kind === 'busy' || !settings.isConnected()"
+      >
+        Test
       </button>
-    </mat-dialog-actions>
+      @if (testStatus().kind === 'busy') {
+        <mat-spinner diameter="18" />
+      }
+      <span
+        class="status"
+        [class.good]="testStatus().kind === 'ok'"
+        [class.bad]="testStatus().kind === 'error'"
+      >
+        {{ testStatus().message }}
+      </span>
+    </div>
   `,
   styles: `
+    /* The stack the fields make, which used to be the sheet's own content box. */
+    :host {
+      display: flex;
+      flex-direction: column;
+      gap: var(--li-space-md);
+    }
+
     .lede {
       margin: 0 0 var(--li-space-md);
       color: var(--li-muted);
@@ -212,12 +199,6 @@ export interface ConnectionData {
       font-size: var(--li-text-sm);
       color: var(--li-muted);
       line-height: 1.45;
-    }
-
-    mat-dialog-content {
-      display: flex;
-      flex-direction: column;
-      gap: var(--li-space-md);
     }
 
     /* The key and the eye that shows it, on one line inside the field. */
@@ -265,13 +246,12 @@ export interface ConnectionData {
     }
   `,
 })
-export class ConnectionDialog {
+export class ConnectionForm {
   protected readonly settings = inject(SettingsStore);
   private readonly client = inject(ModelClient);
 
-  /** Null when opened from the top bar, which is every time but the first. */
-  protected readonly insisting =
-    inject<ConnectionData | null>(MAT_DIALOG_DATA, { optional: true })?.insisting ?? false;
+  /** The first-run sheet, which says why it is asking before it asks. */
+  readonly insisting = input(false, { transform: booleanAttribute });
 
   protected readonly connection = this.settings.connection;
   protected readonly providerGroups = PROVIDER_GROUPS;

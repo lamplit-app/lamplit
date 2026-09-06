@@ -4,11 +4,16 @@
 
 ---
 
+Both halves of this page are one sheet in the app. The model name in the top bar opens **Model**,
+which has two tabs: **Connection** — where the story is sent — and **Parameters** — how the model
+is asked to write once it gets there. They live in the same paragraph of `settings.json` and are
+now in the same place on screen.
+
 ## Connecting
 
-**Ctrl/Cmd+K**, or the model name in the top bar.
+**Ctrl/Cmd+K**, or the model name in the top bar. It opens on this tab.
 
-![The connection modal](images/connection.png)
+![The Connection tab](images/connection.png)
 
 | | |
 |---|---|
@@ -19,8 +24,10 @@
 | **Model** | Prefer one that does not think before it writes. Reasoning models pause and then answer, and you pay for the pause as output tokens; for prose the wait buys little. Your provider's list says which models reason and which of theirs write best — ask them, not the app. Lamplit never asks a model to reason on its own; whether a model reasons when not asked is the model's default, and **Reasoning effort** under [Advanced](#advanced) is the only thing that changes it. |
 | **Test** | One real round trip. Worth doing once — it tells you whether the URL, the key and the model all work together, rather than making you find out mid-sentence. |
 
-Every change is saved the moment you make it, so however you close this modal, it has already
-been kept.
+Every change is saved the moment you make it, so however you close this sheet, it has already
+been kept. On a fresh install the same form is the first thing on screen, without the tab strip
+and without a way past it until there is an endpoint and a model — see
+[Getting started](getting-started.md).
 
 ### The browser talks to the model directly
 
@@ -96,7 +103,9 @@ Three of these need one thing said about them:
 
 ## Parameters
 
-![The sampling set and the context budget](images/parameters.png)
+The second tab of the same sheet.
+
+![The Parameters tab](images/parameters.png)
 
 ### The two that matter most
 
@@ -127,7 +136,7 @@ story pointed at something stricter later.
 **Reset to defaults** puts the whole set back.
 
 > Parameters are global, not per story — they are how *you* like models to behave, and they live
-> in `settings.json` next to your connection.
+> in `settings.json` next to your connection, which is why they are the tab beside it.
 
 ## Reading the numbers
 

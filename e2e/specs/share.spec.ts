@@ -82,7 +82,7 @@ test.describe('sharing on this network', () => {
     try {
       const phonePage = await phone.newPage();
       await phonePage.goto(`${server.sharedUrl}/pair/${await server.shareToken()}`);
-      await expect(phonePage.getByRole('button', { name: 'Preferences' })).toBeVisible();
+      await expect(phonePage.getByRole('button', { name: 'Story', exact: true })).toBeVisible();
 
       await server.setShare(false);
       // The listener is gone; the computer's own is untouched.
@@ -109,7 +109,7 @@ test.describe('sharing on this network', () => {
       const phonePage = await phone.newPage();
       const first = await server.shareToken();
       await phonePage.goto(`${server.sharedUrl}/pair/${first}`);
-      await expect(phonePage.getByRole('button', { name: 'Preferences' })).toBeVisible();
+      await expect(phonePage.getByRole('button', { name: 'Story', exact: true })).toBeVisible();
 
       await preferences.getByRole('button', { name: 'New code' }).click();
       await page.getByRole('button', { name: 'Make a new code' }).click();
@@ -120,7 +120,7 @@ test.describe('sharing on this network', () => {
 
       // Scanning the new one is the way back in.
       await phonePage.goto(`${server.sharedUrl}/pair/${await server.shareToken()}`);
-      await expect(phonePage.getByRole('button', { name: 'Preferences' })).toBeVisible();
+      await expect(phonePage.getByRole('button', { name: 'Story', exact: true })).toBeVisible();
     } finally {
       await phone.close();
     }

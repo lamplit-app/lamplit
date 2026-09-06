@@ -16,13 +16,24 @@ import { SaveStatusIndicator } from './save-status';
  * The one bar that is always there: which story and chapter are open, which
  * model is answering, and the way into everything that opens over the page.
  *
- * On a phone it is three things and no more — the wordmark, the save dot and
- * one menu — because the bar is the only furniture on a screen whose whole
- * purpose is the story under it. What the menu drops is not arbitrary:
- * Parameters, Preferences, Connection, About and What's new are the app being
- * set up rather than the story being written, and they were set up on the
- * computer that is serving this page. The four that stay — Story, World,
- * Chapters, and the chapter panel — are the story itself.
+ * Two halves, and each half says one thing. Left is where you are: the wordmark
+ * and story · chapter. Right is two clusters — the state of things, drawn as
+ * statuses and each one the way into what it reports (the save dot, the update
+ * pill, the model and its dot), and then the story itself, which is Story,
+ * World, Chapters and ⋯ for what is left.
+ *
+ * The named buttons are three because three of them are about what is being
+ * written. Parameters is how the model is asked to write and belongs to the
+ * model, which carries it; Preferences is the app being set up rather than the
+ * story being written and is behind ⋯ with About, where the rest of the app is.
+ *
+ * On a phone the bar is three things and no more — the wordmark, the save dot
+ * and one menu — because the bar is the only furniture on a screen whose whole
+ * purpose is the story under it. What the menu drops there is not arbitrary:
+ * Preferences, the model and About are the app being set up rather than the
+ * story being written, and they were set up on the computer that is serving
+ * this page. The four that stay — Story, World, Chapters, and the chapter panel
+ * — are the story itself.
  */
 @Component({
   selector: 'li-top-bar',
@@ -88,8 +99,8 @@ import { SaveStatusIndicator } from './save-status';
             matButton
             class="model li-truncates"
             [class.unset]="!settings.isConnected()"
-            (click)="dialogs.openConnection()"
-            [matTooltip]="connectionTooltip()"
+            (click)="dialogs.openModel()"
+            [matTooltip]="modelTooltip()"
           >
             <span class="dot" [class.live]="settings.isConnected()"></span>
             {{ modelLabel() }}
@@ -98,8 +109,6 @@ import { SaveStatusIndicator } from './save-status';
           <button matButton (click)="dialogs.openStory()">Story</button>
           <button matButton (click)="dialogs.openWorld()">World</button>
           <button matButton (click)="dialogs.openChapters()">Chapters</button>
-          <button matButton (click)="dialogs.openParameters()">Parameters</button>
-          <button matButton (click)="dialogs.openPreferences()">Preferences</button>
         }
 
         <button matButton [matMenuTriggerFor]="more" aria-label="More actions">⋯</button>
@@ -129,6 +138,14 @@ import { SaveStatusIndicator } from './save-status';
             Clear this chapter
           </button>
           @if (!layout.phone()) {
+            <hr />
+            <!-- The app being set up, rather than the story being written. It
+                 was a word on the bar beside the three about the story; it is a
+                 click further away now, and takes the key every editor gives
+                 its settings to make that back. -->
+            <button mat-menu-item (click)="dialogs.openPreferences()">
+              <span class="item">Preferences…<span class="shortcut">Ctrl+,</span></span>
+            </button>
             <hr />
             <button mat-menu-item (click)="dialogs.openAbout()">About Lamplit…</button>
           }
@@ -195,7 +212,7 @@ import { SaveStatusIndicator } from './save-status';
       overflow: hidden;
       flex-shrink: 1;
       min-width: 0;
-      max-width: 30rem;
+      max-width: 36rem;
     }
 
     /* Where the tap says you are, when the bar has no room to. */
@@ -252,11 +269,12 @@ import { SaveStatusIndicator } from './save-status';
       }
     }
 
-    /* Long enough for a name and no longer, because the six named buttons
-       after it are what the bar is for. li-truncates is what ends a longer
-       name in an ellipsis rather than mid-word. */
+    /* Long enough for a name and no longer, because the named buttons after it
+       are what the bar is for. li-truncates is what ends a longer name in an
+       ellipsis rather than mid-word. Two of those buttons went, so this and the
+       cap on .here above both take a share of what they were using. */
     .model {
-      max-width: 15rem;
+      max-width: 19rem;
     }
 
     .model.unset {
@@ -288,6 +306,21 @@ import { SaveStatusIndicator } from './save-status';
       background: color-mix(in srgb, var(--li-accent) 18%, var(--li-surface));
     }
 
+    /* A name on the left and the keys that do the same thing on the right, the
+       way every editor's menu writes it. The row Material draws is a flex box
+       with the label span filling it, so the two ends are set inside that. */
+    .item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--li-space-xl);
+    }
+
+    .shortcut {
+      font-size: var(--li-text-xs);
+      color: var(--li-muted);
+    }
+
     hr {
       border: 0;
       border-top: 1px solid var(--li-border);
@@ -317,9 +350,16 @@ export class TopBar {
     return known?.name ?? shortModelId(connection.model);
   });
 
-  protected readonly connectionTooltip = computed(
-    () => this.settings.connectionHint() || this.settings.connection().baseUrl,
-  );
+  /**
+   * What is behind the name, not only what the name is. It was the URL alone,
+   * which reads as a label; the rest says that the sheet it opens is where both
+   * the endpoint and the way the model is asked are kept.
+   */
+  protected readonly modelTooltip = computed(() => {
+    const hint = this.settings.connectionHint();
+    if (hint) return hint;
+    return `${this.settings.connection().baseUrl} — the connection and its parameters (Ctrl+K)`;
+  });
 
   protected async rename(): Promise<void> {
     const title = await this.dialogs.askText({

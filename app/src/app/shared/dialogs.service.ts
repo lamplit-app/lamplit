@@ -66,8 +66,8 @@ export class DialogsService {
   private readonly dialog = inject(MatDialog);
   private readonly chapters = inject(ChapterStore);
   private readonly stories = inject(StoryStore);
-  /** The Connection sheet while it is open, so a second ask joins the first. */
-  private connection: Promise<void> | null = null;
+  /** The Model sheet while it is open, so a second ask joins the first. */
+  private model: Promise<void> | null = null;
 
   /**
    * Whether anything is open over the page. The page's own shortcuts stop at
@@ -80,30 +80,32 @@ export class DialogsService {
   }
 
   /**
-   * `insisting` is the first-run form: it opens before anything else, does not
-   * take Escape or a click outside for an answer, and keeps Done dark until
-   * there is somewhere to send the story. Resolves when it closes, so the flow
-   * behind it can wait.
+   * The model: where the story is sent, and how it is asked once it gets there.
+   * Two tabs of one sheet, opening on Connection.
+   *
+   * `insisting` is the first-run form: it opens before anything else, has no
+   * tab strip, does not take Escape or a click outside for an answer, and keeps
+   * Done dark until there is somewhere to send the story. Resolves when it
+   * closes, so the flow behind it can wait.
+   *
+   * Narrower when it is insisting, because a form that will not be dismissed is
+   * a column of questions and nothing else; the tabbed sheet takes the width
+   * Parameters needs for its two columns.
    */
-  async openConnection(insisting = false): Promise<void> {
+  async openModel(insisting = false): Promise<void> {
     // Asked for twice — the shortcut pressed twice, or the first-run flow and a
     // keypress at once — is one sheet, and both askers wait on that one.
-    this.connection ??= this.showConnection(insisting).finally(() => (this.connection = null));
-    return this.connection;
+    this.model ??= this.showModel(insisting).finally(() => (this.model = null));
+    return this.model;
   }
 
-  private async showConnection(insisting: boolean): Promise<void> {
-    const { ConnectionDialog } = await import('../features/connection/connection-dialog');
+  private async showModel(insisting: boolean): Promise<void> {
+    const { ModelDialog } = await import('../features/model/model-dialog');
     const ref = this.dialog.open(
-      ConnectionDialog,
-      sheet('md', { disableClose: insisting, data: { insisting } }),
+      ModelDialog,
+      sheet(insisting ? 'md' : 'lg', { disableClose: insisting, data: { insisting } }),
     );
     await firstValueFrom(ref.afterClosed());
-  }
-
-  async openParameters(): Promise<void> {
-    const { ParametersDialog } = await import('../features/generation/parameters-dialog');
-    this.dialog.open(ParametersDialog, sheet('xl'));
   }
 
   /**

@@ -65,11 +65,11 @@ test('the bar is the wordmark, the dot and one menu', async ({ page, app }) => {
   await expect(bar.locator('.wordmark')).toBeHidden();
   await expect(bar.getByRole('button', { name: 'More actions' })).toBeVisible();
 
-  // The six that were named in the bar are not in it any more.
-  for (const name of ['Story', 'World', 'Chapters', 'Parameters', 'Preferences']) {
+  // The three the desktop bar names are not in this one.
+  for (const name of ['Story', 'World', 'Chapters']) {
     await expect(bar.getByRole('button', { name, exact: true })).toHaveCount(0);
   }
-  // Nor is the model, which is the way into Connection.
+  // Nor is the model, which is the way into the connection and its parameters.
   await expect(bar.getByRole('button', { name: /Storyteller Large|Connect a model/ })).toHaveCount(
     0,
   );
@@ -85,7 +85,7 @@ test('the app’s own settings are not offered anywhere on a phone', async ({ pa
   await expect(menu.getByRole('menuitem', { name: 'Chapters…' })).toBeVisible();
   await expect(menu.getByRole('menuitem', { name: 'Chapter panel' })).toBeVisible();
 
-  for (const name of [/Preferences/, /Parameters/, /Connection/, /About/, /What.s new/]) {
+  for (const name of [/Preferences/, /Parameters/, /Connection/, /Model/, /About/, /What.s new/]) {
     await expect(menu.getByRole('menuitem', { name })).toHaveCount(0);
   }
 

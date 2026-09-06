@@ -197,9 +197,10 @@ usable either way — the panel never takes the box you are writing in.
 
 ## Preferences
 
-**Preferences** in the top bar holds everything that changes how the story looks to you and
-nothing about what is sent. It opens on **Reading**, with **Colours** and **Advanced** folded
-away underneath.
+**Preferences** holds everything that changes how the story looks to you and nothing about what is
+sent. It is behind the **⋯** menu in the top bar, or **Ctrl/Cmd+,** — it is the app being set up
+rather than the story being written, so it is not one of the bar's own names. It opens on
+**Reading**, with **Colours** and **Advanced** folded away underneath.
 
 ### Reading
 
@@ -314,9 +315,17 @@ send exactly the same thing; the difference is only whether you can watch.
 
 The top bar always says which story and which chapter you are in, and which model is answering.
 Click the story name for the story menu — switch, rename, duplicate, delete, or start a new one.
-The **⋯** menu holds **New chapter**, **Edit this scene**, **Clear this chapter**, and
-**About Lamplit** — which says exactly which build you are running, the line to quote in a bug
-report. See [Upgrading](upgrading.md).
+Click the model name for **Model**, which is the connection and its parameters as two tabs; see
+[Models and parameters](models-and-parameters.md).
+
+The bar's own names are **Story**, **World** and **Chapters**, because those three are the story
+being written. The **⋯** menu beside them holds the rest, in three groups:
+
+| | |
+|---|---|
+| **New chapter…**, **Edit this scene…**, **Clear this chapter** | this chapter |
+| **Preferences…** — also **Ctrl/Cmd+,** | the app, set up once |
+| **About Lamplit…** | which build you are running, the line to quote in a bug report; see [Upgrading](upgrading.md) |
 
 Everything is saved as you write it. There is no Save button anywhere in the app, and Escape out
 of any modal keeps what you typed in it.
