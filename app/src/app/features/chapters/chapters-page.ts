@@ -121,6 +121,21 @@ const PINNED_SLACK = 96;
       height: 100%;
       overflow-y: auto;
       overflow-x: hidden;
+
+      /* The top edge, which is the one edge of this scroller that ever cuts
+         anything. The bar ends where this begins, so a line leaving the page
+         was sliced through its x-height and left sitting against an edge that
+         is 82% surface over a blur — soft enough that the half-line read as
+         smeared rather than as ended. Three of the screenshots were of it.
+
+         A line's worth of fade instead, and the line dissolves into the bar
+         rather than being cut by it. It costs nothing at rest: the message
+         list opens on --li-space-lg of padding, which is this exact height, so
+         at the top of a chapter the fade has nothing but that air under it —
+         hero.png, which is the shot taken from there, did not move a byte. The
+         foot of the page needs no such thing: the composer and a third of a
+         screen of tail are down there, and the story never reaches it. */
+      mask-image: linear-gradient(to bottom, transparent, black var(--li-space-lg));
     }
 
     /* At least a screen tall, so a chapter with two lines in it puts the

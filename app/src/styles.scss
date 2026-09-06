@@ -795,6 +795,65 @@ textarea:where(:not(.mat-mdc-input-element)) {
   border: 1px solid var(--li-border);
 }
 
+// ---------------------------------------------------------------------------
+// Saying when a sheet has more in it than it is showing.
+// ---------------------------------------------------------------------------
+//
+// Seven sheets cap their content and scroll inside it, and a scrollport that
+// clips says nothing about what it clipped: four sheets cut a sentence in half
+// in the review's screenshots, and Preferences overflowed its cap by 37px on an
+// install with nothing written in it. The thumb can be seen now, which is a
+// hairline on the far edge of a card and the last thing anybody reads; a phone
+// has no thumb at all.
+//
+// So: a shadow across the edge, and only while there is something past it. Four
+// background layers are the whole of it — no script, no measuring, and nothing
+// written per sheet.
+//
+// Two of the layers are the sheet's own colour and travel with the content; two
+// are the shadow and stay with the box. At rest a patch sits at the end of the
+// content, exactly over the shadow there, and the sheet reads as one
+// uninterrupted surface. Scroll, and that patch rides out of the box and
+// uncovers the shadow it was hiding, while at the far end the other patch has
+// already moved off the edge and uncovered the shadow down there — because the
+// content it is pinned to now ends past the box rather than inside it. A sheet
+// short enough not to scroll uncovers neither: its scrollable area is its box,
+// so both patches are exactly where their shadows are and stay there. The two
+// are the same height, so what is uncovered is what is clipped, pixel for
+// pixel: a clipped descender is a first hint of one, and half a line is all of
+// it.
+//
+// Layers paint first-listed on top, which is why the patches are named first.
+//
+// The shadow peaks a notch inside the edge rather than on it, and this is not
+// an optical nicety. A sheet's height is a fraction of the viewport and lands
+// on a fractional pixel; the shadow is painted against that fraction and the
+// patch against the whole number under it, so on a 1.5x or 2x screen the
+// outermost device pixel of the shadow can escape a patch that has covered
+// every other one. Measured across four heights and three pixel ratios, the
+// escape is one device pixel and no more. Starting the ramp from transparent
+// spends that pixel on nothing, and a sheet that fits says nothing anywhere.
+//
+// `--li-border` rather than the ink at 10% the review asked for: measured, ink
+// at 10% is 1.31:1 on the dark surface, which is the number that finding
+// faulted the scrollbar thumb for. This is the colour every other edge in the
+// app is drawn in, spread over eight pixels instead of one.
+.mat-mdc-dialog-container .mat-mdc-dialog-content {
+  background-image:
+    linear-gradient(var(--li-surface), var(--li-surface)),
+    linear-gradient(var(--li-surface), var(--li-surface)),
+    linear-gradient(to bottom, transparent, var(--li-border) var(--li-space-3xs), transparent),
+    linear-gradient(to top, transparent, var(--li-border) var(--li-space-3xs), transparent);
+  background-position:
+    0 0,
+    0 100%,
+    0 0,
+    0 100%;
+  background-size: 100% var(--li-space-sm);
+  background-repeat: no-repeat;
+  background-attachment: local, local, scroll, scroll;
+}
+
 .cdk-overlay-dark-backdrop {
   background: light-dark(rgb(30 26 20 / 38%), rgb(6 7 10 / 68%));
 }
