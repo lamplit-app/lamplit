@@ -344,8 +344,13 @@ function hostnameOf(header) {
 
 function isOwnHost(hostname, allowed) {
   if (allowed.has(hostname) || hostname.endsWith('.localhost')) return true;
-  // An IP literal: dotted v4, or the v6 that came in brackets.
-  return /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || /^[0-9a-f:.]+$/.test(hostname);
+  // An IP literal: dotted v4, or the v6 that came in brackets. A v6 literal
+  // always has a colon left after the brackets came off, and requiring one is
+  // what keeps a hex-only domain name — `cafe.ba`, `dead.cf` — out.
+  return (
+    /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) ||
+    (hostname.includes(':') && /^[0-9a-f:.]+$/.test(hostname))
+  );
 }
 
 /**

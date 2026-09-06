@@ -402,6 +402,7 @@ describe('the Host header', () => {
       'localhost',
       '127.0.0.1:1234',
       '[::1]:4177',
+      '[fe80::1]',
       'app.localhost',
       '192.168.1.5:4177',
     ];
@@ -430,6 +431,22 @@ describe('the Host header', () => {
       rev: first.rev,
     });
     await api.close();
+  });
+
+  it('refuses a domain that happens to be spelt in hex, which reads like a v6 literal', async () => {
+    const api = await serve();
+    // No colon, so no address: these are names somebody can register, and the
+    // rebinding page would be served from one of them. Answers come back before
+    // the assertions so that a regression fails rather than leaving a listener.
+    const names = ['cafe.ba', 'abcdef.de', 'dead.cf', 'beef.cafe'];
+    const answers = [];
+    for (const host of names) answers.push(await callAs(api.base, host, '/api/health'));
+    await api.close();
+
+    for (const [index, response] of answers.entries()) {
+      assert.equal(response.status, 421, names[index]);
+      assert.deepEqual(response.json(), { ok: false, error: 'misdirected request' });
+    }
   });
 
   it('answers to a name it was told to answer to', async () => {
