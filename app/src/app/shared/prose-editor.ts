@@ -287,10 +287,14 @@ const EnterKey = Extension.create<{ onEnter: () => boolean }>({
       min-width: 0;
     }
 
+    /* The two row counts are the app's own, set by one of the li-rows- classes
+       on this element and inherited from it — the same three names a textarea
+       takes, because a box the story is written in is a box either way. No frame
+       to count in here: the composer draws one around the whole of itself. */
     li-prose-editor .ProseMirror {
       position: relative;
-      min-height: calc(var(--rows-min, 3) * 1lh);
-      max-height: calc(var(--rows-max, 14) * 1lh);
+      min-height: calc(var(--rows-min) * 1lh);
+      max-height: calc(var(--rows-max) * 1lh);
       overflow-y: auto;
       white-space: pre-wrap;
       color: var(--li-ink);

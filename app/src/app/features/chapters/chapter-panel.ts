@@ -94,8 +94,8 @@ const SWIPE_DISTANCE = 48;
               <div class="body">
                 <li-editor-field
                   serif
+                  class="li-rows-medium"
                   ariaLabel="The scene"
-                  [rows]="4"
                   [value]="chapters.chapter().scene"
                   [readOnly]="chapters.isClosed()"
                   [hint]="sceneHint()"
@@ -125,8 +125,8 @@ const SWIPE_DISTANCE = 48;
                   <!-- The default sits in the box it would be edited in, greyed
                        until it is written over. Typing is what adopts it. -->
                   <li-editor-field
+                    class="li-rows-tall"
                     ariaLabel="Narrator instructions"
-                    [rows]="7"
                     [value]="narratorText()"
                     [dimmed]="story().narrator.useDefault"
                     (save)="setNarrator($event)"
@@ -166,8 +166,8 @@ const SWIPE_DISTANCE = 48;
                   (change)="setPersona({ name: value($event) })"
                 />
                 <li-editor-field
+                  class="li-rows-medium"
                   ariaLabel="Persona description"
-                  [rows]="4"
                   [value]="story().persona.description"
                   placeholder="Mara, a marine biologist, thirty-one, back on the island after nine years."
                   (save)="setPersona({ description: $event })"

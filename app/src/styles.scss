@@ -547,31 +547,34 @@ app-root {
 }
 
 // ---------------------------------------------------------------------------
-// Story prose. Applied to the rendered markdown of every message.
+// Prose. Markdown somebody else wrote, rendered.
 // ---------------------------------------------------------------------------
-.story-prose {
-  font-family: var(--li-reading-family);
-  font-size: var(--li-reading-size);
-  line-height: var(--li-reading-line);
+//
+// Two places in the app show a block of rendered markdown: every message of
+// the story, and the release notes on the What's new sheet. They are not set in
+// the same face or at the same size — one is the page's reading type, the other
+// a note on a card — but a heading, a list, a rule, a table and a span of code
+// are the same shapes in both, and they were written out twice, the `code` rule
+// byte for byte. So the shapes are here, in `em` and in the palette, taking
+// their face and their measure from whatever they are set inside.
+//
+// A link is one colour: the accent. It was the accent in the notes, the accent
+// in the row of downloads under them, and `--li-muted` for the "On GitHub"
+// under each release — three links on one sheet and a reader left to work out
+// which of them go somewhere.
+.li-prose {
   overflow-wrap: break-word;
 
   p {
     margin: 0 0 0.75em;
   }
 
+  > :first-child {
+    margin-top: 0;
+  }
+
   > :last-child {
     margin-bottom: 0;
-  }
-
-  .speech {
-    color: var(--li-speech);
-    font-style: normal;
-  }
-
-  .action,
-  em {
-    color: var(--li-action);
-    font-style: italic;
   }
 
   strong {
@@ -590,7 +593,7 @@ app-root {
   h2,
   h3,
   h4 {
-    font-family: var(--li-reading-family);
+    font-family: inherit;
     font-weight: 600;
     line-height: 1.25;
     margin: 1.1em 0 0.5em;
@@ -660,6 +663,28 @@ app-root {
     border: 1px solid var(--li-border);
     padding: 0.35em 0.6em;
     text-align: left;
+  }
+}
+
+// The story itself: the prose above, set the way the reader asked for the page
+// to be set, plus the two runs only a message has — speech in its own colour,
+// and an action in italics.
+.story-prose {
+  @extend .li-prose;
+
+  font-family: var(--li-reading-family);
+  font-size: var(--li-reading-size);
+  line-height: var(--li-reading-line);
+
+  .speech {
+    color: var(--li-speech);
+    font-style: normal;
+  }
+
+  .action,
+  em {
+    color: var(--li-action);
+    font-style: italic;
   }
 }
 
@@ -754,13 +779,51 @@ select {
   }
 }
 
+// How tall a box of text is, as three names rather than as a number.
+//
+// It was eighteen boxes each writing its own pair of row counts, eleven
+// distinct minimums between them, and two ways of saying it: `[rows]` on
+// `li-editor-field`, which worked out the maximum for you, and the pair by
+// hand on everything else, which did not. No two sheets agreed about how tall
+// a paragraph of description is, and none of the eleven numbers had been
+// chosen over the others.
+//
+// So: a box is short, medium or tall. Short is a note — keys, stop sequences,
+// a line of direction to the model. Medium is a paragraph: a description, an
+// instruction, and the box the next message is written in, which is where its
+// three rows come from — that box is the one whose minimum is always in force,
+// because it is nearly always empty, and every row of it is a row of the story
+// not being read above it. Tall is prose meant to be read at length: the scene,
+// the story so far, the summary a chapter closes on.
+//
+// The class goes on the box or on anything above it, because what it sets are
+// two inherited custom properties rather than a height. That is what makes it
+// one API for all three kinds of box: the textarea rule below reads the pair,
+// so does the prose editor's `.ProseMirror`, and a class on a
+// `<li-editor-field>` reaches the textarea inside it without the component
+// having to pass anything on.
+:root,
+.li-rows-medium {
+  --rows-min: 3;
+  --rows-max: 14;
+}
+
+.li-rows-short {
+  --rows-min: 2;
+  --rows-max: 10;
+}
+
+.li-rows-tall {
+  --rows-min: 6;
+  --rows-max: 22;
+}
+
 // A box that holds more than one line sizes itself to its text. `field-sizing`
 // grows it on the line that needs it and shrinks it when text is deleted,
 // whether the text was typed or arrived from code, with nothing measuring
-// anything. Its bounds come in as row counts on the element, `--rows-min` and
-// `--rows-max`, and are converted to heights in `lh`, the line-height the box
-// is actually set in, so that "eight rows" is eight lines whether the face is
-// the serif at reading size or the sans of a note.
+// anything. The row counts above are converted to heights in `lh`, the
+// line-height the box is actually set in, so that "eight rows" is eight lines
+// whether the face is the serif at reading size or the sans of a note.
 //
 // The heights are border-box like everything else here, so the frame around
 // the text is counted in: they read back `--field-pad-y` and `--field-border`
@@ -777,9 +840,6 @@ select {
 // gets a box `--rows-min` tall that scrolls inside itself. That is the whole of
 // the fallback.
 textarea {
-  --rows-min: 2;
-  --rows-max: 12;
-
   field-sizing: content;
   display: block;
   min-height: calc(var(--rows-min) * 1lh + 2 * (var(--field-pad-y) + var(--field-border)));
@@ -913,6 +973,14 @@ input[type='checkbox'] {
   }
 }
 
+// A small word about something, in a ring: the chapter it belongs to, the
+// version that is waiting, the count of what was sent.
+//
+// Half of them are buttons, so the class covers that half too. A `<button>`
+// arrives with the operating system's own font and a default cursor, and three
+// components were each undoing that by hand — two lines apiece, and nothing to
+// stop the fourth pill from forgetting them. What a button adds is only what
+// it is *for*: the colour it hovers to, and whether it can be pressed at all.
 .li-pill {
   display: inline-flex;
   align-items: center;
@@ -920,10 +988,20 @@ input[type='checkbox'] {
   padding: var(--li-space-2xs) var(--li-space-sm);
   border: 1px solid var(--li-border);
   border-radius: var(--li-radius-pill);
+  font-family: inherit;
   font-size: var(--li-text-xs);
   letter-spacing: 0.02em;
   color: var(--li-muted);
   background: var(--li-surface);
+
+  &:is(button) {
+    cursor: pointer;
+  }
+
+  &:is(button):disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
 }
 
 // A two-way choice with room to explain itself: the Narrator / Role-play

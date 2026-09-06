@@ -71,8 +71,8 @@ export interface StoryDialogData {
                 <p class="preset">{{ defaultPrompt }}</p>
               } @else {
                 <li-editor-field
+                  class="li-rows-tall"
                   label="Narrator instructions"
-                  [rows]="7"
                   [value]="story().narrator.prompt"
                   (save)="setNarratorPrompt($event)"
                 />
@@ -131,8 +131,8 @@ export interface StoryDialogData {
                       </button>
                     </header>
                     <li-editor-field
+                      class="li-rows-short"
                       label="Who they are"
-                      [rows]="2"
                       [value]="character.description"
                       placeholder="How they speak, what they want, what they will not do."
                       (save)="stories.patchCharacter(character.id, { description: $event })"
@@ -163,8 +163,8 @@ export interface StoryDialogData {
               />
             </li-field>
             <li-editor-field
+              class="li-rows-short"
               label="Description"
-              [rows]="2"
               [value]="story().persona.description"
               placeholder="Mara, a marine biologist, thirty-one, back on the island after nine years."
               (save)="setPersona({ description: $event })"

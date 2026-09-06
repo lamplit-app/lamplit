@@ -57,8 +57,7 @@ export interface MessageEdit {
           <!-- The prose, edited as it is read: the same editor as the
                composer's, with Enter making a paragraph rather than sending. -->
           <li-prose-editor
-            class="prose"
-            style="--rows-min: 4; --rows-max: 24"
+            class="prose li-rows-medium"
             label="The message"
             autofocus
             [value]="draft()"
@@ -72,7 +71,7 @@ export interface MessageEdit {
             <label class="direction-edit">
               <span class="tag li-smallcaps">author</span>
               <textarea
-                style="--rows-min: 2; --rows-max: 10"
+                class="li-rows-short"
                 aria-label="The direction from the author"
                 [liText]="draftDirection()"
                 (input)="draftDirection.set(text($event))"

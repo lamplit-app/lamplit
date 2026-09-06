@@ -56,8 +56,7 @@ export interface ChapterClose {
       }
 
       <textarea
-        class="serif"
-        style="--rows-min: 6; --rows-max: 20"
+        class="serif li-rows-tall"
         [liText]="summary()"
         [readonly]="busy()"
         [placeholder]="
@@ -153,8 +152,8 @@ export interface ChapterClose {
           <button matButton="outlined" (click)="override()">Write my own</button>
         } @else {
           <li-editor-field
+            class="li-rows-medium"
             label="Instruction"
-            [rows]="5"
             [value]="story().world.summary.prompt"
             (save)="stories.setSummaryPrompt({ prompt: $event })"
           />

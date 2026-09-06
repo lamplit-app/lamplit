@@ -45,7 +45,7 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
               }
             </header>
             @if (notes(release); as html) {
-              <div class="notes" [innerHTML]="html"></div>
+              <div class="li-prose notes" [innerHTML]="html"></div>
             } @else {
               <p class="li-hint empty">This release was published without notes.</p>
             }
@@ -125,49 +125,23 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
       font-variant-numeric: tabular-nums;
     }
 
-    /* Release notes are ordinary markdown, set as prose rather than as story. */
+    /* Release notes are ordinary markdown: the shapes come from .li-prose in
+       the globals, the same base the story is set with, and all this says is
+       what they are set in — a note on a card rather than the reading page. */
     .notes {
       font-size: var(--li-text-md);
       line-height: 1.6;
       color: var(--li-ink-soft);
-      overflow-wrap: break-word;
     }
 
-    .notes :first-child {
-      margin-top: 0;
-    }
-
-    .notes :last-child {
-      margin-bottom: 0;
-    }
-
-    .notes strong {
-      color: var(--li-ink);
-    }
-
-    .notes a {
-      color: var(--li-accent);
-    }
-
-    .notes ul,
-    .notes ol {
-      margin: 0.5em 0;
-      padding-left: 1.3em;
-    }
-
-    .notes code {
-      font-family: var(--li-mono);
-      font-size: 0.85em;
-      background: color-mix(in srgb, var(--li-ink) 8%, transparent);
-      padding: 0.12em 0.35em;
-      border-radius: var(--li-radius-sm);
-    }
-
+    /* Smaller than the notes above it and set below them, which is enough to
+       make it the aside it is. It was --li-muted, and a link the colour of a
+       hint is a link nobody tries. */
     .source {
       display: inline-block;
       margin-top: var(--li-space-sm);
       font-size: var(--li-text-sm);
-      color: var(--li-muted);
+      color: var(--li-accent);
     }
 
     .empty {

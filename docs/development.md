@@ -167,6 +167,9 @@ A few things are worth knowing before reading it:
   that has to look good — the chat itself, and every field in it — is hand-written. A field is a
   label above a box (`li-field`, or `li-editor-field` where the box holds a paragraph), and the
   frame round the box is one rule in `styles.scss` over `input`, `textarea` and `select` alike.
+  How tall a box is, is one of three names — `li-rows-short`, `li-rows-medium`, `li-rows-tall` —
+  put on the box or on anything above it; and every modal opens through `DialogsService`, at one of
+  four widths.
 
 ## Conventions
 

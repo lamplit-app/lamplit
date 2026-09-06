@@ -89,7 +89,7 @@ const EFFORTS: { value: ReasoningEffort; label: string }[] = [
 
       <li-field label="Stop sequences" hint="Generation stops the moment one of these appears.">
         <textarea
-          style="--rows-min: 2; --rows-max: 8"
+          class="li-rows-short"
           [value]="stopText()"
           (change)="setStop(value($event))"
           placeholder="One per line"

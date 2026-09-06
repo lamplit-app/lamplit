@@ -48,8 +48,8 @@ interface Group {
             <li-editor-field
               label="Always included in every request"
               hint="Closing a chapter rewrites this, folding the chapter into it. Edit it freely — this is the whole of what the model remembers before the chapter it is writing."
-              [rows]="6"
               serif
+              class="li-rows-tall"
               [value]="story().world.storySoFar"
               (save)="stories.setStorySoFar($event)"
             />
@@ -79,8 +79,8 @@ interface Group {
                 <p class="preset">{{ defaultSummaryInstruction }}</p>
               } @else {
                 <li-editor-field
+                  class="li-rows-tall"
                   label="Instruction"
-                  [rows]="6"
                   [value]="story().world.summary.prompt"
                   (save)="stories.setSummaryPrompt({ prompt: $event })"
                 />
@@ -213,8 +213,8 @@ interface Group {
                     </li-field>
 
                     <li-editor-field
+                      class="li-rows-medium"
                       label="What is true (required)"
-                      [rows]="3"
                       placeholder="The lighthouse keeper, missing since spring."
                       [value]="entry.content"
                       (save)="stories.patchLore(entry.id, { content: $event })"

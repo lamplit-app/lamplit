@@ -1,12 +1,59 @@
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { DEFAULT_STORY_TITLE } from '../core/defaults';
 import { ChapterStore } from '../store/chapter-store';
 import { StoryStore } from '../store/story-store';
 import type { ChapterClose } from '../features/chapters/close-chapter-dialog';
 import type { NewStoryData, StorySetup } from '../features/story/new-story-dialog';
 import { ConfirmData, TextPromptData } from './small-dialogs';
+
+/**
+ * How wide a sheet is, as four steps.
+ *
+ * It was twelve openers writing seven different `rem` widths — 30, 34, 38, 40,
+ * 42, 44 and 46 — which is to say that three of those numbers existed only
+ * because somebody typed a width rather than picking one. A note is narrow, a
+ * form is a little wider, a sheet you work in is as wide as a paragraph of
+ * prose, and the widest are the ones with tabs or a whole prompt to show.
+ */
+const SHEET_WIDTHS = {
+  sm: '30rem',
+  md: '34rem',
+  lg: '42rem',
+  xl: '46rem',
+} as const;
+
+/**
+ * The three things a sheet says for itself: what it is handed, where focus
+ * lands if not on the sheet, and whether it can be dismissed at all. Named as
+ * the fields of Material's own config so that reading one is reading the other
+ * — picked out of it rather than taken whole, because the rest of that config
+ * is what the helper below is for.
+ */
+type SheetOptions<D> = Pick<MatDialogConfig<D>, 'autoFocus' | 'data' | 'disableClose'>;
+
+/**
+ * Everything a sheet is opened with that is not about that sheet: the width
+ * from the scale, a cap so it never runs to the edge of a phone, and focus put
+ * on the sheet itself rather than on the first thing in it.
+ *
+ * `maxWidth` was written out twelve times and `autoFocus` twelve times, which
+ * is twelve chances for the thirteenth sheet to be the one that opens flush to
+ * the screen edge. The two sheets that want focus in a box instead say so, and
+ * that reads as the exception it is.
+ *
+ * The confirm and one-line-answer sheets are not opened through here: they take
+ * the width of the words on them, and there is no scale for that.
+ */
+function sheet<D>(width: keyof typeof SHEET_WIDTHS, options: SheetOptions<D> = {}) {
+  return {
+    width: SHEET_WIDTHS[width],
+    maxWidth: '95vw',
+    autoFocus: 'dialog',
+    ...options,
+  } satisfies MatDialogConfig<D>;
+}
 
 /**
  * The page is never taken away: everything else opens over it. Keeping the
@@ -47,23 +94,16 @@ export class DialogsService {
 
   private async showConnection(insisting: boolean): Promise<void> {
     const { ConnectionDialog } = await import('../features/connection/connection-dialog');
-    const ref = this.dialog.open(ConnectionDialog, {
-      width: '34rem',
-      maxWidth: '95vw',
-      autoFocus: 'dialog',
-      disableClose: insisting,
-      data: { insisting },
-    });
+    const ref = this.dialog.open(
+      ConnectionDialog,
+      sheet('md', { disableClose: insisting, data: { insisting } }),
+    );
     await firstValueFrom(ref.afterClosed());
   }
 
   async openParameters(): Promise<void> {
     const { ParametersDialog } = await import('../features/generation/parameters-dialog');
-    this.dialog.open(ParametersDialog, {
-      width: '44rem',
-      maxWidth: '95vw',
-      autoFocus: 'dialog',
-    });
+    this.dialog.open(ParametersDialog, sheet('xl'));
   }
 
   /**
@@ -72,7 +112,7 @@ export class DialogsService {
    */
   async openPreferences(): Promise<void> {
     const { PreferencesDialog } = await import('../features/preferences/preferences-dialog');
-    this.dialog.open(PreferencesDialog, { width: '42rem', maxWidth: '95vw', autoFocus: 'dialog' });
+    this.dialog.open(PreferencesDialog, sheet('lg'));
   }
 
   /**
@@ -82,17 +122,12 @@ export class DialogsService {
    */
   async openStory(characterId?: string): Promise<void> {
     const { StoryDialog } = await import('../features/story/story-dialog');
-    this.dialog.open(StoryDialog, {
-      width: '42rem',
-      maxWidth: '95vw',
-      data: { characterId },
-      autoFocus: 'dialog',
-    });
+    this.dialog.open(StoryDialog, sheet('lg', { data: { characterId } }));
   }
 
   async openWorld(): Promise<void> {
     const { WorldDialog } = await import('../features/world/world-dialog');
-    this.dialog.open(WorldDialog, { width: '46rem', maxWidth: '95vw', autoFocus: 'dialog' });
+    this.dialog.open(WorldDialog, sheet('xl'));
   }
 
   /**
@@ -102,33 +137,23 @@ export class DialogsService {
    */
   async openWhatsNew(all = false): Promise<void> {
     const { WhatsNewDialog } = await import('../features/updates/whats-new-dialog');
-    this.dialog.open(WhatsNewDialog, {
-      width: '38rem',
-      maxWidth: '95vw',
-      data: { all },
-      autoFocus: 'dialog',
-    });
+    this.dialog.open(WhatsNewDialog, sheet('lg', { data: { all } }));
   }
 
   /** No settings on it: what this is, which build of it, and where to go next. */
   async openAbout(): Promise<void> {
     const { AboutDialog } = await import('./about-dialog');
-    this.dialog.open(AboutDialog, { width: '30rem', maxWidth: '95vw', autoFocus: 'dialog' });
+    this.dialog.open(AboutDialog, sheet('sm'));
   }
 
   async openChapters(): Promise<void> {
     const { ChaptersDialog } = await import('../features/chapters/chapters-dialog');
-    this.dialog.open(ChaptersDialog, { width: '40rem', maxWidth: '95vw', autoFocus: 'dialog' });
+    this.dialog.open(ChaptersDialog, sheet('lg'));
   }
 
   async openPromptPreview(draft = '', direction = ''): Promise<void> {
     const { PromptPreviewDialog } = await import('../features/chapters/prompt-preview-dialog');
-    this.dialog.open(PromptPreviewDialog, {
-      width: '46rem',
-      maxWidth: '95vw',
-      data: { draft, direction },
-      autoFocus: 'dialog',
-    });
+    this.dialog.open(PromptPreviewDialog, sheet('xl', { data: { draft, direction } }));
   }
 
   /**
@@ -137,12 +162,10 @@ export class DialogsService {
    */
   async openScene(chapterId: string, opening = false): Promise<boolean> {
     const { SceneDialog } = await import('../features/chapters/scene-dialog');
-    const ref = this.dialog.open(SceneDialog, {
-      width: '40rem',
-      maxWidth: '95vw',
-      data: { chapterId, opening },
-      autoFocus: 'first-tabbable',
-    });
+    const ref = this.dialog.open(
+      SceneDialog,
+      sheet('lg', { data: { chapterId, opening }, autoFocus: 'first-tabbable' }),
+    );
     return (await firstValueFrom(ref.afterClosed())) === true;
   }
 
@@ -171,7 +194,7 @@ export class DialogsService {
     const { CloseChapterDialog } = await import('../features/chapters/close-chapter-dialog');
     const ref = this.dialog.open<InstanceType<typeof CloseChapterDialog>, undefined, ChapterClose>(
       CloseChapterDialog,
-      { width: '42rem', maxWidth: '95vw', autoFocus: 'dialog' },
+      sheet('lg'),
     );
     const closed = await firstValueFrom(ref.afterClosed());
     // Backing out of the review leaves the chapter open and starts nothing. Any
@@ -212,7 +235,7 @@ export class DialogsService {
     const { NewStoryDialog } = await import('../features/story/new-story-dialog');
     const ref = this.dialog.open<InstanceType<typeof NewStoryDialog>, NewStoryData, StorySetup>(
       NewStoryDialog,
-      { width: '34rem', maxWidth: '95vw', data, autoFocus: 'first-tabbable' },
+      sheet('md', { data, autoFocus: 'first-tabbable' }),
     );
     return firstValueFrom(ref.afterClosed());
   }

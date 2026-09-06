@@ -73,7 +73,7 @@ export interface NewStoryData extends StorySetup {
 
       <li-field label="Description">
         <textarea
-          style="--rows-min: 3; --rows-max: 12"
+          class="li-rows-medium"
           [liText]="description()"
           (input)="description.set(text($event))"
           placeholder="A marine biologist, thirty-one, back on the island after nine years."

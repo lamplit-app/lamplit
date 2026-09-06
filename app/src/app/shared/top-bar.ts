@@ -272,8 +272,6 @@ import { SaveStatusIndicator } from './save-status';
     .available {
       flex: none;
       margin-right: var(--li-space-xs);
-      cursor: pointer;
-      font-family: inherit;
       color: var(--li-accent);
       border-color: color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
       background: color-mix(in srgb, var(--li-accent) 10%, var(--li-surface));

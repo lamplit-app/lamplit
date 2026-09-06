@@ -54,20 +54,15 @@ import { chapterTitle } from '../../core/prompt-builder';
       color: var(--li-muted);
     }
 
+    /* What the pill does not already know: that it is the fixed thing in a row
+       with a title that gives way, and where it goes when hovered. */
     button.li-pill {
       flex: none;
-      cursor: pointer;
-      font-family: inherit;
     }
 
     button.li-pill:hover:not(:disabled) {
       color: var(--li-ink-soft);
       border-color: color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
-    }
-
-    button.li-pill:disabled {
-      opacity: 0.45;
-      cursor: default;
     }
   `,
 })

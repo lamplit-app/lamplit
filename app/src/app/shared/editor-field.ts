@@ -22,6 +22,12 @@ let nextId = 0;
  * The label is tied to the box by id rather than by wrapping it: a `<label>`
  * around all of this names the *first* labelable thing inside, which is the
  * save mark, and leaves the box itself with no name at all.
+ *
+ * How tall the box is, is not an input: put `li-rows-short`, `li-rows-medium`
+ * or `li-rows-tall` on the element, as on any other box in the app. The two row
+ * counts those classes set are inherited, so they reach the textarea in here
+ * with nothing forwarding them — and there is one vocabulary for a height
+ * rather than a number here and a pair of custom properties everywhere else.
  */
 @Component({
   selector: 'li-editor-field',
@@ -49,8 +55,6 @@ let nextId = 0;
         [attr.aria-label]="label() ? null : ariaLabel() || null"
         [class.serif]="serif()"
         [class.dimmed]="dimmed()"
-        [style.--rows-min]="rows()"
-        [style.--rows-max]="rows() + 10"
         [liText]="draft()"
         [placeholder]="placeholder()"
         [readOnly]="readOnly()"
@@ -121,7 +125,6 @@ export class EditorField implements OnDestroy {
   readonly value = input('');
   readonly placeholder = input('');
   readonly hint = input('');
-  readonly rows = input(4);
   /** A box that holds the story: set as the page sets prose, in the globals. */
   readonly serif = input(false, { transform: booleanAttribute });
   /** Shown, never taken: a closed chapter's scene, and anything else settled. */

@@ -37,9 +37,8 @@ export interface SceneDialogData {
 
       <li-field label="The scene">
         <textarea
-          class="scene serif"
+          class="scene serif li-rows-tall"
           cdkFocusInitial
-          style="--rows-min: 4; --rows-max: 22"
           [liText]="scene()"
           (input)="scene.set(text($event))"
           placeholder="A lighthouse gallery. Dusk, the first night of autumn. Mara is alone, and the lamp is already lit."

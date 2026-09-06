@@ -59,8 +59,7 @@ import { TextValue } from '../../shared/text-value';
             <div class="box">
               <li-prose-editor
                 #input
-                class="prose"
-                style="--rows-min: 3; --rows-max: 14"
+                class="prose li-rows-medium"
                 label="What happens next"
                 [submitOnEnter]="!layout.coarse()"
                 [value]="draft()"
@@ -77,7 +76,7 @@ import { TextValue } from '../../shared/text-value';
                   <span class="tag li-smallcaps">author</span>
                   <textarea
                     #directionInput
-                    style="--rows-min: 1; --rows-max: 8"
+                    class="li-rows-short"
                     aria-label="A direction from the author"
                     placeholder="Where the story goes. The model follows it and never mentions it."
                     [liText]="direction()"
@@ -343,11 +342,6 @@ import { TextValue } from '../../shared/text-value';
       align-items: center;
       gap: var(--li-space-sm);
       min-height: 1.2rem;
-    }
-
-    button.li-pill {
-      cursor: pointer;
-      font-family: inherit;
     }
 
     button.li-pill:hover {
