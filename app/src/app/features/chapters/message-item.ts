@@ -569,15 +569,22 @@ export interface MessageEdit {
       }
     }
 
+    /* The rail and the corner button need nothing here: the rule at the foot
+       of styles.scss makes every duration in the app an instant, and a thing
+       that slides in over no time at all has simply arrived.
+
+       The dots need two things. No animation at all, rather than an instant
+       one, because an infinite animation is the single shape an instant does
+       not tame — the global rule holds it to one iteration, and this says the
+       same thing a second time about the one animation in the app where
+       getting it wrong is a flicker in somebody's face. And half lit, because
+       standing still is not an appearance the keyframes ever have to give:
+       three dots at full strength and not moving look like a decoration, where
+       three at half say the app is holding its breath. */
     @include bp.reduced-motion {
       .waiting .dot {
         animation: none;
         opacity: 0.5;
-      }
-
-      .rail,
-      .more {
-        transition: none;
       }
     }
 

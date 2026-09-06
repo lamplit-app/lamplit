@@ -145,8 +145,12 @@ $margin-width: 42rem;
   }
 }
 
-/// Motion turned down, in the operating system or the browser. Anything that
-/// moves on its own says here what it does instead.
+/// Motion turned down, in the operating system or the browser.
+///
+/// `styles.scss` answers this for the whole app in one rule — every duration
+/// in it becomes an instant — so a component reaches for this mixin only to
+/// say what it looks like standing still, which is the one thing a duration
+/// cannot say for it.
 @mixin reduced-motion {
   @media (prefers-reduced-motion: reduce) {
     @content;

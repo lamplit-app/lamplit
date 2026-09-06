@@ -1282,3 +1282,54 @@ button {
   scrollbar-width: thin;
   scrollbar-color: var(--li-muted) transparent;
 }
+
+// ---------------------------------------------------------------------------
+// Motion turned down.
+// ---------------------------------------------------------------------------
+//
+// Five rules in the app animate something. Three of them move it — the knob of
+// the panel's in-scene switch, the message rail sliding in from the margin,
+// and a block sliding out of the way of the one being dragged in the prompt
+// preview — and two fade: the waiting dots pulsing, and the save dot settling
+// after a write. Only the two in `message-item.ts` had ever been turned down,
+// because turning it down is something the person writing the animation has to
+// remember at the moment they write it, and three times out of five nobody
+// did.
+//
+// So it is answered once, here, for everything — including everything we did
+// not write: the sheets that scale in, the backdrop, Material's ripples.
+// Whatever moves next is covered before it exists.
+//
+// `!important` is the app's one exception besides the phone's dialog widths
+// above, and it is what makes the rule work at all: a component's styles are
+// scoped to it, with a class and an attribute in the selector, and `*` is
+// worth nothing against that. There is no specificity to win with.
+//
+// 0.01ms, and not `none` or `0s`, which look like the honest answer and are a
+// trap. A duration of zero fires no `transitionend` and no `animationend`, and
+// code that waits for one waits for ever — the CDK animates a dropped block
+// into its place and holds on to it until that event arrives. An instant that
+// is not quite zero fires everything on the next frame instead, and nobody
+// sees a thing.
+//
+// The iteration count is the other half of the same trap. An infinite
+// animation given an instant duration is not a still image, it is a strobe,
+// which is the exact opposite of what was asked for. One iteration.
+//
+// This is a floor and not the whole answer: something that moves in order to
+// say something has to say it another way while standing still, and that
+// belongs beside the thing itself. `message-item.ts` is where the waiting dots
+// say it.
+//
+// The composer's box eases its border to the accent as it takes focus, and
+// that goes too. A colour is not motion, and one rule over everything cannot
+// tell the difference; the accent simply arrives.
+@include bp.reduced-motion {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
