@@ -20,7 +20,15 @@ import { sheetSettled } from './helpers';
 interface Box {
   /** What names it: a label tied by id, or the aria-label of a box without one. */
   name: string;
-  /** The step from the foot of the name to the top of the box, where there is a name. */
+  /**
+   * The step from the foot of the name to the top of the box, where there is a
+   * name — in pixels, as the browser laid it out, unrounded. The step is
+   * `--li-space-xs`, which is `5.6px`, and rounding a number that sits 0.4px
+   * from the boundary between two integers throws away the only precision that
+   * would say whether it is the right number: `Math.round` reads 6 at rest, 5
+   * after a single sub-pixel shift, and 4 off a sheet that has not finished
+   * growing. `step()` below is what it is compared with.
+   */
   above: number | null;
   radius: string;
   border: string;
@@ -54,12 +62,41 @@ function boxes(page: Page): Promise<Box[]> {
         const top = box.getBoundingClientRect().top;
         return {
           name: label?.textContent?.trim() ?? box.getAttribute('aria-label') ?? '',
-          above: label ? Math.round(top - label.getBoundingClientRect().bottom) : null,
+          above: label ? top - label.getBoundingClientRect().bottom : null,
           radius: style.borderRadius,
           border: `${style.borderTopWidth} ${style.borderTopStyle} ${style.borderTopColor}`,
           paper: style.backgroundColor,
         };
       });
+  });
+}
+
+/**
+ * What `--li-space-xs` is worth in pixels, asked of the browser.
+ *
+ * The step a name stands above its box is `li-field`'s own `gap`, so this is
+ * the number every one of them is compared with rather than a `6` written
+ * here. Resolved through a probe element the way `preferences.spec.ts` resolves
+ * a colour, because a custom property's own computed value is the `0.35rem` it
+ * was declared as and the page is drawn in pixels.
+ *
+ * Compared with half a pixel of tolerance at the call site. Both sides are
+ * quantised the same way — the browser resolves `0.35rem` to a sixty-fourth,
+ * and all sixteen steps and the token alike land on 5.59375 — so the tolerance
+ * is not covering for the arithmetic; it is there so the assertion is about
+ * the step rather than the last bit of a float. Half a pixel leaves nothing
+ * real uncaught: the space tokens either side of this one are 4px and 8px, and
+ * the read that started this, off a sheet still at `scale(0.8)`, is 4.475px —
+ * 1.12px out.
+ */
+function step(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const probe = document.createElement('div');
+    probe.style.height = 'var(--li-space-xs)';
+    document.body.append(probe);
+    const px = parseFloat(getComputedStyle(probe).height);
+    probe.remove();
+    return px;
   });
 }
 
@@ -131,12 +168,15 @@ test('every box in every sheet is the same box, named the same way', async ({ pa
 
   // The name stands the same step above the box wherever it is written — the
   // field's own, the editor field's row with a save mark to fit on it, all of
-  // them.
+  // them — and that step is the token, not a number that happens to match it.
   const named = seen.filter((box) => box.above !== null);
   expect(named.length).toBeGreaterThan(10);
-  expect(named.map((box) => `${box.name} — ${box.above}px`)).toEqual(
-    named.map((box) => `${box.name} — ${named[0].above}px`),
-  );
+  const gap = await step(page);
+  expect(
+    named
+      .filter((box) => Math.abs(box.above! - gap) > 0.5)
+      .map((box) => `${box.name} — ${box.above}px, not ${gap}px`),
+  ).toEqual([]);
 });
 
 test('a box says it has the focus the same way whatever kind it is', async ({ page, app }) => {
