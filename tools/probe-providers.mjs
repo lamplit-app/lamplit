@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { fileURLToPath } from 'node:url';
+import { DEFAULT_PORT } from '../server/src/ports.js';
 
 /**
  * `npm run providers` — asks every provider in the table whether it still lets
@@ -17,7 +18,7 @@ import { fileURLToPath } from 'node:url';
  *
  * The probe is the real request the app makes: a cross-origin `POST` to
  * `/chat/completions` carrying `authorization` and `content-type`, from a page
- * on `http://localhost:4177` — the port the packaged app runs on. The key is
+ * on `http://localhost` at the port the packaged app runs on. The key is
  * nonsense, so every provider answers 401 or 400 and no tokens are spent. What
  * is being read is not the status: it is whether the browser let the answer
  * through at all.
@@ -28,9 +29,6 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const TABLE = pathToFileURL(resolve(ROOT, 'app/src/app/core/providers.ts')).href;
-
-/** The packaged app's own port, so the probe asks as the app would. */
-const ORIGIN_PORT = 4177;
 
 const { PROVIDERS, CUSTOM_PROVIDER_ID } = await import(TABLE);
 
@@ -44,13 +42,13 @@ async function main() {
       .writeHead(200, { 'Content-Type': 'text/html' })
       .end('<!doctype html><title>probe</title>'),
   );
-  await new Promise((done) => origin.listen(ORIGIN_PORT, '127.0.0.1', done));
+  await new Promise((done) => origin.listen(DEFAULT_PORT, '127.0.0.1', done));
 
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  await page.goto(`http://localhost:${ORIGIN_PORT}/`);
+  await page.goto(`http://localhost:${DEFAULT_PORT}/`);
 
-  console.log(`Probing ${targets.length} providers from http://localhost:${ORIGIN_PORT} …\n`);
+  console.log(`Probing ${targets.length} providers from http://localhost:${DEFAULT_PORT} …\n`);
   const results = [];
   for (const preset of targets) {
     const verdict = await probe(page, preset);

@@ -108,6 +108,21 @@ export async function recordRun(dataDir, version) {
   return { previousVersion, upgraded: changed };
 }
 
+/**
+ * `0.1.0 (build 42 · a1b2c3d)`, or just the version when nothing stamped it.
+ *
+ * One line, because two places say it out loud and they must not disagree: the
+ * server prints it at every start, and the desktop shell puts it in the Help
+ * menu beside the same line the About sheet shows.
+ *
+ * @param {{version: string, build?: string, commit?: string}} build
+ * @returns {string}
+ */
+export function versionLine({ version, build: number, commit }) {
+  const detail = [number === 'local' ? '' : `build ${number}`, commit].filter(Boolean).join(' · ');
+  return detail ? `${version} (${detail})` : version;
+}
+
 // -- the pieces --------------------------------------------------------------
 
 /** package.json, from the packaged root or the repository's. */

@@ -1,6 +1,6 @@
 import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 
 /**
  * The three document kinds the app persists, and where each one lives.
@@ -150,17 +150,7 @@ export class DocumentStore {
       // Spread first, so a `rev` the client echoed back inside the document it
       // is sending cannot be the one that ends up written down.
       const stamped = { ...document, rev };
-      const temporary = `${path}.${randomUUID().slice(0, 8)}.tmp`;
-      await writeFile(temporary, `${JSON.stringify(stamped, null, 2)}\n`, 'utf8');
-      try {
-        await rename(temporary, path);
-      } catch (error) {
-        // Windows refuses the rename while something holds the target open;
-        // the write has failed either way, and the failure should not also
-        // leave a stray file for the backup to pick up.
-        await rm(temporary, { force: true }).catch(() => {});
-        throw error;
-      }
+      await writeAtomic(path, `${JSON.stringify(stamped, null, 2)}\n`);
       return { ok: true, rev };
     });
   }
@@ -224,4 +214,29 @@ function newRevision() {
 function revisionOf(document) {
   const rev = document?.['rev'];
   return typeof rev === 'string' ? rev : '';
+}
+
+/**
+ * Writes a file by writing another one and renaming it over the target, which
+ * is atomic on both Windows and POSIX: a reader sees the old bytes or the new
+ * ones, and a run that dies half way leaves the old file intact.
+ *
+ * Here rather than inside the store's own write because `share.js` keeps a file
+ * of its own beside the documents and wants exactly this, the Windows rename
+ * failure included — where something holds the target open the write has failed
+ * either way, and it must not also leave a stray `.tmp` behind for the backup
+ * to pick up.
+ *
+ * @param {string} path
+ * @param {string} text
+ */
+export async function writeAtomic(path, text) {
+  const temporary = `${path}.${randomBytes(4).toString('hex')}.tmp`;
+  await writeFile(temporary, text, 'utf8');
+  try {
+    await rename(temporary, path);
+  } catch (error) {
+    await rm(temporary, { force: true }).catch(() => {});
+    throw error;
+  }
 }

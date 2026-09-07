@@ -1,9 +1,11 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { networkInterfaces } from 'node:os';
 import { join } from 'node:path';
 import QRCode from 'qrcode';
+import { DEFAULT_PORT, listenWalking } from './ports.js';
+import { writeAtomic } from './store.js';
 
 /**
  * The second front door, and the lock on it.
@@ -40,18 +42,6 @@ import QRCode from 'qrcode';
 /** The file this owns, beside the documents. Not `settings.json`: see app.js. */
 export const SHARE_FILE = 'server.json';
 
-/**
- * The same port the zip's own listener wants, and on purpose: it is the number
- * in the URL somebody may end up typing, and a port that moved between runs
- * would make the QR code the only way in. Electron uses it too, where the
- * loopback port is whatever the OS handed out — the shared one is the stable
- * one precisely because a person reads it.
- */
-export const DEFAULT_SHARE_PORT = 4177;
-
-/** A busy port should not turn a switch into a stack trace. Same rule as index.js. */
-const PORT_ATTEMPTS = 10;
-
 const COOKIE = 'lamplit_pair';
 /** A year. Scanning once should mean once; "New code" is the way to undo it. */
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -68,7 +58,7 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
  * adapter, and this project's own tests, where binding every interface on a
  * developer's Windows laptop raises the firewall prompt on `npm test`.
  */
-export function createSharing({ dataDir, port = DEFAULT_SHARE_PORT, host = '0.0.0.0' }) {
+export function createSharing({ dataDir, port = DEFAULT_PORT, host = '0.0.0.0' }) {
   return new Sharing(dataDir, port, host);
 }
 
@@ -181,7 +171,10 @@ class Sharing {
       if (this.#refuseUnpaired(request, response)) return;
       this.#handler(request, response);
     });
-    this.#port = await listen(server, this.#wantedPort, this.#host);
+    const listening = await listenWalking(server, this.#wantedPort, this.#host);
+    // What it actually got, not what it asked for: port 0 is how a test takes
+    // whatever is free, and the answer only the socket knows.
+    this.#port = listening.address().port;
     this.#server = server;
   }
 
@@ -229,15 +222,8 @@ class Sharing {
   async #persist(share) {
     const path = join(this.#dataDir, SHARE_FILE);
     await mkdir(this.#dataDir, { recursive: true });
-    const temporary = `${path}.${randomBytes(4).toString('hex')}.tmp`;
     const body = `${JSON.stringify({ share, token: this.#token }, null, 2)}\n`;
-    await writeFile(temporary, body, 'utf8');
-    try {
-      await rename(temporary, path);
-    } catch (error) {
-      await rm(temporary, { force: true }).catch(() => {});
-      throw error;
-    }
+    await writeAtomic(path, body);
   }
 }
 
@@ -326,28 +312,6 @@ function refuse(request, response) {
   });
   response.end(body);
   return true;
-}
-
-/** Takes the next free port when the wanted one is in use, as index.js does. */
-function listen(server, from, host) {
-  return new Promise((fulfil, reject) => {
-    let port = from;
-    const attempt = () => {
-      server.listen(port, host);
-      server.once('listening', () => {
-        server.removeAllListeners('error');
-        // What it actually got, not what it asked for: port 0 is how a test
-        // takes whatever is free, and the answer only the socket knows.
-        fulfil(server.address().port);
-      });
-      server.once('error', (error) => {
-        if (error.code !== 'EADDRINUSE' || port >= from + PORT_ATTEMPTS) return reject(error);
-        port += 1;
-        attempt();
-      });
-    };
-    attempt();
-  });
 }
 
 async function readState(dataDir) {

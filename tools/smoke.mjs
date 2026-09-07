@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DEFAULT_PORT } from '../server/src/ports.js';
 
 /**
  * `npm run smoke` — a completely fresh install, in one command.
@@ -21,7 +22,7 @@ import { fileURLToPath } from 'node:url';
  * Ctrl+C stops it. Run it again and the folder and the data are both new.
  *
  *   --no-build   reuse the last archive
- *   --port N     listen somewhere other than 4177
+ *   --port N     listen somewhere other than the default
  *   --check      stop as soon as it answers, and exit 0 — for CI
  *
  * `--check` is the same walk with nobody to walk it: it proves that what was
@@ -46,7 +47,7 @@ const fresh = join(BUILD, 'fresh-install');
 const argv = process.argv.slice(2);
 const skipBuild = argv.includes('--no-build');
 const check = argv.includes('--check');
-const port = argv.includes('--port') ? Number(argv[argv.indexOf('--port') + 1]) : 4177;
+const port = argv.includes('--port') ? Number(argv[argv.indexOf('--port') + 1]) : DEFAULT_PORT;
 const url = `http://127.0.0.1:${port}/`;
 
 let server = null;

@@ -21,10 +21,12 @@ server/     Express 5 — JSON documents on disk, the built app in front of them
             a dependency-free zip writer, and the build stamp (version.js: which
             build this is, and which one wrote this data folder last).
             share.js is the second listener and the pairing lock in front of
-            it, which is how a phone on the same network reads the story
+            it, which is how a phone on the same network reads the story.
+            bootstrap.js is the start-up sequence itself — the one thing both
+            index.js and the desktop shell call, so there is one order
 electron/   the desktop shell: main process, preload, electron-builder config.
-            It starts the same server in-process and opens one window at it,
-            and knows nothing else about the app
+            It starts the same server in-process, through that one call, and
+            opens one window at it; it knows nothing else about the app
 tools/      dev.mjs (both halves at once), package.mjs (the runnable zip),
             desktop.mjs (the window, and the installers), smoke.mjs (a fresh
             install to walk by hand, and --check to prove one in CI),

@@ -2,23 +2,21 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createApp } from './app.js';
-import { backupOnStartup } from './backup.js';
-import { DEFAULT_SHARE_PORT, createSharing, localAddresses } from './share.js';
-import { readBuildInfo, recordRun } from './version.js';
-import { createUpdateChecker } from './updates.js';
+import { DEFAULT_PORT, bootstrap, localAddresses, versionLine } from './bootstrap.js';
 
 /**
  * The one process a packaged Lamplit runs: documents on disk, the built
  * app in front of them, one URL to open. `start.bat` and `start.sh` do nothing
  * but call this file.
+ *
+ * What it is, beside `bootstrap.js`: the command line and the console. Where
+ * the folders are, which port to ask for, and everything said out loud once it
+ * is up — which is the whole of what a reader watching a terminal window gets,
+ * and is why it is written here rather than where the desktop shell can see it.
  */
 
 /** `server/src/index.js` → the folder the app was unzipped (or cloned) into. */
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const DEFAULT_PORT = 4177;
-/** A busy port should not turn a double-click into a stack trace. */
-const PORT_ATTEMPTS = 10;
 
 const options = parseArguments(process.argv.slice(2));
 const dataDir = resolve(options.data ?? process.env['LAMPLIT_DATA_DIR'] ?? join(ROOT, 'data'));
@@ -32,56 +30,18 @@ const wanted = Number(
 const shouldOpen =
   process.env['LAMPLIT_OPEN'] === '0' ? false : options.open || process.env['LAMPLIT_OPEN'] === '1';
 
-// Which build this is: the stamp next to the built app in a packaged copy,
-// package.json and git when running from the repository.
-const build = readBuildInfo({ root: ROOT, publicDir });
-
-// What ran here last. A data folder written by an older version is the only
-// signal that an upgrade happened, and the app shows one notice for it.
-const { previousVersion, upgraded } = await recordRun(dataDir, build.version);
-
-// Nothing is asked of GitHub until the app calls /api/updates, and the app
-// only calls it when the reader has left the check on. This is the same switch
-// from the environment, for a zip started by a script rather than by a person.
-const updates = createUpdateChecker({
-  version: build.version,
-  enabled: process.env['LAMPLIT_UPDATE_CHECK'] !== '0',
-});
-
-// A host it was told to bind to is a name it should answer to as well.
-const hosts = host === '0.0.0.0' ? [] : [host];
-// Off unless asked for: the app calls its own origin, and `npm start` proxies
-// rather than calling across. See corsFor in app.js.
-const devCors = process.env['LAMPLIT_DEV_CORS'] === '1';
-
-// Made before the app because the app registers the routes that read it, and
-// handed the app straight after because it is the app it puts behind the lock.
-// Off until somebody turns it on, or until `server.json` says it already is.
-const sharing = createSharing({
-  dataDir,
-  port: Number(process.env['LAMPLIT_SHARE_PORT'] ?? DEFAULT_SHARE_PORT),
-  // Every interface, which is the point of sharing. Narrower is for a machine
-  // with a reason to offer one adapter, and for this project's own e2e suite.
-  ...(process.env['LAMPLIT_SHARE_HOST'] ? { host: process.env['LAMPLIT_SHARE_HOST'] } : {}),
-});
-const app = createApp({
-  dataDir,
-  publicDir,
-  build,
-  previousVersion,
-  updates,
-  hosts,
-  devCors,
-  sharing,
-});
-const store = app.locals['store'];
-sharing.serve(app);
-
-await store.init();
-const shared = await sharing.init();
-
-const server = await listen(app, host, wanted);
-const url = `http://${host === '0.0.0.0' ? 'localhost' : host}:${server.address().port}/`;
+const { build, previousVersion, upgraded, updates, sharing, shared, server, url, backup } =
+  await bootstrap({
+    root: ROOT,
+    dataDir,
+    backupsDir,
+    publicDir,
+    host,
+    port: wanted,
+    // Off unless asked for: the app calls its own origin, and `npm start`
+    // proxies rather than calling across. See corsFor in app.js.
+    devCors: process.env['LAMPLIT_DEV_CORS'] === '1',
+  });
 
 console.log(`Lamplit ${versionLine(build)} — ${url}`);
 console.log(`  documents  ${dataDir}`);
@@ -102,13 +62,8 @@ if (shared.share) {
   console.warn(`  sharing was on, but could not be opened: ${shared.error}`);
 }
 
-if (process.env['LAMPLIT_BACKUP'] !== '0') {
-  backupOnStartup(dataDir, backupsDir).then(
-    (made) => made && console.log(`  backup     ${made}`),
-    // A backup that cannot be written is worth saying out loud and no more.
-    (error) => console.warn(`  backup failed: ${error.message}`),
-  );
-}
+// The failure has already been said; a backup that was taken is worth a line.
+void backup.then((made) => made && console.log(`  backup     ${made}`));
 
 if (shouldOpen) openBrowser(url);
 
@@ -120,35 +75,11 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
   });
 }
 
-/** Takes the next free port when the wanted one is in use. */
-function listen(application, hostname, from) {
-  return new Promise((fulfil, reject) => {
-    let port = from;
-    const attempt = () => {
-      const instance = application.listen(port, hostname);
-      instance.once('listening', () => fulfil(instance));
-      instance.once('error', (error) => {
-        if (error.code !== 'EADDRINUSE' || port >= from + PORT_ATTEMPTS) return reject(error);
-        console.warn(`port ${port} is busy, trying ${port + 1}`);
-        port += 1;
-        attempt();
-      });
-    };
-    attempt();
-  });
-}
-
 /** Packaged layout first, then the repository's Angular output. */
 function findBuiltApp() {
   const packaged = join(ROOT, 'public');
   if (existsSync(join(packaged, 'index.html'))) return packaged;
   return join(ROOT, 'app', 'dist', 'app', 'browser');
-}
-
-/** `0.1.0 (build 42 · a1b2c3d)`, or just the version when nothing stamped it. */
-function versionLine({ version, build: number, commit }) {
-  const detail = [number === 'local' ? '' : `build ${number}`, commit].filter(Boolean).join(' · ');
-  return detail ? `${version} (${detail})` : version;
 }
 
 function parseArguments(argv) {

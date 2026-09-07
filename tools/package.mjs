@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DEFAULT_PORT } from '../server/src/ports.js';
 import { collectEntries, writeZip } from '../server/src/zip.js';
 import { STAMP_FILE, buildStamp } from '../server/src/version.js';
 import { productionClosure } from './lib/production-closure.mjs';
@@ -370,7 +371,7 @@ Running it
   macOS        double-click start.command
   Linux        ./start.sh   (start.command is the same script)
 
-One call starts the server and opens http://127.0.0.1:4177/ in your browser.
+One call starts the server and opens http://127.0.0.1:${DEFAULT_PORT}/ in your browser.
 Close the window (or press Ctrl+C) to stop it. Node.js 20.19+ is the only thing
 that has to be installed already — everything else is in this folder. If it is
 missing or too old, the script says so and offers the one command that installs

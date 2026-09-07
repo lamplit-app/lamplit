@@ -158,58 +158,40 @@ async function start() {
     return fatal(new Error(`no built app at ${PUBLIC_DIR} — run \`npm run build\` first.`));
   }
 
-  const { createApp } = await import(pathToFileURL(join(SERVER, 'app.js')).href);
-  // The same stamp the zip reads, from the same file, so the window and the
-  // browser tab cannot disagree about which build this is. `app.getVersion()`
-  // knows the version and nothing else — no commit, no build number.
-  const { readBuildInfo, recordRun } = await import(pathToFileURL(join(SERVER, 'version.js')).href);
-  build = readBuildInfo({ root: BUNDLE, publicDir: PUBLIC_DIR, channel: 'desktop' });
-  const { previousVersion, upgraded } = await recordRun(DATA_DIR, build.version);
-  if (upgraded) console.log(`upgraded ${previousVersion} → ${build.version}`);
-
-  // The same endpoint the zip serves, so the What's new sheet reads the same
-  // answer here as it does there. What the shell *does* with an update is its
-  // own business and unchanged: electron-updater downloads it and installs it
-  // on quit, which is why the sheet says so rather than offering a download.
-  const { createUpdateChecker } = await import(pathToFileURL(join(SERVER, 'updates.js')).href);
-  const updates = createUpdateChecker({
-    version: build.version,
-    enabled: process.env['LAMPLIT_UPDATE_CHECK'] !== '0',
-  });
-
-  // The same second listener the zip has, on the same port. The window's own
-  // port is whatever the operating system handed out and changes every start;
-  // the shared one is fixed at 4177 precisely because a person may read it off
-  // the screen and type it into a phone.
-  const { DEFAULT_SHARE_PORT, createSharing } = await import(
-    pathToFileURL(join(SERVER, 'share.js')).href
-  );
-  sharing = createSharing({ dataDir: DATA_DIR, port: DEFAULT_SHARE_PORT });
-
-  const expressApp = createApp({
+  // One call, into the same sequence the zip runs — the build stamp, what ran
+  // here last, the update checker the /api/updates endpoint answers from,
+  // sharing, the app, the store, the listener, the daily backup. It is the
+  // whole of what the shell used to re-implement through six imports of the
+  // server's own modules, in an order that had already drifted from theirs.
+  const { bootstrap, versionLine } = await import(pathToFileURL(join(SERVER, 'bootstrap.js')).href);
+  const started = await bootstrap({
+    root: BUNDLE,
     dataDir: DATA_DIR,
+    backupsDir: BACKUPS_DIR,
     publicDir: PUBLIC_DIR,
-    build,
-    previousVersion,
-    updates,
-    sharing,
+    // Read from the same stamp beside the same built app the zip reads, so the
+    // window and the browser tab cannot disagree about which build this is —
+    // `app.getVersion()` knows the version and nothing else. Only the channel
+    // is the shell's to say; see version.js for why it is not in the file.
+    channel: 'desktop',
+    // Port 0: the operating system hands back one that is free, and it is a
+    // different one every start. The shared listener is the one that does not
+    // move, because a person may read that number off the screen.
+    port: 0,
   });
-  await expressApp.locals['store'].init();
-  sharing.serve(expressApp);
+  build = started.build;
+  sharing = started.sharing;
+  server = started.server;
+  const url = started.url;
+  if (started.upgraded) {
+    console.log(`upgraded ${started.previousVersion} → ${build.version}`);
+  }
   // Honoured, not thrown: a machine that was sharing when it was shut down
   // should be sharing again, and a port that is busy this morning must still
   // leave a window that opens.
-  const shared = await sharing.init();
-  if (shared.error) console.warn(`sharing was on, but could not be opened: ${shared.error}`);
-
-  server = await listen(expressApp);
-  const url = `http://127.0.0.1:${server.address().port}/`;
-
-  // The same daily backup the zip takes, into the profile beside the data.
-  const { backupOnStartup } = await import(pathToFileURL(join(SERVER, 'backup.js')).href);
-  backupOnStartup(DATA_DIR, BACKUPS_DIR).catch((error) =>
-    console.warn(`backup failed: ${error.message}`),
-  );
+  if (started.shared.error) {
+    console.warn(`sharing was on, but could not be opened: ${started.shared.error}`);
+  }
 
   denyPermissions();
   ipcMain.handle('lamplit:open-data-folder', openDataFolder);
@@ -226,7 +208,7 @@ async function start() {
   ipcMain.handle('lamplit:use-system-proxy', (_event, enabled) =>
     session.defaultSession.setProxy(enabled ? SYSTEM : DIRECT),
   );
-  Menu.setApplicationMenu(buildMenu());
+  Menu.setApplicationMenu(buildMenu(versionLine(build)));
 
   // Same window, same background colour, so the hand-over is a change of
   // words rather than a flash. `loadURL` from here does not fire
@@ -258,15 +240,6 @@ function denyPermissions() {
   defaultSession.setPermissionCheckHandler((_contents, permission) =>
     ALLOWED_PERMISSIONS.has(permission),
   );
-}
-
-/** Port 0: the operating system hands back one that is free. */
-function listen(expressApp) {
-  return new Promise((fulfil, reject) => {
-    const instance = expressApp.listen(0, '127.0.0.1');
-    instance.once('listening', () => fulfil(instance));
-    instance.once('error', reject);
-  });
 }
 
 async function openWindow() {
@@ -378,7 +351,8 @@ function rememberWindow() {
 
 // -- the menu ----------------------------------------------------------------
 
-function buildMenu() {
+/** `version` is the line the server made of the stamp, ready to show. */
+function buildMenu(version) {
   return Menu.buildFromTemplate([
     {
       label: 'File',
@@ -421,22 +395,10 @@ function buildMenu() {
         { label: 'Report a problem', click: () => openExternal(`${REPOSITORY}/issues`) },
         { type: 'separator' },
         // The same line the About sheet shows, from the same stamp.
-        { label: `Version ${versionLine()}`, enabled: false },
+        { label: `Version ${version}`, enabled: false },
       ],
     },
   ]);
-}
-
-/** `0.1.0 (build 42 · a1b2c3d)`, or just the version when nothing stamped it. */
-function versionLine() {
-  const version = build?.version ?? app.getVersion();
-  const detail = [
-    build && build.build !== 'local' ? `build ${build.build}` : '',
-    build?.commit ?? '',
-  ]
-    .filter(Boolean)
-    .join(' · ');
-  return detail ? `${version} (${detail})` : version;
 }
 
 const WEBSITE = 'https://lamplit-app.github.io/lamplit/';
