@@ -17,7 +17,7 @@ runs:
   steps:
     - uses: actions/setup-node@v7
       with:
-        node-version: 22
+        node-version: 24
         cache: npm
 
     # The committed lockfile pins registry.npmjs.org, which is what lets this

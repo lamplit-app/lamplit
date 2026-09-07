@@ -481,6 +481,17 @@ refused rather than applied, the page reloads that document and says **"Changed 
 reloaded"** — and coming back to a tab that was in the background fetches whatever changed while
 you were away. Before this, the second writer's saves were quietly dropped and reported as saved.
 
+**Angular 22, TypeScript 6, Node 24.** The app is on the current Angular, built and tested on the
+current Node, and the desktop shell is on Electron 44.2.0. Nothing you can see moved: every
+component was already written the way Angular 22 now assumes — signals, no zone, nothing reaching
+into the page behind the framework's back — so the opt-outs the upgrade offers to write for you
+were all taken back out, and the whole test suite says the same thing afterwards as before.
+
+- **If you install from a download, this changes nothing for you.** Node still travels inside the
+  installers, and the zip still asks the same of the machine it unpacks on: Node 20.19 or newer.
+- **If you build from source, you need a newer Node** — 22.22, 24.15 or 26. That is Angular 22's
+  floor, not ours, and `npm install` will say so.
+
 ## 0.1.0 — the first release
 
 The first version anyone can install without a terminal.

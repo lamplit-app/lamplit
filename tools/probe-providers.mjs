@@ -23,8 +23,9 @@ import { DEFAULT_PORT } from '../server/src/ports.js';
  * is being read is not the status: it is whether the browser let the answer
  * through at all.
  *
- * Node 22 needs `--experimental-strip-types` to import the table from the
- * app's TypeScript; the npm script passes it.
+ * The table it reads lives in the app's TypeScript, imported straight from
+ * this script: Node strips the types itself from 22.22 on, which is the floor
+ * the root `engines` sets, so no flag is needed.
  */
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');

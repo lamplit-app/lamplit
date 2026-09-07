@@ -22,10 +22,10 @@ Guiding principles
 
 | Item | Finding | Action |
 |---|---|---|
-| Node | v22.14.0, npm 10.9.2 | Below Angular 22's minimum (`^22.22.3`); fine for Angular 21 (`^22.12.0`). Angular 21 chosen 2026-09-02 rather than upgrading Node. |
+| Node | v24.20.0, npm 11.19.0 | Angular 22's range is `^22.22.3 \|\| ^24.15.0 \|\| >=26`, and the root `engines` says the same; CI installs Node 24. It was v22.14.0 on 2026-09-02, which is why Angular 21 was chosen then; the machine and the build moved up together on 2026-09-07 (issue #76). The **server's** floor is a separate number and still `>=20.19` — that is what the shipped zip's start scripts check for. |
 | npm registry | `~/.npmrc` points at a corporate AWS CodeArtifact registry (proxying npmjs). Token refreshed 2026-09-02, `npm view` works. | Always install through the configured registry. Never add a project `.npmrc` or `--registry` flag to bypass it. If the token expires again (E401), Gaetan refreshes it. **The committed lockfile pins `registry.npmjs.org` URLs** so a clone works anywhere and the proxy's host is not published (added 2026-09-03, before the repo went public); if an install rewrites them back to the proxy, put them back before committing — the integrity hashes are unaffected either way. |
 | Electron's binary | Electron 44.1.1 publishes **no `scripts` at all** — no postinstall. `npm ci` installs the JavaScript and no executable, and says nothing. electron-builder does not care (it downloads its own copy through @electron/get), but Playwright's `_electron.launch()` runs the one in `node_modules`, so the desktop spec has nothing to open. Confirmed 2026-09-03 by reading the published tarball, after it failed the first release on both runners. | `postinstall` at the root runs `tools/fetch-electron.mjs`, so `npm ci` is all anyone has to run. It is idempotent and never fails an install. |
-| Angular | 22.1.x is current on npm, but CLI 22 refuses Node v22.14.0. 21.2.9 (core + CLI + Material) runs on it and has standalone, signals, zoneless and the new control flow. | Use 21.2.9. |
+| Angular | 22.1.5 (core + Material), CLI and build 22.1.7, on TypeScript 6.0.3. Upgraded from 21.2.22 on 2026-09-07 with `ng update`; nothing 22 removed was in use, and the only migration that touched the source was the one adding `ChangeDetectionStrategy.Eager` everywhere, which was reverted. The two template migrations were declined: the diagnostics opt-out was not needed (no template trips them) and no `?.` needed wrapping. | Use 22. |
 | NanoGPT CORS | `https://nano-gpt.com/api/v1` answers preflight with `Access-Control-Allow-Origin: *` and allows `Authorization`. | Direct browser calls work. No proxy needed. |
 | NanoGPT model list | `GET /api/v1/models` returns the standard OpenAI `{object:"list", data:[{id, owned_by, created}]}`. `?detailed=true` adds names and capabilities. Works without a key. | Use `?detailed=true` when the URL is NanoGPT, fall back to plain `/models` for hand-typed URLs. |
 | NanoGPT extra sampling | Accepts `top_k`, `min_p`, `repetition_penalty`, `top_a` beyond the OpenAI set (ST `public/scripts/openai.js:2958`). | Expose as "advanced" parameters, sent only when set. |
@@ -39,8 +39,8 @@ Guiding principles
 
 | Concern | Choice | Why |
 |---|---|---|
-| Framework | Angular 21.2.9, standalone components, signals, zoneless change detection, new control flow, `inject()` | Current best practice; fine-grained updates suit token streaming. 22 needs a newer Node than this machine has (see 0). |
-| UI kit | Angular Material 21 (M3) for dialogs, menus, sliders, selects, tooltips, snackbar, plus a custom dark "reading" theme. Chat rendering is fully custom. | Solid a11y primitives for the modals without hand-building them; the part that has to look great (the chat) is ours. |
+| Framework | Angular 22.1.5, standalone components, signals, zoneless change detection, new control flow, `inject()` | Current best practice; fine-grained updates suit token streaming. Every component is OnPush, which is 22's default and which the signal stores already satisfied: the `Eager` opt-outs `ng update` writes were taken back out (see 0). |
+| UI kit | Angular Material 22 (M3) for dialogs, menus, sliders, selects, tooltips, snackbar, plus a custom dark "reading" theme. Chat rendering is fully custom. | Solid a11y primitives for the modals without hand-building them; the part that has to look great (the chat) is ours. |
 | State | Plain Angular services holding `signal()`/`computed()` state, one service per document type (see 1.3). No NgRx. | The persistence model is "one store slice = one JSON file"; a hand-rolled signal store maps onto that 1:1 with zero ceremony. |
 | Model calls | Native `fetch` with `ReadableStream`, hand-written SSE parser (`data:` lines, `[DONE]`), `AbortController` for Stop. | No SDK dependency, full control over streaming and errors. |
 | Rendering | `marked` (markdown) + `DOMPurify` (sanitising) + `highlight.js` (code blocks, `lib/core` with eight languages registered rather than `lib/common`) + a custom dialogue-formatting pass. | Standard, small, well-maintained. A story is not a codebase, so the full language set is not worth 350 kB. |
@@ -55,7 +55,7 @@ Guiding principles
 Lamplit/
   PLAN.md
   package.json              npm workspaces: app, server, e2e, electron
-  app/                      Angular 21 workspace
+  app/                      Angular 22 workspace
     src/app/
       core/                 model client, SSE parser, prompt builder, tokens, formatting
       store/                signal stores (one per document type) + persistence layer

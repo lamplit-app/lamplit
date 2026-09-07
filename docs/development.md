@@ -7,7 +7,7 @@
 ## Layout
 
 ```
-app/        Angular 21 workspace — standalone components, signals, zoneless
+app/        Angular 22 workspace — standalone components, signals, zoneless
   core/       model client, SSE reader, error mapping, token estimates,
               story formatting, the prompt builder
   store/      signal stores (one per document type), and the persistence layer
@@ -174,7 +174,7 @@ A few things are worth knowing before reading it:
   `Persistence` says why in its header.
 - **No SDK, no HTTP client, no state library.** `fetch`, a hand-written SSE parser, and
   `AbortController` for Stop.
-- **Angular 21, zoneless.** Signals throughout, the new control flow, `inject()`, standalone
+- **Angular 22, zoneless.** Signals throughout, the new control flow, `inject()`, standalone
   components. Material is used for dialogs, menus, tabs, sliders, switches and tooltips; everything
   that has to look good — the chat itself, and every field in it — is hand-written. A field is a
   label above a box (`li-field`, or `li-editor-field` where the box holds a paragraph), and the

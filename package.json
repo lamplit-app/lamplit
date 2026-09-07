@@ -20,7 +20,7 @@
     "desktop:stage": "node tools/desktop.mjs --stage-only",
     "desktop:dist": "node tools/desktop.mjs --dist",
     "screenshots": "node tools/screenshots.mjs",
-    "providers": "node --experimental-strip-types tools/probe-providers.mjs",
+    "providers": "node tools/probe-providers.mjs",
     "check:docs": "node tools/check-docs.mjs",
     "notes": "node tools/release-notes.mjs",
     "check:notes": "node tools/release-notes.mjs --check",
@@ -40,14 +40,14 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "angular-eslint": "^21.4.0",
+    "angular-eslint": "^22.4.0",
     "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.12.0",
-    "typescript": "~5.9.2",
+    "typescript": "~6.0.3",
     "typescript-eslint": "^8.69.0"
   },
   "engines": {
-    "node": "^20.19.0 || ^22.12.0 || >=24.0.0"
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
   }
 }

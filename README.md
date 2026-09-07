@@ -76,7 +76,7 @@ Nothing below is needed to *use* Lamplit — the
 [download page](https://lamplit-app.github.io/lamplit/) has installers that carry Node
 inside them. This is the way in for people who want the source.
 
-Node 20.19+, 22.12+ or 24+.
+Node 22.22+, 24.15+ or 26+ — what Angular 22 asks for.
 
 ```bash
 npm install
@@ -146,7 +146,7 @@ completion (non-chat) endpoints.
 
 ## Built with
 
-Angular 21 (standalone, signals, zoneless) · Angular Material · Express 5 · Playwright · Vitest.
+Angular 22 (standalone, signals, zoneless) · Angular Material · Express 5 · Playwright · Vitest.
 No state library, no HTTP client, no model SDK — `fetch` and a hand-written SSE reader.
 
 ## License
