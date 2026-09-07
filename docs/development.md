@@ -81,9 +81,15 @@ startup load, coalescing, sequence numbers, offline queueing, and refusing to st
 server). `node --test` for the server: the document store's write ordering and atomic writes, the
 API, the zip writer, the daily backup, and the build stamp (reading it, the dev fallback, and how
 an upgrade is noticed). `node --test` again for the scripts in `tools/`, which have no other way of
-being caught: reading the changelog's top section, the arguments the desktop build hands
-electron-builder, whether the desktop shell may ask GitHub about an update, and which packages the
-runnable zip has to carry.
+being caught: reading the changelog's top section and the page the website is made from, the
+arguments the desktop build hands electron-builder, whether the desktop shell may ask GitHub about
+an update, which packages the runnable zip has to carry, what the staged folder is made of (the
+generated `package.json`, the two start scripts, the README, the line endings each of them wants),
+and each trap a docs page can fall into on the way to becoming a website.
+
+A script cannot be imported to be asked what it would do — it has its effects at the top of the
+file — so the part of one worth a test lives in `tools/lib/` and the script reads and writes the
+files around it. That is the split to keep when a script grows a decision worth checking.
 
 **End to end — `npm run e2e`.** Playwright drives the real app against
 `e2e/fake-openai-server.mjs`, a deterministic stand-in for an OpenAI-compatible endpoint. Both

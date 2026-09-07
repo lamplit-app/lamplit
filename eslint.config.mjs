@@ -112,6 +112,15 @@ export default defineConfig([
     languageOptions: { sourceType: 'module', globals: globals.node },
   },
   {
+    // This file. Without a block that matches it, `eslint .` walks past the one
+    // file that decides what everything else is linted with — an unused import
+    // or a stray `console.log` in here went unreported while every file it
+    // configures was checked for both.
+    files: ['*.mjs'],
+    extends: [js.configs.recommended],
+    languageOptions: { sourceType: 'module', globals: globals.node },
+  },
+  {
     // The preload is CommonJS because a sandboxed preload cannot be a module;
     // preload.cjs says so at the top.
     files: ['electron/**/*.cjs'],
