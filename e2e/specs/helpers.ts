@@ -120,14 +120,49 @@ export async function moving(page: Page): Promise<string[]> {
   });
 }
 
+/**
+ * Waits for every open sheet to have stopped moving.
+ *
+ * A sheet grows into place, and anything measured or scrolled while it is
+ * still growing is measured against geometry that is about to change — which
+ * is how a gap of 6px reads as 4px, a click lands on the wrong element, and a
+ * scroll ends up at the foot.
+ *
+ * Six places used to wait for `.mdc-dialog--opening` to be gone, and that is
+ * the trap this replaces. `MatDialogContainer` adds that class — and the
+ * `--open` one that ends the sheet's `scale(0.8)` — inside a
+ * `requestAnimationFrame` that runs *after* the content is attached, so
+ * between a sheet appearing and that frame arriving there is no `--opening`
+ * element to be found and the wait returns at once, on a sheet still at
+ * four-fifths of its size. On a busy machine that frame is late, which is why
+ * the same commit was red on CI and green on a re-run of itself.
+ *
+ * So what is waited for here is the sheet rather than a class: the surface at
+ * its own size and the container fully faded in. That is true whether Material
+ * is mid-animation, has finished, or was never asked to animate — a machine
+ * with motion turned down draws the sheet at rest from the first frame, and
+ * `_animationsEnabled` then puts `--open` on without any frame at all.
+ */
+export async function sheetSettled(page: Page): Promise<void> {
+  await page.waitForFunction(() => {
+    const surfaces = [...document.querySelectorAll('.mat-mdc-dialog-surface')];
+    const containers = [...document.querySelectorAll('.mat-mdc-dialog-inner-container')];
+    // No sheet at all is not "settled": the caller has just opened one.
+    if (!surfaces.length) return false;
+    const still = (transform: string) =>
+      transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)';
+    return (
+      surfaces.every((surface) => still(getComputedStyle(surface).transform)) &&
+      containers.every((container) => getComputedStyle(container).opacity === '1')
+    );
+  });
+}
+
 /** Opens What the model sees, which developer mode's pill is the only way into. */
 export async function openPromptPreview(page: Page): Promise<void> {
   await page.getByRole('button', { name: /^context/ }).click();
   await expect(page.getByRole('heading', { name: 'What the model sees' })).toBeVisible();
-  // The sheet grows into place, and anything measured or scrolled while it is
-  // still growing is measured against geometry that is about to change — which
-  // is how a click lands on the wrong element and a scroll ends up at the foot.
-  await expect(page.locator('.mdc-dialog--opening')).toHaveCount(0);
+  await sheetSettled(page);
 }
 
 /**

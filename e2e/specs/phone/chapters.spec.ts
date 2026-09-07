@@ -5,6 +5,7 @@ import {
   closeChapter,
   messages,
   send,
+  sheetSettled,
   waitForTurn,
 } from '../helpers';
 import { openMenu } from './helpers';
@@ -62,7 +63,7 @@ test('a sheet is the whole screen, and its buttons are where the thumb is', asyn
 
   const sheet = page.getByRole('dialog');
   await expect(sheet).toBeVisible();
-  await expect(page.locator('.mdc-dialog--opening')).toHaveCount(0);
+  await sheetSettled(page);
 
   const viewport = (await page.viewportSize())!;
   const box = (await sheet.boundingBox())!;

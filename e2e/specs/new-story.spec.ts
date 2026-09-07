@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { captureRequests, openChapter, send, systemOf, waitForTurn } from './helpers';
+import { captureRequests, openChapter, send, sheetSettled, systemOf, waitForTurn } from './helpers';
 
 /**
  * Starting a second story from inside the first: the questions it asks, the
@@ -48,7 +48,7 @@ test('the persona box grows with what is typed, even in a short window', async (
   // The dialog scales up as it opens, which moves the numbers this measures.
   // Waiting for the animation to be over says that; a sleep says "probably
   // by now", and is the one thing every flaky suite has in common.
-  await expect(page.locator('.mdc-dialog--opening')).toHaveCount(0);
+  await sheetSettled(page);
 
   const state = () =>
     box.evaluate((el: HTMLTextAreaElement) => ({

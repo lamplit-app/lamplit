@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
+import { sheetSettled } from './helpers';
 
 /**
  * One way to name a field.
@@ -24,15 +25,6 @@ interface Box {
   radius: string;
   border: string;
   paper: string;
-}
-
-/**
- * Nothing is measured while a sheet is still growing into place: Material
- * scales a dialog open, and a gap read off a scaled box is a gap that has been
- * multiplied by something less than one.
- */
-async function settled(page: Page): Promise<void> {
-  await expect(page.locator('.mdc-dialog--opening')).toHaveCount(0);
 }
 
 /**
@@ -91,7 +83,7 @@ test('every box in every sheet is the same box, named the same way', async ({ pa
   await page.getByRole('button', { name: /The Lighthouse/ }).click();
   await page.getByRole('menuitem', { name: 'New story…' }).click();
   await expect(page.getByRole('dialog').getByLabel('Title')).toBeVisible();
-  await settled(page);
+  await sheetSettled(page);
   seen.push(...(await boxes(page)));
   await page.getByRole('button', { name: 'Cancel' }).click();
   await expect(page.getByRole('dialog')).toBeHidden();
@@ -99,7 +91,7 @@ test('every box in every sheet is the same box, named the same way', async ({ pa
   /** The scene sheet: the app's serif box stacked on what was a Material one. */
   await page.getByRole('button', { name: 'Edit scene' }).click();
   await expect(page.getByRole('dialog').locator('textarea.scene')).toBeVisible();
-  await settled(page);
+  await sheetSettled(page);
   seen.push(...(await boxes(page)));
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toBeHidden();
@@ -107,7 +99,7 @@ test('every box in every sheet is the same box, named the same way', async ({ pa
   /** The connection sheet, which is where all three kinds of box are. */
   await page.keyboard.press('Control+k');
   await expect(page.getByRole('dialog').getByLabel('Provider')).toBeVisible();
-  await settled(page);
+  await sheetSettled(page);
   seen.push(...(await boxes(page)));
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toBeHidden();
@@ -121,7 +113,7 @@ test('every box in every sheet is the same box, named the same way', async ({ pa
     .first()
     .click();
   await expect(world.getByLabel('Keys')).toBeVisible();
-  await settled(page);
+  await sheetSettled(page);
   seen.push(...(await boxes(page)));
 
   // Four sheets, and a box of every kind in them.
@@ -154,7 +146,7 @@ test('a box says it has the focus the same way whatever kind it is', async ({ pa
 
   const sheet = page.getByRole('dialog');
   await expect(sheet.getByLabel('Provider')).toBeVisible();
-  await settled(page);
+  await sheetSettled(page);
 
   const edge = (name: string) =>
     sheet.getByLabel(name).evaluate((box) => {
@@ -170,4 +162,43 @@ test('a box says it has the focus the same way whatever kind it is', async ({ pa
 
   expect(line).not.toBe(resting);
   expect(choice).toBe(line);
+});
+
+/**
+ * The guard on the two tests above, which went missing without saying so.
+ *
+ * Both of them measure a sheet, and both are only true of a sheet that has
+ * stopped moving. The wait that says so used to watch for a class Material
+ * puts on an animation frame after the sheet appears — so on a machine slow
+ * enough to be late with that frame, there was no class to wait for, the wait
+ * returned at once, and a 6px step read as 4px. It went red on CI twice on
+ * changes that had nothing to do with fields, and green on a re-run of the
+ * same commit both times.
+ *
+ * So the late frame is arranged here rather than waited for. What is asserted
+ * is not a number — the two above own the numbers — but that the numbers do
+ * not move after the wait has returned, which is the whole of what the wait is
+ * for.
+ */
+test('measures a sheet only once it has stopped moving', async ({ page, app }) => {
+  // A frame late enough that slipping through the window behind it is certain
+  // rather than a matter of how busy the machine happens to be.
+  await page.addInitScript(() => {
+    const frame = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = (callback) =>
+      frame(() => window.setTimeout(() => callback(performance.now()), 120));
+  });
+  await app.seed();
+  await app.visit();
+
+  await page.getByRole('button', { name: 'Edit scene' }).click();
+  await expect(page.getByRole('dialog').locator('textarea.scene')).toBeVisible();
+  await sheetSettled(page);
+  const measured = await boxes(page);
+
+  // Long enough for an animation that had not finished to finish.
+  await page.waitForTimeout(400);
+
+  expect(measured.length).toBeGreaterThan(0);
+  expect(measured).toEqual(await boxes(page));
 });

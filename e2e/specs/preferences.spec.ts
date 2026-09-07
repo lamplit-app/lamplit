@@ -9,6 +9,7 @@ import {
   seedDeveloperMode,
   seedUi,
   send,
+  sheetSettled,
   systemOf,
   waitForTurn,
 } from './helpers';
@@ -269,7 +270,7 @@ test.describe('preferences', () => {
     expect(layerShape).not.toMatch(/9999px|50%/);
 
     await openPreferences(page);
-    await expect(page.locator('.mdc-dialog--opening')).toHaveCount(0);
+    await sheetSettled(page);
     await page.getByRole('button', { name: 'Advanced' }).first().click();
     // The panel unfolds, and anything measured while it is unfolding is
     // measured against geometry that is about to change.
@@ -351,7 +352,7 @@ test.describe('preferences', () => {
     // The two boxes the story itself is written into, in a sheet over the page
     // and in the panel beside it. Both were 16px against a page of 23.
     await page.getByRole('button', { name: 'Edit scene' }).click();
-    await expect(page.locator('.mdc-dialog--opening')).toHaveCount(0);
+    await sheetSettled(page);
     expect(await sizeOf('textarea.scene')).toBe('23px');
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toBeHidden();
