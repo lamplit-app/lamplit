@@ -60,9 +60,19 @@ function sheet<D>(width: keyof typeof SHEET_WIDTHS, options: SheetOptions<D> = {
  * openers here means the top bar, the composer, the chapter toolbar and the
  * lists can all reach a modal without importing each other — and the two
  * flows that chain modals (new chapter, close chapter) live in one place.
+ *
+ * **Two words, on purpose.** *Dialog* is Material's: `MatDialog`, the config
+ * it takes, the `mat-dialog-*` parts the stylesheet reaches for, and so the
+ * `*-dialog.ts` files and `li-*-dialog` selectors that are components of one.
+ * *Sheet* is the app's: it is what the guide calls these, what `styles.scss`
+ * measures in `--li-sheet-height`, and what the comments here say — because a
+ * reader is not being asked a question by a modal, they are being handed a
+ * sheet of paper over the page. Where this file talks about the framework it
+ * says dialog, and where it talks about the thing the writer sees it says
+ * sheet. Renaming either half would leave one of those two readings lying.
  */
 @Injectable({ providedIn: 'root' })
-export class DialogsService {
+export class Dialogs {
   private readonly dialog = inject(MatDialog);
   private readonly chapters = inject(ChapterStore);
   private readonly stories = inject(StoryStore);

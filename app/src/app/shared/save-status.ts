@@ -115,7 +115,7 @@ import { Persistence } from '../store/persistence';
     }
   `,
 })
-export class SaveStatusIndicator {
+export class SaveStatus {
   protected readonly persistence = inject(Persistence);
   protected readonly state = this.persistence.status;
 

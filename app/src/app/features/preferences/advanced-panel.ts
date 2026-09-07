@@ -3,7 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { desktop } from '../../core/desktop';
-import { DialogsService } from '../../shared/dialogs.service';
+import { Dialogs } from '../../shared/dialogs';
 import { SettingsStore } from '../../store/settings-store';
 import { ShareStore } from '../../store/share-store';
 import { UpdatesStore } from '../../store/updates-store';
@@ -241,7 +241,7 @@ export class AdvancedPanel {
   protected readonly settings = inject(SettingsStore);
   protected readonly share = inject(ShareStore);
   private readonly updates = inject(UpdatesStore);
-  private readonly dialogs = inject(DialogsService);
+  private readonly dialogs = inject(Dialogs);
 
   protected readonly ui = this.settings.ui;
   protected readonly connection = this.settings.connection;

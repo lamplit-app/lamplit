@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UpgradeNotice } from './upgrade-notice';
-import { BuildInfoStore } from '../store/build-info';
+import { BuildInfoStore } from '../store/build-info-store';
 import { SettingsStore } from '../store/settings-store';
 import { KEYS } from '../store/documents';
 import { STORAGE_BACKEND, StorageBackend } from '../store/storage';

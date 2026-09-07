@@ -6,7 +6,6 @@ import {
 } from './defaults';
 import { BlockId, Chapter, ChapterMessage, LoreEntry, Story } from './models';
 import {
-  DEFAULT_BLOCK_ORDER,
   buildPrompt,
   buildSummaryPrompt,
   chapterTitle,
@@ -16,7 +15,7 @@ import {
   summaryInstruction,
 } from './prompt-builder';
 import { heuristicEstimator } from './tokens';
-import { newChapter, newStory } from '../store/documents';
+import { newChapter, newStory } from './fixtures';
 
 function story(patch: Partial<Story> = {}): Story {
   return { ...newStory('The Lighthouse'), ...patch };
@@ -150,9 +149,14 @@ describe('buildPrompt: the order of the blocks', () => {
   /**
    * The shipped order without the author's block, which is the one block whose
    * presence a chapter decides rather than a story: nothing here carries a
-   * direction, so it is not in any of these. `directions.spec` holds that end.
+   * direction, so it is not in any of these. The directions spec holds that
+   * end.
+   *
+   * Written out rather than assembled from the three constants in
+   * `prompt-builder.ts`, so that this says what the order *is* instead of
+   * agreeing with however the file happens to compose it.
    */
-  const SHIPPED = DEFAULT_BLOCK_ORDER.filter((id) => id !== 'author');
+  const SHIPPED: BlockId[] = ['mode', 'persona', 'story-so-far', 'lore', 'scene', 'style'];
 
   it('ships in the order the app was built with', () => {
     expect(ids(full())).toEqual(SHIPPED);

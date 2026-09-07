@@ -2,9 +2,9 @@ import { Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { REPOSITORY } from '../core/project';
-import { BuildInfoStore } from '../store/build-info';
+import { BuildInfoStore } from '../store/build-info-store';
 import { SettingsStore } from '../store/settings-store';
-import { DialogsService } from './dialogs.service';
+import { Dialogs } from './dialogs';
 
 /**
  * One sheet, and no settings on it: what this is, which build of it is running,
@@ -113,7 +113,7 @@ import { DialogsService } from './dialogs.service';
 export class AboutDialog {
   private readonly builds = inject(BuildInfoStore);
   private readonly settings = inject(SettingsStore);
-  private readonly dialogs = inject(DialogsService);
+  private readonly dialogs = inject(Dialogs);
 
   protected readonly issues = `${REPOSITORY}/issues`;
 

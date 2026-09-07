@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Chapter, ChapterMessage, LoreEntry, Story } from './models';
 import { LORE_SCHEMA, buildLorePrompt, entryFrom, readProposals } from './lore-extraction';
 import { parseJsonObject, readCompletion } from './model-client';
-import { newChapter, newStory } from '../store/documents';
+import { newChapter, newStory } from './fixtures';
 
 /**
  * What a chapter established, asked for as JSON: the request, what comes back,

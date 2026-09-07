@@ -6,7 +6,7 @@ import { Chapter } from '../../core/models';
 import { chapterTitle, firstLine } from '../../core/prompt-builder';
 import { ChapterStore } from '../../store/chapter-store';
 import { StoryStore } from '../../store/story-store';
-import { DialogsService } from '../../shared/dialogs.service';
+import { Dialogs } from '../../shared/dialogs';
 import { countWords } from '../../shared/editor-field';
 
 interface Row {
@@ -145,7 +145,7 @@ interface Row {
 export class ChaptersDialog {
   protected readonly chapters = inject(ChapterStore);
   protected readonly stories = inject(StoryStore);
-  private readonly dialogs = inject(DialogsService);
+  private readonly dialogs = inject(Dialogs);
   private readonly ref = inject(MatDialogRef<ChaptersDialog>);
 
   protected readonly rows = computed<Row[]>(() => {

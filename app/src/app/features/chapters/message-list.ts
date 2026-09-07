@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { speakerLabels } from '../../core/speakers';
-import { ReadAloud } from '../../shared/read-aloud.service';
+import { ReadAloud } from '../../shared/read-aloud';
 import { ChapterStore } from '../../store/chapter-store';
 import { SettingsStore } from '../../store/settings-store';
 import { StoryStore } from '../../store/story-store';

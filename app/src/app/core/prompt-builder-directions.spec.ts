@@ -1,19 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { AUTHOR_DIRECTIONS_PROMPT, DEFAULT_GENERATION } from './defaults';
 import { Chapter, ChapterMessage, Story } from './models';
-import {
-  DEFAULT_BLOCK_ORDER,
-  buildPrompt,
-  buildSummaryPrompt,
-  isPinned,
-  withDirection,
-} from './prompt-builder';
+import { PINNED_LAST, buildPrompt, buildSummaryPrompt, withDirection } from './prompt-builder';
 import { heuristicEstimator } from './tokens';
-import { newChapter, newStory, normaliseChapter } from '../store/documents';
+import { newChapter, newStory } from './fixtures';
 
 /**
- * The author's voice: kept apart from the prose everywhere it is stored and
- * shown, joined to it only on the wire, and never in the summary.
+ * The author's voice, as `prompt-builder.ts` handles it: kept apart from the
+ * prose, joined to it only on the wire, and never in the summary. What a
+ * direction looks like once it is on disk is `store/documents.spec.ts`.
  */
 
 function story(patch: Partial<Story> = {}): Story {
@@ -117,8 +112,8 @@ describe('the author block', () => {
 
     expect(ids.at(-1)).toBe('author');
     expect(ids.at(-2)).toBe('style');
-    expect(DEFAULT_BLOCK_ORDER.at(-1)).toBe('author');
-    expect(isPinned('author')).toBe(true);
+    // Pinned, and the last of the pinned end, which is what puts it last of all.
+    expect(PINNED_LAST.at(-1)).toBe('author');
 
     // A stored order that names it is a list this build cannot honour, so the
     // whole list is refused rather than half-applied.
@@ -175,22 +170,5 @@ describe('what a direction is left out of', () => {
 
     const mentioned = build(chapter([said('I watch the storm come in.')]), patch);
     expect(mentioned.lore).toHaveLength(1);
-  });
-});
-
-describe('a direction on disk', () => {
-  it('survives a reload with no prose to keep it company', () => {
-    const stored = {
-      id: 'c1',
-      storyId: 's1',
-      number: 1,
-      messages: [
-        { id: 'm1', role: 'user', content: '', direction: 'The storm arrives tonight.' },
-        { id: 'm2', role: 'user', content: '' },
-      ],
-    };
-
-    const messages = normaliseChapter(stored as unknown as Chapter).messages;
-    expect(messages.map((m) => m.id)).toEqual(['m1']);
   });
 });

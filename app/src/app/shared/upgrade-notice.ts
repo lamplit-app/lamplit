@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { REPOSITORY } from '../core/project';
-import { BuildInfoStore } from '../store/build-info';
+import { BuildInfoStore } from '../store/build-info-store';
 import { SettingsStore } from '../store/settings-store';
 
 /**

@@ -14,7 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChapterStore } from '../../store/chapter-store';
 import { SettingsStore } from '../../store/settings-store';
 import { StoryStore } from '../../store/story-store';
-import { DialogsService } from '../../shared/dialogs.service';
+import { Dialogs } from '../../shared/dialogs';
 import { chapterTitle } from '../../core/prompt-builder';
 import { ChapterToolbar } from './chapter-toolbar';
 import { Composer } from './composer';
@@ -281,7 +281,7 @@ export class ChaptersPage {
   protected readonly chapters = inject(ChapterStore);
   protected readonly stories = inject(StoryStore);
   protected readonly settings = inject(SettingsStore);
-  protected readonly dialogs = inject(DialogsService);
+  protected readonly dialogs = inject(Dialogs);
 
   protected readonly title = computed(
     () => chapterTitle(this.chapters.chapter()) || `Chapter ${this.chapters.chapter().number}`,

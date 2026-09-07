@@ -17,7 +17,7 @@ import { SettingsStore } from '../../store/settings-store';
 import { Layout } from '../../core/layout';
 import { withDirection } from '../../core/prompt-builder';
 import { TOKEN_ESTIMATOR, formatTokens } from '../../core/tokens';
-import { DialogsService } from '../../shared/dialogs.service';
+import { Dialogs } from '../../shared/dialogs';
 import { fieldValue } from '../../shared/field';
 import { ProseEditor } from '../../shared/prose-editor';
 import { TextValue } from '../../shared/text-value';
@@ -364,7 +364,7 @@ import { TextValue } from '../../shared/text-value';
 export class Composer {
   protected readonly chapters = inject(ChapterStore);
   protected readonly settings = inject(SettingsStore);
-  protected readonly dialogs = inject(DialogsService);
+  protected readonly dialogs = inject(Dialogs);
   protected readonly layout = inject(Layout);
 
   // Not `required`: a chapter with no scene, no connection or a closed status

@@ -17,7 +17,7 @@ import { StorageBackend } from './storage';
  * offline  the server stopped answering; the session carries on and retries
  * refused  the server is answering and will not take a document; it is named
  */
-export type SaveStatus = 'saving' | 'saved' | 'offline' | 'refused';
+type SaveStatus = 'saving' | 'saved' | 'offline' | 'refused';
 
 /** Long enough to coalesce a burst of keystrokes, short enough to feel saved. */
 const DEBOUNCE = 300;

@@ -3,11 +3,11 @@ import { DEFAULT_GENERATION } from './defaults';
 import { CastChange, Chapter, ChapterMessage, Character, Story } from './models';
 import { activeCharacter, buildPrompt, buildSummaryPrompt, isOneAtATime } from './prompt-builder';
 import { heuristicEstimator } from './tokens';
-import { newChapter, newStory } from '../store/documents';
+import { newChapter, newStory } from './fixtures';
 
 /**
- * Role-play with a cast: the ensemble the app has always sent, and the one
- * character at a time it can send instead.
+ * Role-play with a cast, as `prompt-builder.ts` sends it: the ensemble the app
+ * has always sent, and the one character at a time it can send instead.
  */
 
 const NELL: Character = {

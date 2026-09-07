@@ -36,12 +36,6 @@ export const PINNED_FIRST: readonly BlockId[] = ['mode'];
 export const MOVABLE_BLOCKS: readonly BlockId[] = ['persona', 'story-so-far', 'lore', 'scene'];
 export const PINNED_LAST: readonly BlockId[] = ['style', 'author'];
 
-export const DEFAULT_BLOCK_ORDER: readonly BlockId[] = [
-  ...PINNED_FIRST,
-  ...MOVABLE_BLOCKS,
-  ...PINNED_LAST,
-];
-
 /** Why a block has no handle, in the preview's own words. */
 export const PIN_REASONS: Record<string, string> = {
   mode: 'Always first: it says what the model is, and the rest is read as instructions to that.',
@@ -50,10 +44,6 @@ export const PIN_REASONS: Record<string, string> = {
     'Only when the chapter carries a direction, and never anywhere but here: a direction ' +
     'overrides everything above it, so nothing may be put between it and the conversation.',
 };
-
-export function isPinned(id: BlockId): boolean {
-  return PINNED_FIRST.includes(id) || PINNED_LAST.includes(id);
-}
 
 /**
  * The movable blocks in this story's order.

@@ -12,8 +12,8 @@ import { UpdatesStore } from './store/updates-store';
 import { ChapterStore } from './store/chapter-store';
 import { StoryStore } from './store/story-store';
 import { Persistence } from './store/persistence';
-import { DialogsService } from './shared/dialogs.service';
-import { ReadAloud } from './shared/read-aloud.service';
+import { Dialogs } from './shared/dialogs';
+import { ReadAloud } from './shared/read-aloud';
 
 /**
  * The app itself, once there are documents to show.
@@ -67,7 +67,7 @@ export class Workspace {
   private readonly settings = inject(SettingsStore);
   private readonly chapters = inject(ChapterStore);
   private readonly stories = inject(StoryStore);
-  private readonly dialogs = inject(DialogsService);
+  private readonly dialogs = inject(Dialogs);
   private readonly persistence = inject(Persistence);
 
   constructor() {

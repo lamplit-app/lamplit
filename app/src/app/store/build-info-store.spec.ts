@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { BuildInfoStore, isNewer } from './build-info';
+import { BuildInfoStore, isNewer } from './build-info-store';
 
 /** What `/api/health` answers, so the store can be asked what it made of it. */
 function health(body: unknown, status = 200): void {

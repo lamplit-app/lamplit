@@ -5,7 +5,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { renderMarkdown } from '../../core/formatting';
 import { REPOSITORY, WEBSITE } from '../../core/project';
-import { BuildInfoStore } from '../../store/build-info';
+import { BuildInfoStore } from '../../store/build-info-store';
 import { Release, UpdatesStore } from '../../store/updates-store';
 
 export interface WhatsNewData {

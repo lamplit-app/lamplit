@@ -5,7 +5,7 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { MAT_SLIDE_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/slide-toggle';
-import { BuildInfoStore } from './store/build-info';
+import { BuildInfoStore } from './store/build-info-store';
 import { Persistence } from './store/persistence';
 import { STORAGE_BACKEND } from './store/storage';
 

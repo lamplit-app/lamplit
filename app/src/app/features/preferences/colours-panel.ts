@@ -11,7 +11,7 @@ import {
   shippedColour,
   wantsContrast,
 } from '../../core/theming';
-import { DialogsService } from '../../shared/dialogs.service';
+import { Dialogs } from '../../shared/dialogs';
 import { fieldValue } from '../../shared/field';
 import { ChapterStore } from '../../store/chapter-store';
 import { SettingsStore } from '../../store/settings-store';
@@ -211,7 +211,7 @@ export class ColoursPanel {
   private readonly settings = inject(SettingsStore);
   protected readonly stories = inject(StoryStore);
   private readonly chapters = inject(ChapterStore);
-  private readonly dialogs = inject(DialogsService);
+  private readonly dialogs = inject(Dialogs);
 
   protected readonly ui = this.settings.ui;
 

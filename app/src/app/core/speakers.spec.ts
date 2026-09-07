@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CHARACTER_COLOURS, characterColour } from './character-colours';
 import { CastChange, ChapterMessage, Character, Story } from './models';
 import { speakerLabels } from './speakers';
-import { newStory } from '../store/documents';
+import { newStory } from './fixtures';
 
 /**
  * Who the page says is speaking: the name as it was stored, once per run of

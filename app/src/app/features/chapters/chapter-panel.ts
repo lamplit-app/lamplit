@@ -5,7 +5,7 @@ import { characterColour } from '../../core/character-colours';
 import { Layout } from '../../core/layout';
 import { Character, PanelSection } from '../../core/models';
 import { firstLine, isOneAtATime } from '../../core/prompt-builder';
-import { DialogsService } from '../../shared/dialogs.service';
+import { Dialogs } from '../../shared/dialogs';
 import { CharacterSwatch } from '../../shared/character-swatch';
 import { EditorField } from '../../shared/editor-field';
 import { fieldValue } from '../../shared/field';
@@ -563,7 +563,7 @@ export class ChapterPanel {
   protected readonly story = this.stories.story;
   protected readonly layout = inject(Layout);
   private readonly settings = inject(SettingsStore);
-  private readonly dialogs = inject(DialogsService);
+  private readonly dialogs = inject(Dialogs);
 
   protected readonly open = computed(() => this.settings.ui().sidebarOpen);
 

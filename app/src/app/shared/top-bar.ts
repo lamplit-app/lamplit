@@ -8,9 +8,9 @@ import { SettingsStore } from '../store/settings-store';
 import { ChapterStore } from '../store/chapter-store';
 import { StoryStore } from '../store/story-store';
 import { UpdatesStore } from '../store/updates-store';
-import { DialogsService } from './dialogs.service';
-import { ReadAloud } from './read-aloud.service';
-import { SaveStatusIndicator } from './save-status';
+import { Dialogs } from './dialogs';
+import { ReadAloud } from './read-aloud';
+import { SaveStatus } from './save-status';
 
 /**
  * The one bar that is always there: which story and chapter are open, which
@@ -37,7 +37,7 @@ import { SaveStatusIndicator } from './save-status';
  */
 @Component({
   selector: 'li-top-bar',
-  imports: [MatButtonModule, MatMenuModule, MatTooltipModule, SaveStatusIndicator],
+  imports: [MatButtonModule, MatMenuModule, MatTooltipModule, SaveStatus],
   template: `
     <header class="bar">
       <div class="identity">
@@ -317,7 +317,7 @@ export class TopBar {
   protected readonly stories = inject(StoryStore);
   protected readonly chapters = inject(ChapterStore);
   protected readonly updates = inject(UpdatesStore);
-  protected readonly dialogs = inject(DialogsService);
+  protected readonly dialogs = inject(Dialogs);
   protected readonly speech = inject(ReadAloud);
 
   protected readonly chapterLabel = computed(() => {

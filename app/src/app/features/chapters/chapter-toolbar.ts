@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChapterStore } from '../../store/chapter-store';
-import { DialogsService } from '../../shared/dialogs.service';
+import { Dialogs } from '../../shared/dialogs';
 import { chapterTitle } from '../../core/prompt-builder';
 
 /**
@@ -64,7 +64,7 @@ import { chapterTitle } from '../../core/prompt-builder';
 })
 export class ChapterToolbar {
   protected readonly chapters = inject(ChapterStore);
-  protected readonly dialogs = inject(DialogsService);
+  protected readonly dialogs = inject(Dialogs);
 
   protected readonly label = computed(() => {
     const chapter = this.chapters.chapter();
