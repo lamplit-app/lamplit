@@ -89,6 +89,12 @@ export default defineConfig([
       // the key, so that an absent key means "the default" in the JSON file
       // as well as in memory. That is the point, not an accident.
       '@typescript-eslint/no-dynamic-delete': 'off',
+      // A component that is nothing but a template is a class with nothing in
+      // it, and that is the shape to want: `li-preferences-dialog` is the
+      // sheet, the four panels and the close button, and every field it used
+      // to hold went to the panel that reads it. Angular needs the class
+      // either way, and the decorator is what says the class is not the point.
+      '@typescript-eslint/no-extraneous-class': ['error', { allowWithDecorator: true }],
       // `const { promptOrder: _shipped, ...rest } = story` is how a field is
       // dropped from a document; the named-and-unused half is the point.
       '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],

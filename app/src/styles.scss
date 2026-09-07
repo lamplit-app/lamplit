@@ -1009,6 +1009,121 @@ input[type='checkbox'] {
   }
 }
 
+// How a panel of Preferences is built, for the four components that each draw
+// one of them — and for the palette row inside one of those.
+//
+// The panels are one sheet to the reader and four files to us, and these are
+// the rules every one of them was written with: the word beside a panel's
+// name, the column its settings stand in, the rule between two groups of
+// them, the sentence a panel opens with. Before the sheet was split they were
+// declared once because there was one component; they are declared once still,
+// here, rather than four times over — a divider a step lighter in Advanced
+// than in Reading is not a decision anybody would make on purpose.
+//
+// Worn by the `mat-expansion-panel` itself, so nothing outside Preferences —
+// the world sheet's entries, a parameter group — is touched by any of it.
+.li-panel {
+  mat-panel-description {
+    flex: none;
+    color: var(--li-muted);
+    font-size: var(--li-text-sm);
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--li-space-md);
+    padding-bottom: var(--li-space-xs);
+  }
+
+  // Whatever else the stack is holding — a note, a warning — takes its room
+  // from the gap and not from the browser's paragraph margin.
+  .stack > p {
+    margin: 0;
+  }
+
+  // The sentence a section opens with, before its own stack of settings.
+  .lead {
+    margin: 0 0 var(--li-space-lg);
+  }
+
+  // A rule across a stack, at the stack's own gap either side of it: the
+  // divider groups the settings without adding a rhythm of its own.
+  hr {
+    width: 100%;
+    border: 0;
+    border-top: 1px solid var(--li-border);
+    margin: 0;
+  }
+
+  // A switch with a sentence for a label wraps, and its own text should not
+  // run back under the switch when it does.
+  mat-slide-toggle {
+    align-items: flex-start;
+  }
+
+  // A box that has to be read, with the panel's own air above it.
+  .warning {
+    margin: var(--li-space-md) 0 0;
+  }
+
+  // The name of a row: the heading over the page palette, and a colour's own
+  // name beside its swatch. The palette row is one component and the swatches
+  // are another, and the two names are one size.
+  .row-name,
+  .name {
+    font-size: var(--li-text-md);
+    color: var(--li-ink);
+  }
+
+  // The one word in a note the reader is looking for: which theme is being
+  // edited, which chapter has a page of its own.
+  .editing strong,
+  .palette-lead strong {
+    color: var(--li-ink);
+    font-weight: 600;
+  }
+
+  // The app's quiet row tint, on the two things in here that are pressed.
+  .palette:hover,
+  .swatch:hover {
+    background: color-mix(in srgb, var(--li-ink) 5%, transparent);
+  }
+}
+
+// The two ends of the stack.
+//
+// Material draws an accordion's outer corners off `:first-of-type` and
+// `:last-of-type` among a panel's own siblings, and every panel here is the
+// only child of the component that draws it — so both match all four of them,
+// and instead of one box with rounded ends there would be four rounded boxes.
+// It is the only thing about splitting the sheet into components that the
+// reader could have seen.
+//
+// So the ends are named off the accordion's own children, whatever element
+// they happen to be, and with one class more than Material's rule: its styles
+// are injected after this sheet, and an equal specificity would lose. The
+// panel that is open keeps all four corners, which is Material's own doing and
+// what it looked like before — `mat-expansion-panel-spacing` is the class it
+// wears while it stands away from the two beside it.
+//
+// Everything else about the geometry is Material's and still lands: a folded
+// panel is squared by a rule that reaches any descendant of the accordion, and
+// a panel one level deeper is still a descendant.
+.mat-accordion > * > .mat-expansion-panel.li-panel:not(.mat-expansion-panel-spacing) {
+  border-radius: 0;
+}
+
+.mat-accordion > *:first-child > .mat-expansion-panel.li-panel:not(.mat-expansion-panel-spacing) {
+  border-top-left-radius: var(--mat-expansion-container-shape, 12px);
+  border-top-right-radius: var(--mat-expansion-container-shape, 12px);
+}
+
+.mat-accordion > *:last-child > .mat-expansion-panel.li-panel:not(.mat-expansion-panel-spacing) {
+  border-bottom-left-radius: var(--mat-expansion-container-shape, 12px);
+  border-bottom-right-radius: var(--mat-expansion-container-shape, 12px);
+}
+
 // A small word about something, in a ring: the chapter it belongs to, the
 // version that is waiting, the count of what was sent.
 //
