@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Lexer } from 'marked';
 import { readSseData } from './sse';
 import { ModelClient, buildBody, normaliseBaseUrl, parseChunk } from './model-client';
 import {
@@ -11,6 +12,36 @@ import { formatTokens, heuristicEstimator } from './tokens';
 import { renderMarkdown, renderStoryHtml } from './formatting';
 import { after } from './text';
 import { GenerationParams } from './models';
+
+/**
+ * A counter on the parse, in place of a stopwatch.
+ *
+ * What the blocks in `formatting.ts` are for is reading less, and a wall clock
+ * measures the machine as much as the reading — so the tests at the end of
+ * `renderStoryHtml` count what marked is asked to read instead of timing it,
+ * and a machine with something else to do is asked for exactly the same. Every
+ * parse of a message, or of a piece of one, starts at one of these two, and
+ * nothing inside marked comes back to them: what they count is what the app
+ * asked for, not marked's own working.
+ */
+const asked: number[] = [];
+const lex = Lexer.lex.bind(Lexer);
+const lexInline = Lexer.lexInline.bind(Lexer);
+Lexer.lex = (source: string, options?: never) => {
+  asked.push(source.length);
+  return lex(source, options);
+};
+Lexer.lexInline = (source: string, options?: never) => {
+  asked.push(source.length);
+  return lexInline(source, options);
+};
+
+/** The length of every string marked was given while `render` ran. */
+function given(render: () => void): number[] {
+  asked.length = 0;
+  render();
+  return [...asked];
+}
 
 /** A body split at awkward places, the way a real socket delivers it. */
 function streamOf(...pieces: string[]): ReadableStream<Uint8Array> {
@@ -559,9 +590,13 @@ describe('renderStoryHtml, block by block', () => {
   const plain = { bookStyleDialogue: false };
   const book = { bookStyleDialogue: true };
 
-  /** What marked is slowest on, and what a model repeating itself writes. */
-  const looping = (length: number, separator: string, salt: string) =>
-    `${salt}\n\n${`**a **b**${separator}`.repeat(Math.ceil(length / 10)).slice(0, length)}`;
+  /**
+   * One paragraph of what marked is slowest on, and what a model repeating
+   * itself writes. The salt goes in front so that two of these are two
+   * different paragraphs, which is what a cache kept by text is asked about.
+   */
+  const looping = (length: number, salt: string) =>
+    `${salt} ${'**a **b** '.repeat(Math.ceil(length / 10))}`.slice(0, length);
 
   it('keeps a paragraph too long to parse at once as one paragraph', () => {
     // Cut into pieces and put back together: one <p>, the line endings still
@@ -618,30 +653,52 @@ describe('renderStoryHtml, block by block', () => {
   });
 
   /**
-   * Budgets, not stopwatches. One parse of thirty thousand characters of
+   * Counters, not stopwatches. One parse of thirty thousand characters of
    * unbalanced emphasis was about four and a half seconds on the machine this
    * was written on, and it happened again on every animation frame of a
-   * streaming answer. The numbers below are three times what that machine now
-   * takes, so a slower one still passes and only losing the blocks fails.
+   * streaming answer. The three below count what marked is asked to read, so
+   * losing the blocks fails them and a loaded machine does not.
    */
-  it('renders the worst message a model can write inside a budget', () => {
+  it('never gives the parser a paragraph whole, however long it grows', () => {
     // One paragraph with no line ending anywhere in it to cut at: the shape
     // that costs the most, rendered cold, with none of it remembered.
-    const worst = looping(30_000, ' ', 'the worst of it');
-    const started = performance.now();
-    const html = renderStoryHtml(worst, plain);
-    expect(performance.now() - started).toBeLessThan(1500);
+    const worst = looping(30_000, 'the worst of it');
+    let html = '';
+    const lengths = given(() => (html = renderStoryHtml(worst, plain)));
+    // Thirty thousand characters of it, and marked is never handed more than a
+    // piece at a time — `PIECE` is fifteen hundred, and a cut lands before it.
+    expect(Math.max(...lengths)).toBeLessThanOrEqual(1500);
     expect(html).toContain('<strong>');
   });
 
   it('streams one without reading again everything that already arrived', () => {
-    // Sixty frames of the same answer growing, the way a turn arrives.
-    const answer = looping(30_000, '\n\n', 'streamed');
-    const started = performance.now();
-    for (let frame = 1; frame <= 60; frame++) {
-      renderStoryHtml(answer.slice(0, (answer.length * frame) / 60), plain);
-    }
-    expect(performance.now() - started).toBeLessThan(1500);
+    // Sixty frames of the same answer growing, the way a turn arrives: thirty
+    // paragraphs, each of them a long one and no two of them the same text.
+    const answer = Array.from({ length: 30 }, (_, i) => looping(1_000, `paragraph ${i}`)).join(
+      '\n\n',
+    );
+    const lengths = given(() => {
+      for (let frame = 1; frame <= 60; frame++) {
+        renderStoryHtml(answer.slice(0, (answer.length * frame) / 60), plain);
+      }
+    });
+    // Every paragraph above the one the words are arriving into is a lookup, so
+    // the answer is read two and a half times across the sixty frames — once as
+    // it lands, and again each frame for the paragraph being written into — and
+    // not the thirty times over it comes to without the blocks.
+    const read = lengths.reduce((all, length) => all + length, 0);
+    expect(read).toBeLessThan(answer.length * 4);
+  });
+
+  it('reads only the last paragraph again once the answer has stopped', () => {
+    const answer = Array.from({ length: 10 }, (_, i) => looping(1_000, `settled ${i}`)).join(
+      '\n\n',
+    );
+    renderStoryHtml(answer, plain);
+    // The last block is where the next words would land, so it alone is not
+    // remembered. Asking for the finished message again reads that paragraph
+    // and nothing else, which is what makes the parse at the end of a turn free.
+    expect(given(() => renderStoryHtml(answer, plain))).toEqual([1_000]);
   });
 });
 
