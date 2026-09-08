@@ -289,7 +289,7 @@ const SWIPE_DISTANCE = 48;
         (click)="setOpen(true)"
       >
         <span class="li-caret">‹</span>
-        <span class="edge">This chapter</span>
+        <span class="edge li-label">This chapter</span>
       </button>
     }
   `,
@@ -349,10 +349,10 @@ const SWIPE_DISTANCE = 48;
       background: color-mix(in srgb, var(--li-surface) 90%, transparent);
     }
 
+    /* The app's block label, turned to run up the grip. The type is li-label's
+       — this was the same size and the same tracking without the class. */
     .edge {
       writing-mode: vertical-rl;
-      font-size: var(--li-text-xs);
-      letter-spacing: 0.06em;
     }
 
     /* The same ink over the page that the CDK's backdrop paints under every

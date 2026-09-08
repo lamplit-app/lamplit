@@ -89,7 +89,7 @@ export interface MessageEdit {
         </div>
       } @else {
         @if (error()) {
-          <p class="error li-warning">{{ error() }}</p>
+          <p class="error li-warning alarm">{{ error() }}</p>
           <div class="error-actions">
             <!-- Offered, never taken: pressing this changes the setting and
                  sends nothing. "Try again" is still the press that spends. -->
@@ -475,14 +475,8 @@ export interface MessageEdit {
       }
     }
 
-    /* Spoken in the danger colour rather than the ordinary ink, and at the
-       size the story is read at: here the words are the alarm. */
-    .error {
-      margin: 0;
-      color: var(--li-danger);
-      font-size: var(--li-text-md);
-    }
-
+    /* Under the box the failure is in — li-warning, spoken loud, in the
+       globals — and close enough to it to read as its answer. */
     .error-actions {
       display: flex;
       gap: var(--li-space-xs);

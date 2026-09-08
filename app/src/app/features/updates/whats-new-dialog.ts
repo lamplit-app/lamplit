@@ -37,7 +37,7 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
         <p class="li-hint running">You are running {{ running() }}.</p>
 
         @for (release of releases(); track release.tag) {
-          <article class="release">
+          <article class="release li-card">
             <header>
               <span class="version">{{ release.name || release.version }}</span>
               @if (published(release); as when) {
@@ -55,7 +55,7 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
           </article>
         }
 
-        <section class="how">
+        <section class="how li-card">
           <h3>{{ howHeading() }}</h3>
           <p>{{ how() }}</p>
           @if (channel() !== 'desktop') {
@@ -95,8 +95,6 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
     .release {
       margin: 0 0 var(--li-space-md);
       padding: var(--li-space-md);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-lg);
       background: var(--li-surface-raised);
     }
 
@@ -147,8 +145,9 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
     .how {
       margin-top: var(--li-space-lg);
       padding: var(--li-space-md);
-      border: 1px solid var(--li-edge-accent);
-      border-radius: var(--li-radius-lg);
+      /* A card with its edge lit, which is one property over li-card's own
+         because the frame is a shorthand there. */
+      border-color: var(--li-edge-accent);
       background: var(--li-wash-accent-1);
     }
 

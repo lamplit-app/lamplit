@@ -79,6 +79,14 @@ export interface PaletteOption {
       margin: var(--li-space-md) 0 var(--li-space-xs);
     }
 
+    /* The heading over the row, at the size a colour's own name is set in
+       beside its swatch: the two are one size, and both are named where they
+       are drawn. */
+    .row-name {
+      font-size: var(--li-text-md);
+      color: var(--li-ink);
+    }
+
     /* Said rather than implied: a preset with your own colours over it is not
        that preset any more, and Reset is the only way back to one. The ring is
        the accent's, which is what tells it from the pills that only report. */
@@ -88,6 +96,13 @@ export interface PaletteOption {
 
     .palette-lead {
       margin: 0 0 var(--li-space-md);
+    }
+
+    /* The one word in the sentence the reader is looking for: which chapter
+       has a page of its own, or what custom means. */
+    .palette-lead strong {
+      color: var(--li-ink);
+      font-weight: 600;
     }
 
     .palettes {
@@ -110,6 +125,11 @@ export interface PaletteOption {
       font-size: var(--li-text-xs);
       text-align: center;
       cursor: pointer;
+
+      /* The app's quiet row tint: a tile is a row you press. */
+      &:hover {
+        background: var(--li-tint-1);
+      }
 
       &.on {
         color: var(--li-ink);

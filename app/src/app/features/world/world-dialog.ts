@@ -44,7 +44,7 @@ interface Group {
     <mat-dialog-content>
       <mat-tab-group>
         <mat-tab label="Story so far">
-          <div class="tab">
+          <div class="li-tab">
             <li-editor-field
               label="Always included in every request"
               hint="Closing a chapter rewrites this, folding the chapter into it. Edit it freely — this is the whole of what the model remembers before the chapter it is writing."
@@ -54,7 +54,7 @@ interface Group {
               (save)="stories.setStorySoFar($event)"
             />
 
-            <mat-expansion-panel class="instruction">
+            <mat-expansion-panel class="instruction li-card">
               <mat-expansion-panel-header>
                 <mat-panel-title>How a chapter is folded in</mat-panel-title>
                 <mat-panel-description>
@@ -76,7 +76,7 @@ interface Group {
               </mat-slide-toggle>
 
               @if (story().world.summary.useDefault) {
-                <p class="preset">{{ defaultSummaryInstruction }}</p>
+                <p class="preset li-preset">{{ defaultSummaryInstruction }}</p>
               } @else {
                 <li-editor-field
                   class="li-rows-tall"
@@ -117,7 +117,7 @@ interface Group {
         </mat-tab>
 
         <mat-tab label="Lore">
-          <div class="tab">
+          <div class="li-tab">
             <div class="lore-head">
               <li-field label="Search" class="search">
                 <input
@@ -141,7 +141,7 @@ interface Group {
               <h3 class="li-label">{{ group.label }}</h3>
               @for (entry of group.entries; track entry.id) {
                 <section
-                  class="entry"
+                  class="entry li-card"
                   [class.off]="!entry.enabled"
                   [class.unwritten]="!entry.content.trim()"
                   [class.open]="isOpen(entry.id)"
@@ -161,10 +161,10 @@ interface Group {
                       }}</span>
                       <span class="keys li-aside li-one-line">{{ summaryOf(entry) }}</span>
                       @if (!entry.enabled) {
-                        <span class="tag li-chip">off</span>
+                        <span class="tag li-pill li-chip">off</span>
                       }
                       @if (!entry.content.trim()) {
-                        <span class="tag warn">needs text</span>
+                        <span class="tag li-pill warn">needs text</span>
                       }
                     </button>
                     <button matIconButton [matMenuTriggerFor]="actions" aria-label="Entry actions">
@@ -295,36 +295,13 @@ interface Group {
     </mat-dialog-actions>
   `,
   styles: `
-    .tab {
-      display: flex;
-      flex-direction: column;
-      gap: var(--li-space-md);
-      padding: var(--li-space-lg) var(--li-space-3xs) var(--li-space-xs);
-    }
-
-    .tab > * {
-      flex: none;
-    }
-
     h3 {
       margin: var(--li-space-xs) 0 0;
       color: var(--li-muted);
     }
 
-    .instruction {
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-lg);
-    }
-
     .preset {
-      margin: var(--li-space-sm) 0 0;
-      padding: var(--li-space-md);
-      border: 1px dashed var(--li-border);
-      border-radius: var(--li-radius-md);
-      font-family: var(--li-serif);
-      font-size: var(--li-text-md);
-      line-height: var(--li-line-note);
-      color: var(--li-ink-soft);
+      margin-top: var(--li-space-sm);
     }
 
     .folded p {
@@ -358,8 +335,6 @@ interface Group {
       flex-direction: column;
       gap: var(--li-space-xs);
       padding: var(--li-space-xs) var(--li-space-sm);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-lg);
     }
 
     .entry.open {
@@ -387,12 +362,10 @@ interface Group {
       max-width: 16rem;
     }
 
+    /* The app's pill, and the one thing it does not already know: that it is
+       the fixed thing on a row whose name gives way. */
     .tag {
       flex: none;
-      padding: var(--li-space-3xs) var(--li-space-sm);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-pill);
-      color: var(--li-muted);
     }
 
     .tag.warn {

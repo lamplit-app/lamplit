@@ -254,12 +254,21 @@ const PINNED_SLACK = 96;
       color: var(--li-ink);
     }
 
-    p {
+    /* Every paragraph on the card takes its room from the card rather than
+       from the browser's own paragraph margin. */
+    .card p {
+      margin: 0 0 var(--li-space-lg);
+    }
+
+    /* And the ones the reader is being spoken to in are set as prose. Named
+       past the hint, rather than set for every paragraph in the component and
+       then set back again by a rule for p.li-hint — the hint is the app's own
+       voice and was being made prose and unmade. */
+    .card p:not(.li-hint) {
       font-family: var(--li-serif);
       font-size: var(--li-text-lg);
       line-height: var(--li-line-note);
       color: var(--li-ink-soft);
-      margin: 0 0 var(--li-space-lg);
     }
 
     /* The scene is prose the writer wrote: set it as prose, not as a caption. */
@@ -271,11 +280,6 @@ const PINNED_SLACK = 96;
       /* The paper at an alpha, not a wash: the block sits on the page and is
          meant to read as a sheet laid over it. */
       background: color-mix(in srgb, var(--li-surface) 70%, transparent);
-    }
-
-    p.li-hint {
-      font-family: var(--li-sans);
-      font-size: var(--li-text-sm);
     }
   `,
 })

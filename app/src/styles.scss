@@ -678,8 +678,17 @@ html {
   --mat-dialog-with-actions-content-padding: var(--li-space-lg) var(--li-space-xl) 0;
 
   // The panels that fold Advanced away sit on the sheet rather than on a card
-  // of their own; the two that want an edge draw their own border.
+  // of their own; the two that want an edge wear `.li-card`.
   --mat-expansion-container-background-color: transparent;
+
+  // And they are cards, so they are rounded to the corner the app rounds a
+  // card to. Material ships 12px and applies it through a rule of its own
+  // — `.mat-expansion-panel`, one class, injected after this sheet — which is
+  // a rule `.li-card` cannot beat on specificity or on order. So this is said
+  // as a token, where there is nothing to beat: the two folded instructions
+  // are the app's own corner now rather than two pixels off it, and the
+  // accordion's own ends, which read this token by name further down, follow.
+  --mat-expansion-container-shape: var(--li-radius-lg);
 
   // What a folded panel says while it is folded, in the voice a note is
   // written in. Said here rather than inherited from `on-surface-variant`,
@@ -893,9 +902,9 @@ app-root {
     padding-left: 1.4em;
   }
 
+  // The line itself is the element's, below. Prose measures its air in `em`
+  // like everything else in here, which is the whole of what this says.
   hr {
-    border: 0;
-    border-top: 1px solid var(--li-border);
     margin: 1.4em 0;
   }
 
@@ -1223,6 +1232,26 @@ input[type='checkbox'] {
   }
 }
 
+// A line across a stack. The one element the app draws that is nothing but a
+// line, so what it is drawn in belongs to the element rather than to a class.
+//
+// It was written out three times — under Preferences, in the top bar's menus
+// and on a tab of the story sheet — with the same `border: 0` undoing the
+// browser's bevel and the same hairline put back, at three different margins.
+// The margin here is the one two of the three asked for; the third wanted none
+// at all, because the stack it divides carries its own gap, and it says so
+// where it is.
+//
+// `width: 100%` because an `hr` arrives with `margin-inline: auto`, and in a
+// flex column that is what stops it stretching to the width of the stack it is
+// dividing.
+hr {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--li-border);
+  margin: var(--li-space-2xs) 0;
+}
+
 // ---------------------------------------------------------------------------
 // Shared bits
 // ---------------------------------------------------------------------------
@@ -1252,17 +1281,28 @@ input[type='checkbox'] {
 // How a panel of Preferences is built, for the four components that each draw
 // one of them — and for the palette row inside one of those.
 //
-// The panels are one sheet to the reader and four files to us, and these are
-// the rules every one of them was written with: the column its settings stand
-// in, the rule between two groups of them, the sentence a panel opens with.
-// Before the sheet was split they were declared once because there was one
-// component; they are declared once still, here, rather than four times over —
-// a divider a step lighter in Advanced than in Reading is not a decision
-// anybody would make on purpose.
+// The panels are one sheet to the reader and four files to us, and every rule
+// left in here is one that more than one of them was written with: the column
+// its settings stand in, the rule between two groups of them, the sentence a
+// panel opens with, the switch that wraps, the box that has to be read. Before
+// the sheet was split they were declared once because there was one component;
+// they are declared once still, here, rather than four times over — a divider
+// a step lighter in Advanced than in Reading is not a decision anybody would
+// make on purpose.
 //
-// The word beside a panel's name used to be here too. It has gone further
-// down, beside Material's own selectors: three sheets outside Preferences fold
-// a panel as well, and all three had written the same rule again.
+// "More than one of them" is the whole of the test, and six rules failed it:
+// `.row-name`, `.name`, `.editing strong`, `.palette-lead strong`,
+// `.palette:hover` and `.swatch:hover` were the insides of the colour swatches
+// and the palette row — two components, one rule each — declared globally
+// because they happened to be drawn inside a panel. A global rule naming a
+// class only one component wears is not "declared once", it is a component's
+// stylesheet in the wrong file, and it says that anything drawn in a panel may
+// find its own class already spoken for. They are in `colours-panel.ts` and
+// `page-palette.ts` now.
+//
+// The word beside a panel's name went the other way, and further down: three
+// sheets outside Preferences fold a panel as well, and all three had written
+// the same rule again, so it is beside Material's own selectors.
 //
 // Worn by the `mat-expansion-panel` itself, so nothing outside Preferences —
 // the world sheet's entries, a parameter group — is touched by any of it.
@@ -1300,32 +1340,10 @@ input[type='checkbox'] {
     align-items: flex-start;
   }
 
-  // A box that has to be read, with the panel's own air above it.
+  // A box that has to be read, with the panel's own air above it. Advanced and
+  // Colours both draw one.
   .warning {
     margin: var(--li-space-md) 0 0;
-  }
-
-  // The name of a row: the heading over the page palette, and a colour's own
-  // name beside its swatch. The palette row is one component and the swatches
-  // are another, and the two names are one size.
-  .row-name,
-  .name {
-    font-size: var(--li-text-md);
-    color: var(--li-ink);
-  }
-
-  // The one word in a note the reader is looking for: which theme is being
-  // edited, which chapter has a page of its own.
-  .editing strong,
-  .palette-lead strong {
-    color: var(--li-ink);
-    font-weight: 600;
-  }
-
-  // The app's quiet row tint, on the two things in here that are pressed.
-  .palette:hover,
-  .swatch:hover {
-    background: var(--li-tint-1);
   }
 }
 
@@ -1350,8 +1368,9 @@ input[type='checkbox'] {
 // a panel one level deeper is still a descendant.
 //
 // These three are Material's own selectors and belong to the list under
-// "Material's own selectors" further down; they are here rather than there
-// because they read beside `.li-panel`, which is the class they vary.
+// "Material's own selectors" further down; they are the only ones here rather
+// than there, because they read beside `.li-panel`, which is the class they
+// vary.
 .mat-accordion > * > .mat-expansion-panel.li-panel:not(.mat-expansion-panel-spacing) {
   border-radius: 0;
 }
@@ -1443,28 +1462,78 @@ input[type='checkbox'] {
   background: var(--li-accent);
 }
 
-// A Material button that has to fit the room there is, rather than the room its
-// label would like.
+// The card. A hairline and a large corner, and that is the whole of it.
 //
-// Material wraps whatever is put in a button in a span of its own, and that
-// span is a flex item with an automatic minimum width — which for a label that
-// will not wrap is the whole label. So the span never shrinks, the button never
-// shrinks, and whatever is around it clips the overflow with a hard edge:
-// "…A hundred and nine ste", cut mid-word, with the app's own `text-overflow`
-// two levels down and nothing for it to do. There is no Material token for it,
-// which is why this is a selector rather than a property.
+// This is the app's most-repeated shape and it was the last one without a
+// name: ten rules in eight components typed `1px solid var(--li-border)` and
+// `var(--li-radius-lg)` one under the other — the composer's box, a character,
+// a lore entry, a release, the two folded instructions, the lore proposals,
+// the budgets, the how-to on What's new — and `.li-choice` below made eleven.
 //
-// Both buttons that wear this are in the top bar, and both are named things
-// that can be long: the story and chapter you are in, and the model answering.
+// Two declarations, deliberately. What a card is *for* varies and stays with
+// whatever wears the class: the paper (none, so the sheet shows through; raised
+// paper, so it reads as a thing on the sheet; a wash, so it reads as being
+// about something), the room inside it, and the room around it. What does not
+// vary is the frame — a card is drawn in the same line as every other box in
+// the app, at the corner the app rounds a card to — and that is what a reader
+// compares from sheet to sheet without being able to say what changed.
 //
-// `.mdc-button__label` is Material's own, and the oldest name of the twelve
-// this app reaches for — see "Material's own selectors" further down, where it
-// is the first one to check on an upgrade.
-.li-truncates > .mdc-button__label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+// The border is a shorthand rather than `border-width`/`border-style`/
+// `border-color`, so a caller lighting the edge overrides `border-color` alone
+// and gets the width and the style for free. `whats-new-dialog.ts` is the one
+// that does.
+.li-card {
+  border: 1px solid var(--li-border);
+  border-radius: var(--li-radius-lg);
+}
+
+// Text the app wrote, in the box the reader's own would go in: the default
+// system prompt, the default summary instruction, the instruction a chapter
+// closes on. Three sheets, and it was three verbatim copies of the same eight
+// declarations differing only in the margin.
+//
+// Dashed rather than solid, which is the whole of what it says: this is not a
+// field and there is nothing in it to edit — the button beside it is what
+// makes it yours. Set in the reading face because the words are the ones the
+// model will read, at a note's size on the sheet rather than the page's.
+.li-preset {
+  margin: 0;
+  padding: var(--li-space-md);
+  border: 1px dashed var(--li-border);
+  border-radius: var(--li-radius-md);
+  font-family: var(--li-serif);
+  font-size: var(--li-text-md);
+  line-height: var(--li-line-note);
+  color: var(--li-ink-soft);
+}
+
+// What is inside one tab of a sheet that has tabs: the story sheet's three,
+// the world sheet's two, the model sheet's two.
+//
+// Material gives a tab body no padding at all, and the three sheets each wrote
+// the same column with the same four numbers in it. The horizontal padding is
+// a hairline rather than a gap on purpose — a tab body clips, and a field's
+// focus ring is drawn outside the field.
+//
+// Nothing in a tab gives up its height. A tab body is a flex column inside a
+// dialog that scrolls, and the first thing such a column squashes is anything
+// that scrolls inside itself — which is every box of text on these sheets, and
+// they were drawn short of the rows they asked for.
+.li-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--li-space-md);
+  padding: var(--li-space-lg) var(--li-space-3xs) var(--li-space-xs);
+
+  > * {
+    flex: none;
+  }
+
+  // A divider on a tab takes the column's own air either side of it, which is
+  // the element's own margin further up; only the stretch is this one's.
+  hr {
+    width: 100%;
+  }
 }
 
 // A two-way choice with room to explain itself: the Narrator / Role-play
@@ -1475,13 +1544,15 @@ input[type='checkbox'] {
   gap: var(--li-space-sm);
 }
 
+// A card you can press, which is why the frame comes from `.li-card` rather
+// than being typed again here.
 .li-choice {
+  @extend .li-card;
+
   display: flex;
   flex-direction: column;
   gap: var(--li-space-2xs);
   padding: var(--li-space-md);
-  border: 1px solid var(--li-border);
-  border-radius: var(--li-radius-lg);
   background: var(--li-surface-raised);
   text-align: left;
   font: inherit;
@@ -1515,11 +1586,20 @@ input[type='checkbox'] {
 // `close-chapter-dialog.ts`, at 40%, for as long as the claim stood. A comment
 // cannot hold a value in one place; a token can.
 //
-// What is said inside it stays with the caller, and the two are not saying the
-// same kind of thing: the model's failure is spoken in the danger colour
-// because the words are the alarm, and a note about a palette is spoken in the
-// ordinary ink because the ring is.
+// The two things it is used to say are not the same kind of thing, and that is
+// the modifier below rather than a second box. A note about a choice the reader
+// made is spoken in the ordinary ink, because the ring is the alarm. A request
+// that came back an error is spoken in the danger colour and a step larger,
+// because there the words are the alarm and the ring is only the frame round
+// them — two sheets say it, and both had written the same three declarations
+// under a name of their own.
+//
+// `margin: 0` because every one of the seven that wear this is a `<p>`, and a
+// paragraph arrives with the browser's `1em` above and below it. What room a
+// warning wants stays with the caller, as it does for every other box here;
+// what it does not want is the room nobody asked for.
 .li-warning {
+  margin: 0;
   padding: var(--li-space-sm) var(--li-space-md);
   border: 1px solid var(--li-edge-danger);
   border-radius: var(--li-radius-md);
@@ -1527,6 +1607,11 @@ input[type='checkbox'] {
   color: var(--li-ink-soft);
   font-size: var(--li-text-sm);
   line-height: var(--li-line-ui);
+
+  &.alarm {
+    color: var(--li-danger);
+    font-size: var(--li-text-md);
+  }
 }
 
 // Naming a box: the word above it. The size a note is set in and the ink a
@@ -1737,8 +1822,9 @@ input[type='checkbox'] {
 // an upgrade can silently break. A renamed class does not error; it stops
 // applying, and the app is drawn the library's way with nobody told.
 //
-// The fourteen, and what each is for:
+// The fourteen, in the order they are written, and what each is for:
 //
+//   `.li-truncates > .mdc-button__label`       a label that ellipses
 //   `.mat-expansion-panel-header-description`  the aside on a folding row
 //   `.mat-mdc-dialog-surface`                  the border round a card
 //   `.mat-mdc-dialog-content`                  the height cap
@@ -1751,17 +1837,39 @@ input[type='checkbox'] {
 //   `.mat-mdc-menu-item` (touch)               44px for a finger
 //   `.mat-accordion > * > .mat-expansion-panel` ×3, further up beside
 //                                              `.li-panel`: an accordion's ends
-//   `.li-truncates > .mdc-button__label`, further up: a label that ellipses
 //
-// The last two runs stay where they are because they read beside the classes
-// of ours they vary, which is how they are found; they belong to this list and
-// each says so.
+// The accordion's three stay where they are because they read beside
+// `.li-panel`, which is the class they vary, and that is how they are found;
+// they belong to this list and say so there.
 //
-// `.mdc-button__label` is the one to check first. `mdc-` is the old Material
-// Components for Web naming, kept alive inside Angular Material's button and
-// nothing else the app touches; every other selector here is `mat-`. When it
-// goes, the rule beside it goes quiet and two buttons in the top bar start
-// pushing the bar wide instead of ellipsing.
+// `.mdc-button__label` is the one to check first, and it is written out first
+// below. `mdc-` is the old Material Components for Web naming, kept alive
+// inside Angular Material's button and nothing else the app touches; every
+// other selector here is `mat-`. When it goes, the rule goes quiet and two
+// buttons in the top bar start pushing the bar wide instead of ellipsing.
+
+// A Material button that has to fit the room there is, rather than the room its
+// label would like.
+//
+// Material wraps whatever is put in a button in a span of its own, and that
+// span is a flex item with an automatic minimum width — which for a label that
+// will not wrap is the whole label. So the span never shrinks, the button never
+// shrinks, and whatever is around it clips the overflow with a hard edge:
+// "…A hundred and nine ste", cut mid-word, with the app's own `text-overflow`
+// two levels down and nothing for it to do. There is no Material token for it,
+// which is why this is a selector rather than a property.
+//
+// Both buttons that wear this are in the top bar, and both are named things
+// that can be long: the story and chapter you are in, and the model answering.
+// One component, so this is not furniture and does not read with it; it is
+// here because `.mdc-button__label` is the oldest of the names below and the
+// first to check on an upgrade.
+.li-truncates > .mdc-button__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 // The aside on a row that folds, wherever one folds: Preferences' four panels,
 // the world sheet's summary instruction, the close sheet's, and the sampling

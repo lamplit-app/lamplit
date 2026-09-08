@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
+import { Notice } from './notice';
 import { Persistence } from '../store/persistence';
 
 /**
@@ -12,44 +12,18 @@ import { Persistence } from '../store/persistence';
  * reloading is done. Dismissed rather than timed out, because what it is
  * really reporting is that something typed here may have gone with it, and a
  * strip that vanishes on its own is a strip somebody misses.
+ *
+ * The strip is `li-notice`, which the upgrade notice draws too. What is left
+ * here is when there is one, what it says, and what answering it does.
  */
 @Component({
   selector: 'li-reload-notice',
-  imports: [MatButtonModule],
+  imports: [Notice],
   template: `
     @if (persistence.notice(); as notice) {
-      <aside class="notice" role="status">
+      <li-notice (dismissed)="persistence.dismissNotice()">
         <span class="li-one-line">{{ notice }}</span>
-        <button
-          matIconButton
-          class="close"
-          aria-label="Dismiss"
-          (click)="persistence.dismissNotice()"
-        >
-          ×
-        </button>
-      </aside>
-    }
-  `,
-  styles: `
-    .notice {
-      display: flex;
-      align-items: center;
-      gap: var(--li-space-md);
-      padding: var(--li-space-xs) var(--li-space-sm) var(--li-space-xs) var(--li-space-lg);
-      border-bottom: 1px solid var(--li-border);
-      background: var(--li-wash-accent-2);
-      font-size: var(--li-text-md);
-      color: var(--li-ink);
-    }
-
-    /* The dismiss sits at the far end, where a strip's dismiss is looked for. */
-    .close {
-      flex: none;
-      margin-left: auto;
-      font-size: var(--li-text-lg);
-      line-height: var(--li-line-flush);
-      color: var(--li-muted);
+      </li-notice>
     }
   `,
 })

@@ -36,10 +36,10 @@ export interface ModelData {
       } @else {
         <mat-tab-group [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)">
           <mat-tab label="Connection">
-            <div class="tab"><li-connection-form /></div>
+            <div class="li-tab"><li-connection-form /></div>
           </mat-tab>
           <mat-tab label="Parameters">
-            <div class="tab"><li-parameters-form /></div>
+            <div class="li-tab"><li-parameters-form /></div>
           </mat-tab>
         </mat-tab-group>
       }
@@ -61,13 +61,6 @@ export interface ModelData {
         Done
       </button>
     </mat-dialog-actions>
-  `,
-  styles: `
-    .tab {
-      display: flex;
-      flex-direction: column;
-      padding: var(--li-space-lg) var(--li-space-3xs) var(--li-space-xs);
-    }
   `,
 })
 export class ModelDialog {

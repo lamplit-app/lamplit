@@ -306,12 +306,6 @@ import { SaveStatus } from './save-status';
       font-size: var(--li-text-xs);
       color: var(--li-muted);
     }
-
-    hr {
-      border: 0;
-      border-top: 1px solid var(--li-border);
-      margin: var(--li-space-2xs) 0;
-    }
   `,
 })
 export class TopBar {

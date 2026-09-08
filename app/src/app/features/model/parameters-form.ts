@@ -25,7 +25,7 @@ const EFFORTS: { value: ReasoningEffort; label: string }[] = [
   selector: 'li-parameters-form',
   imports: [MatExpansionModule, Field, ParamRow],
   template: `
-    <section class="budgets">
+    <section class="budgets li-card">
       <li-param-row
         label="Context budget"
         [hint]="budgetHint()"
@@ -187,8 +187,6 @@ const EFFORTS: { value: ReasoningEffort; label: string }[] = [
     .budgets {
       padding: var(--li-space-sm) var(--li-space-md) var(--li-space-xs);
       margin-bottom: var(--li-space-sm);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-lg);
       background: var(--li-wash-accent-1);
     }
 

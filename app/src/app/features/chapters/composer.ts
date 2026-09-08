@@ -57,7 +57,7 @@ import { TextValue } from '../../shared/text-value';
               {{ blocked.reason }} — {{ blockedAction() }}
             </button>
           } @else {
-            <div class="box">
+            <div class="box li-card">
               <li-prose-editor
                 #input
                 class="prose li-rows-medium"
@@ -93,7 +93,7 @@ import { TextValue } from '../../shared/text-value';
                      selection they are about is still there when they act. -->
                 <div class="marks" role="group" aria-label="Formatting">
                   <button
-                    class="quiet mark speech"
+                    class="quiet mark speech li-pill"
                     type="button"
                     (mousedown)="$event.preventDefault()"
                     (click)="input.quote()"
@@ -102,7 +102,7 @@ import { TextValue } from '../../shared/text-value';
                     Speech
                   </button>
                   <button
-                    class="quiet mark action"
+                    class="quiet mark action li-pill"
                     type="button"
                     [class.on]="input.action()"
                     [attr.aria-pressed]="input.action()"
@@ -113,7 +113,7 @@ import { TextValue } from '../../shared/text-value';
                     Action
                   </button>
                   <button
-                    class="quiet mark bold"
+                    class="quiet mark bold li-pill"
                     type="button"
                     [class.on]="input.bold()"
                     [attr.aria-pressed]="input.bold()"
@@ -130,7 +130,7 @@ import { TextValue } from '../../shared/text-value';
                     <button matButton="filled" class="stop" (click)="chapters.stop()">Stop</button>
                   } @else {
                     <button
-                      class="quiet author"
+                      class="quiet author li-pill"
                       type="button"
                       [class.on]="authoring()"
                       [attr.aria-pressed]="authoring()"
@@ -204,10 +204,10 @@ import { TextValue } from '../../shared/text-value';
       color: var(--li-accent);
     }
 
+    /* The card is li-card; what is this box's own is the paper it is on, the
+       room the writing gets, and the accent easing in as it takes focus. */
     .box {
       padding: var(--li-space-sm) var(--li-space-sm) var(--li-space-xs) var(--li-space-md);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-lg);
       background: var(--li-surface-raised);
       transition: border-color 120ms ease;
     }
@@ -284,17 +284,13 @@ import { TextValue } from '../../shared/text-value';
       color: var(--li-ink-soft);
     }
 
-    /* A quiet word, lit when what it stands for is on. */
+    /* A quiet word, lit when what it stands for is on: the app's pill, with
+       nothing drawn round it until it is hovered or on. The ring is kept
+       rather than removed so that lighting it moves no words sideways. */
     .quiet {
       padding: var(--li-space-xs) var(--li-space-sm);
-      border: 1px solid transparent;
-      border-radius: var(--li-radius-pill);
+      border-color: transparent;
       background: none;
-      color: var(--li-muted);
-      font-family: var(--li-sans);
-      font-size: var(--li-text-xs);
-      letter-spacing: 0.02em;
-      cursor: pointer;
     }
 
     .quiet:hover,

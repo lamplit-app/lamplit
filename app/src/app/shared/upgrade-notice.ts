@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
+import { Notice } from './notice';
 import { REPOSITORY } from '../core/project';
 import { BuildInfoStore } from '../store/build-info-store';
 import { SettingsStore } from '../store/settings-store';
@@ -13,13 +13,17 @@ import { SettingsStore } from '../store/settings-store';
  * written into settings.json, so it survives a reload and is per version rather
  * than per session. A fresh install has nothing to compare against and shows
  * nothing, which is right: there is no upgrade to report.
+ *
+ * The strip is `li-notice`, which the reload notice draws too. This one puts a
+ * link beside its sentence — projected into the strip, so the rule below still
+ * reaches it — and reading the notes counts as an answer to the notice.
  */
 @Component({
   selector: 'li-upgrade-notice',
-  imports: [MatButtonModule],
+  imports: [Notice],
   template: `
     @if (from()) {
-      <aside class="notice" role="status">
+      <li-notice (dismissed)="dismiss()">
         <span class="li-one-line">
           Lamplit was upgraded to <b>{{ builds.version() }}</b>
         </span>
@@ -32,34 +36,13 @@ import { SettingsStore } from '../store/settings-store';
         >
           What’s new
         </a>
-        <button matIconButton class="close" aria-label="Dismiss" (click)="dismiss()">×</button>
-      </aside>
+      </li-notice>
     }
   `,
   styles: `
-    .notice {
-      display: flex;
-      align-items: center;
-      gap: var(--li-space-md);
-      padding: var(--li-space-xs) var(--li-space-sm) var(--li-space-xs) var(--li-space-lg);
-      border-bottom: 1px solid var(--li-border);
-      background: var(--li-wash-accent-2);
-      font-size: var(--li-text-md);
-      color: var(--li-ink);
-    }
-
     .notes {
       flex: none;
       color: var(--li-accent);
-    }
-
-    /* The dismiss sits at the far end, where a strip's dismiss is looked for. */
-    .close {
-      flex: none;
-      margin-left: auto;
-      font-size: var(--li-text-lg);
-      line-height: var(--li-line-flush);
-      color: var(--li-muted);
     }
   `,
 })

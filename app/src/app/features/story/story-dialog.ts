@@ -33,7 +33,7 @@ export interface StoryDialogData {
     <mat-dialog-content>
       <mat-tab-group>
         <mat-tab label="Mode">
-          <div class="tab">
+          <div class="li-tab">
             <div class="li-choices">
               <button
                 type="button"
@@ -68,7 +68,7 @@ export interface StoryDialogData {
               </mat-slide-toggle>
 
               @if (story().narrator.useDefault) {
-                <p class="preset">{{ defaultPrompt }}</p>
+                <p class="li-preset">{{ defaultPrompt }}</p>
               } @else {
                 <li-editor-field
                   class="li-rows-tall"
@@ -107,7 +107,7 @@ export interface StoryDialogData {
                 </div>
 
                 @for (character of story().characters; track character.id) {
-                  <section class="character" [attr.data-character]="character.id">
+                  <section class="character li-card" [attr.data-character]="character.id">
                     <header>
                       <li-character-swatch
                         [character]="character"
@@ -153,7 +153,7 @@ export interface StoryDialogData {
         </mat-tab>
 
         <mat-tab label="Persona">
-          <div class="tab">
+          <div class="li-tab">
             <p class="li-hint">Who the reader is in this story. Always sent, in both modes.</p>
             <li-field label="Name">
               <input
@@ -173,7 +173,7 @@ export interface StoryDialogData {
         </mat-tab>
 
         <mat-tab label="Style">
-          <div class="tab">
+          <div class="li-tab">
             <mat-slide-toggle
               [checked]="story().style.dialogueOnOwnLine"
               (change)="setStyle({ dialogueOnOwnLine: $event.checked })"
@@ -186,7 +186,7 @@ export interface StoryDialogData {
               @for (option of lengths; track option.value) {
                 <button
                   type="button"
-                  class="length"
+                  class="length li-pill"
                   [class.on]="story().style.replyLength === option.value"
                   (click)="setStyle({ replyLength: option.value })"
                 >
@@ -228,35 +228,6 @@ export interface StoryDialogData {
     </mat-dialog-actions>
   `,
   styles: `
-    .tab {
-      display: flex;
-      flex-direction: column;
-      gap: var(--li-space-md);
-      padding: var(--li-space-lg) var(--li-space-3xs) var(--li-space-xs);
-    }
-
-    .tab > * {
-      flex: none;
-    }
-
-    .tab hr {
-      width: 100%;
-      border: 0;
-      border-top: 1px solid var(--li-border);
-      margin: var(--li-space-2xs) 0;
-    }
-
-    .preset {
-      margin: 0;
-      padding: var(--li-space-md);
-      border: 1px dashed var(--li-border);
-      border-radius: var(--li-radius-md);
-      font-family: var(--li-serif);
-      font-size: var(--li-text-md);
-      line-height: var(--li-line-note);
-      color: var(--li-ink-soft);
-    }
-
     .cast {
       display: flex;
       flex-direction: column;
@@ -278,8 +249,6 @@ export interface StoryDialogData {
       flex-direction: column;
       gap: var(--li-space-xs);
       padding: var(--li-space-md);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-lg);
     }
 
     /* A swatch, a field, a switch and a button on one line: the field is a
@@ -305,15 +274,13 @@ export interface StoryDialogData {
       margin-right: var(--li-space-xs);
     }
 
+    /* The app's pill, a size up and on raised paper: three of them are a
+       choice to be made rather than three words reporting something. */
     .length {
       padding: var(--li-space-2xs) var(--li-space-md);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-pill);
       background: var(--li-surface-raised);
       color: var(--li-ink-soft);
-      font: inherit;
       font-size: var(--li-text-sm);
-      cursor: pointer;
     }
 
     .length.on {

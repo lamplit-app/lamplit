@@ -54,7 +54,7 @@ export interface ChapterClose {
       </p>
 
       @if (error()) {
-        <p class="error">{{ error() }}</p>
+        <p class="error li-warning alarm">{{ error() }}</p>
       }
 
       <textarea
@@ -82,7 +82,7 @@ export interface ChapterClose {
       <!-- What the chapter established, as entries rather than as prose. The
            button is here whether or not the story asks for it on its own: it
            is one request, and wanting it once is not wanting it every time. -->
-      <section class="proposals">
+      <section class="proposals li-card">
         <header>
           <span class="name">Lore from this chapter</span>
           @if (proposing()) {
@@ -116,7 +116,7 @@ export interface ChapterClose {
               </span>
               <span class="keys">
                 @for (key of proposal.keys; track key) {
-                  <span class="key">{{ key }}</span>
+                  <span class="key li-pill">{{ key }}</span>
                 }
               </span>
               <p class="content">{{ proposal.content }}</p>
@@ -141,7 +141,7 @@ export interface ChapterClose {
         }
       </section>
 
-      <mat-expansion-panel class="instruction">
+      <mat-expansion-panel class="instruction li-card">
         <mat-expansion-panel-header>
           <mat-panel-title>What was asked for</mat-panel-title>
           <mat-panel-description>
@@ -150,7 +150,7 @@ export interface ChapterClose {
         </mat-expansion-panel-header>
 
         @if (story().world.summary.useDefault) {
-          <p class="preset">{{ defaultInstruction }}</p>
+          <p class="preset li-preset">{{ defaultInstruction }}</p>
           <button matButton="outlined" (click)="override()">Write my own</button>
         } @else {
           <li-editor-field
@@ -200,8 +200,6 @@ export interface ChapterClose {
       flex-direction: column;
       gap: var(--li-space-sm);
       padding: var(--li-space-sm) var(--li-space-md) var(--li-space-md);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-lg);
     }
 
     .proposals header {
@@ -286,15 +284,6 @@ export interface ChapterClose {
       gap: var(--li-space-xs);
     }
 
-    .key {
-      padding: 0 var(--li-space-xs);
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-pill);
-      font-family: var(--li-sans);
-      font-size: var(--li-text-xs);
-      color: var(--li-muted);
-    }
-
     .proposal .content {
       margin: 0;
       font-family: var(--li-serif);
@@ -324,29 +313,10 @@ export interface ChapterClose {
          squashes anything that clips when it runs out of room: it would be
          folded to nothing under a long summary rather than scrolled to. */
       flex-shrink: 0;
-      border: 1px solid var(--li-border);
-      border-radius: var(--li-radius-lg);
     }
 
     .preset {
-      margin: 0 0 var(--li-space-sm);
-      padding: var(--li-space-md);
-      border: 1px dashed var(--li-border);
-      border-radius: var(--li-radius-md);
-      font-family: var(--li-serif);
-      font-size: var(--li-text-md);
-      line-height: var(--li-line-note);
-      color: var(--li-ink-soft);
-    }
-
-    .error {
-      margin: 0;
-      padding: var(--li-space-sm) var(--li-space-md);
-      border: 1px solid var(--li-edge-danger);
-      border-radius: var(--li-radius-md);
-      color: var(--li-danger);
-      font-size: var(--li-text-md);
-      line-height: var(--li-line-ui);
+      margin-bottom: var(--li-space-sm);
     }
   `,
 })

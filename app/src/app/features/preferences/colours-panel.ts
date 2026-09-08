@@ -120,10 +120,15 @@ import { PagePalette } from './page-palette';
   `,
   styles: `
     /* The two sentences either side of a grid of swatches: which theme is
-       being edited, and whose cast is below. The word each of them is read
-       for is inked in styles.scss, beside the palette row's own. */
+       being edited, and whose cast is below — and the one word in each that
+       the reader is looking for. */
     .editing {
       margin: var(--li-space-lg) 0 var(--li-space-md);
+    }
+
+    .editing strong {
+      color: var(--li-ink);
+      font-weight: 600;
     }
 
     .swatches {
@@ -144,6 +149,11 @@ import { PagePalette } from './page-palette';
       border: 1px solid transparent;
       border-radius: var(--li-radius-md);
       cursor: pointer;
+
+      /* The app's quiet row tint: a swatch is a row you press. */
+      &:hover {
+        background: var(--li-tint-1);
+      }
 
       /* A changed colour says so, so that Reset is not the only way to tell. */
       &.custom {
@@ -193,6 +203,13 @@ import { PagePalette } from './page-palette';
       display: flex;
       flex-direction: column;
       min-width: 0;
+    }
+
+    /* A colour's own name, over the sentence saying what it moves. One size up
+       from the hint under it, which is what makes it the name of the row. */
+    .name {
+      font-size: var(--li-text-md);
+      color: var(--li-ink);
     }
 
     .reset {
