@@ -415,12 +415,15 @@ async function theApp() {
   await page.getByRole('button', { name: 'Advanced' }).first().click();
   await page.getByRole('button', { name: 'Reading' }).first().click();
   await page.waitForTimeout(400);
-  await page.getByRole('switch', { name: 'Dark theme' }).click();
+  // `exact`, because a folded Reading says which theme it is on and that makes
+  // the section's own region a second match for the word.
+  const theme = page.getByLabel('Theme', { exact: true });
+  await theme.selectOption('light');
   await escape(page);
   await page.waitForTimeout(500);
   await shot(page, 'light', 'the same chapter, light');
   await openPreferences(page);
-  await page.getByRole('switch', { name: 'Dark theme' }).click();
+  await theme.selectOption('dark');
   await escape(page);
   await page.waitForTimeout(400);
 

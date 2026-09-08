@@ -206,7 +206,10 @@ rather than the story being written, so it is not one of the bar's own names. It
 
 ![Preferences, open on Reading](images/preferences.png)
 
-- **Dark theme** — on by default.
+- **Theme** — **Follow my computer**, which is what a fresh install does, or **Always dark** or
+  **Always light** for this app alone. Following it means following it: a computer that turns dark
+  at sunset takes Lamplit with it, mid-chapter, with nothing to reload. A settings file written
+  before this choice existed named a theme, so an upgrade leaves you in the one you were in.
 - **Dialogue on its own line** — breaks each quoted line onto its own paragraph. This only has
   visible work to do when a model runs narration and dialogue together in one block; models that
   already break their own lines look the same either way.
@@ -316,7 +319,8 @@ as you drag. Nothing has been added to the palette that was not already in it: *
 when it moves.
 
 - **Each theme keeps its own set.** Editing while the dark theme is on edits the dark colours;
-  switch to light in **Reading** and you are editing the light ones. Neither touches the other.
+  switch to light in **Reading** — or on your computer, while the theme is following it — and you
+  are editing the light ones. Neither touches the other.
 - **Reset the … colours** puts one theme back to whatever is underneath — the palette you picked,
   or what Lamplit ships — and asks first. It clears only what you changed, so a colour you never
   touched cannot drift.

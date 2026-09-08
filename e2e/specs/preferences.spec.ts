@@ -36,6 +36,16 @@ test.describe('preferences', () => {
     await app.seed();
   });
 
+  /**
+   * The theme, which is a choice of three now rather than a switch: the
+   * machine's own answer, and the two ways of saying otherwise. These specs
+   * name a side, because a suite that followed the machine would be asserting
+   * colours that depend on the runner.
+   */
+  function theme(page: Page, name: 'system' | 'dark' | 'light'): Promise<unknown> {
+    return page.getByLabel('Theme', { exact: true }).selectOption(name);
+  }
+
   /** The native picker is not clickable, so the value is set the way a browser would. */
   function paint(page: Page, colour: string): Promise<void> {
     return page
@@ -54,7 +64,7 @@ test.describe('preferences', () => {
     // The first section is open on arrival, with all of its settings — the
     // font among them, because how the story is set is one question and the
     // size of it was answered here while the face was answered under Colours.
-    await expect(page.getByRole('switch', { name: 'Dark theme' })).toBeVisible();
+    await expect(page.getByLabel('Theme', { exact: true })).toBeVisible();
     await expect(page.getByRole('switch', { name: 'Dialogue on its own line' })).toBeVisible();
     await expect(page.getByRole('switch', { name: 'Show token counts' })).toBeVisible();
     await expect(page.getByRole('slider', { name: 'Text size' })).toBeVisible();
@@ -104,7 +114,7 @@ test.describe('preferences', () => {
     await page.getByRole('button', { name: 'Colours' }).first().click();
 
     await paint(page, '#123456');
-    await page.getByRole('switch', { name: 'Dark theme' }).click();
+    await theme(page, 'light');
 
     // Switching the theme switched the palette with it: light is untouched.
     await expect.poll(() => pageColour(page)).not.toBe(rgb('#123456'));
@@ -120,7 +130,7 @@ test.describe('preferences', () => {
     await expect.poll(() => pageColour(page)).toBe(shippedLight);
 
     // And the dark set survived the reset of the light one.
-    await page.getByRole('switch', { name: 'Dark theme' }).click();
+    await theme(page, 'dark');
     await expect.poll(() => pageColour(page)).toBe(rgb('#123456'));
   });
 
@@ -178,7 +188,7 @@ test.describe('preferences', () => {
     expect(dark.count).toBe(11);
     expect(dark.worst).toBeGreaterThanOrEqual(3);
 
-    await page.getByRole('switch', { name: 'Dark theme' }).click();
+    await theme(page, 'light');
     const light = await worstRing();
     expect(light.worst).toBeGreaterThanOrEqual(3);
   });

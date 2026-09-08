@@ -1,4 +1,4 @@
-import { ColourKey, ContrastMode, ReadingFont, ThemeName, UiSettings } from './models';
+import { ColourKey, ContrastMode, ReadingFont, ThemeMode, ThemeName, UiSettings } from './models';
 import { PagePalette } from './page-palettes';
 
 /**
@@ -79,6 +79,12 @@ export const READING_SIZE = '--li-reading-size';
  * readily as it does: a colour that is no longer overridden must leave nothing
  * behind, or the shipped one never comes back.
  *
+ * `theme` is which of the two palettes the reader is looking at, which is a
+ * question `ui.theme` only half answers: `system` is the machine's, and the
+ * machine is a signal rather than a setting. It is handed in rather than asked
+ * for here so that there is one answer to it — `SettingsStore.theme` — and so
+ * that the effect calling this repaints when the machine changes its mind.
+ *
  * `palette` is the page the story or the chapter asked for, and it sits between
  * the stylesheet and the colours set by hand — a preset is exactly that, and a
  * swatch the reader dragged themselves beats one a table chose for them.
@@ -88,10 +94,16 @@ export const READING_SIZE = '--li-reading-size';
 export function applyUi(
   root: HTMLElement,
   ui: UiSettings,
+  theme: ThemeName,
   palette: PagePalette | null = null,
 ): void {
-  // The whole palette hangs off `color-scheme`, so this one line is the theme.
-  root.style.colorScheme = ui.theme;
+  // The whole palette hangs off `color-scheme`, so this one line is the theme —
+  // and *not* saying it is how the machine's answer is followed, exactly as an
+  // absent `data-contrast` is below. `styles.scss` declares both schemes on
+  // <html>, so with nothing written here the browser picks the one the reader's
+  // desktop is in and every `light-dark()` in the app follows.
+  root.style.colorScheme = ui.theme === 'system' ? '' : ui.theme;
+  cacheTheme(root, ui.theme);
 
   // And the two accessibility modes are one attribute each, for the same
   // reason: `styles.scss` has a block per state, so saying which state we are
@@ -101,9 +113,9 @@ export function applyUi(
   setMode(root, 'contrast', ui.contrast === 'system' ? '' : ui.contrast);
   setMode(root, 'motion', ui.motion === 'system' ? '' : ui.motion);
 
-  const preset = palette?.[ui.theme];
-  const strong = wantsContrast(root, ui.contrast) ? palette?.contrast[ui.theme] : undefined;
-  const overrides = ui.colours[ui.theme] ?? {};
+  const preset = palette?.[theme];
+  const strong = wantsContrast(root, ui.contrast) ? palette?.contrast[theme] : undefined;
+  const overrides = ui.colours[theme] ?? {};
   for (const { key } of THEME_COLOURS) {
     // A colour the reader chose themselves still wins, in a contrast mode as
     // anywhere else: the stylesheet says the same thing by letting an inline
@@ -128,6 +140,43 @@ export function applyUi(
 function setMode(root: HTMLElement, name: 'contrast' | 'motion', value: string): void {
   if (value) root.dataset[name] = value;
   else delete root.dataset[name];
+}
+
+/**
+ * Where the chosen theme is left for the next load of this page, so that the
+ * first frame is already the right colour.
+ *
+ * `settings.json` is still where the setting lives; this is a copy of it, and
+ * the one thing in the app the browser keeps of its own. It has to be: the
+ * document arrives from the server an initializer and a fetch after the page
+ * does, and until it lands the app can only be the colour the stylesheet says.
+ * That was always dark, so a light-theme reader watched the app flip on every
+ * load — and on the desktop, watched it flip *away* from a splash screen that
+ * had followed the machine correctly.
+ *
+ * Per device, which is the other reason it is here rather than in the
+ * document: what it answers is "what did this browser draw last time", and one
+ * `settings.json` is read by the laptop that serves it and by whatever phone
+ * has scanned the code. The setting itself stays in the document, where a
+ * setting belongs, and this is only ever a copy of it.
+ *
+ * Removed rather than written when the reader follows the machine, because the
+ * stylesheet is then already right and a stale value would pin the app to
+ * yesterday's answer.
+ */
+export const THEME_CACHE_KEY = 'lamplit-theme';
+
+function cacheTheme(root: HTMLElement, mode: ThemeMode): void {
+  // A page with no storage at all — a private window with cookies blocked,
+  // some embeddings — throws on the property itself rather than on the call.
+  try {
+    const store = root.ownerDocument.defaultView?.localStorage;
+    if (!store) return;
+    if (mode === 'system') store.removeItem(THEME_CACHE_KEY);
+    else store.setItem(THEME_CACHE_KEY, mode);
+  } catch {
+    // A theme that is a frame late is not worth a broken app.
+  }
 }
 
 /**

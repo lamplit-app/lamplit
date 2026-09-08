@@ -1,5 +1,6 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { DEFAULT_GENERATION, DEFAULT_SETTINGS } from '../core/defaults';
+import { Layout } from '../core/layout';
 import {
   ColourKey,
   ConnectionSettings,
@@ -19,6 +20,7 @@ import { STORAGE_BACKEND } from './storage';
 @Injectable({ providedIn: 'root' })
 export class SettingsStore {
   private readonly storage = inject(STORAGE_BACKEND);
+  private readonly layout = inject(Layout);
   private readonly state = signal<Settings>(this.load());
   /**
    * The document as it was last read or written. A state that differs from
@@ -31,6 +33,27 @@ export class SettingsStore {
   readonly connection = computed(() => this.state().connection);
   readonly generation = computed(() => this.state().generation);
   readonly ui = computed(() => this.state().ui);
+
+  /**
+   * Which of the two palettes the reader is looking at.
+   *
+   * `ui().theme` is the setting and has a third state — `system`, which is
+   * what a fresh install is — and everything the app writes down twice is
+   * written under the other two: the halves of a colour, the two sets of
+   * overrides, a page palette's light and dark, a character's pair. So this is
+   * the one place the setting and the machine are put together, and everything
+   * that has to pick a side reads it: `applyUi`, the cast's colours in the
+   * panel and the message list, and the swatch beside a name.
+   *
+   * A computed over `Layout`, so following the machine means exactly that: a
+   * desktop that turns dark at sunset repaints the app, because the effect in
+   * `Workspace` reads this.
+   */
+  readonly theme = computed<ThemeName>(() => {
+    const chosen = this.ui().theme;
+    if (chosen !== 'system') return chosen;
+    return this.layout.prefersDark() ? 'dark' : 'light';
+  });
 
   /**
    * What the selected model says its own window is, or 0 where the provider

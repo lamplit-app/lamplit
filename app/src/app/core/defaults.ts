@@ -28,7 +28,10 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   generation: { ...DEFAULT_GENERATION },
   ui: {
-    theme: 'dark',
+    // The machine's, like `contrast` and `motion` below. A fresh install opens
+    // in whatever theme the rest of the desktop is in; a settings file that
+    // says `dark` or `light` says it deliberately and is left alone.
+    theme: 'system',
     bookStyleDialogue: true,
     fontSize: 18,
     showTokenCounts: true,

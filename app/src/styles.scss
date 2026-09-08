@@ -8,8 +8,21 @@
 @include cdk.a11y-visually-hidden();
 @include mat.elevation-classes();
 
-// One theme, driven by the `color-scheme` property on <html>, which the
-// settings store flips. Material emits light-dark() values for every token.
+// One theme, driven by the `color-scheme` property on <html>. Material emits
+// light-dark() values for every token, and so does everything below, so that
+// property is the whole of the switch.
+//
+// Both schemes are declared and neither is preferred, which is what makes the
+// reader's own machine the answer: `light-dark()` follows `prefers-color-scheme`
+// unless something says otherwise. The something is `applyUi`, which writes
+// `color-scheme` inline on this same element when the reader has chosen a side
+// under Preferences → Reading — an inline style beats this rule — and writes
+// nothing at all when the setting is to follow the machine.
+//
+// It used to say `dark`, full stop. That was the app's first frame on every
+// load, whatever the reader had chosen, because the setting arrives from the
+// server an initializer later; `public/boot-theme.js` is the other half of
+// undoing that.
 html {
   @include mat.theme(
     (
@@ -34,7 +47,7 @@ html {
     )
   );
 
-  color-scheme: dark;
+  color-scheme: light dark;
 }
 
 // ---------------------------------------------------------------------------

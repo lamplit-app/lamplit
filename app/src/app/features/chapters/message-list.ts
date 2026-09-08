@@ -69,6 +69,6 @@ export class MessageList {
    * between them, which the page itself does not show.
    */
   protected readonly speakers = computed(() =>
-    speakerLabels(this.stories.story(), this.chapters.messages(), this.settings.ui().theme),
+    speakerLabels(this.stories.story(), this.chapters.messages(), this.settings.theme()),
   );
 }

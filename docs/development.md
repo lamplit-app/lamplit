@@ -171,7 +171,9 @@ A few things are worth knowing before reading it:
   map that lasts the session; writes go to that map and to the server. The stores stay synchronous
   and know about neither. It used to keep a `localStorage` copy as well, which bought a merge on
   every startup, a persisted write queue and a rule for which side wins — all of it gone, and
-  `Persistence` says why in its header.
+  `Persistence` says why in its header. One key is left in the browser and it is not a document:
+  `lamplit-theme`, which `public/boot-theme.js` reads before the stylesheet so that the first frame
+  is the theme you chose rather than the one that arrives a fetch later.
 - **No SDK, no HTTP client, no state library.** `fetch`, a hand-written SSE parser, and
   `AbortController` for Stop.
 - **Angular 22, zoneless.** Signals throughout, the new control flow, `inject()`, standalone
@@ -183,7 +185,7 @@ A few things are worth knowing before reading it:
   put on the box or on anything above it; every modal opens through `DialogsService`, at one of
   four widths; and a Material button whose label can be longer than the room there is wears
   `li-truncates`, which is what makes it end in an ellipsis rather than mid-word.
-- **Every media query is a mixin in `app/src/breakpoints.scss`.** The five widths and the three
+- **Every media query is a mixin in `app/src/breakpoints.scss`.** The five widths and the four
   things the reader's machine answers are declared there, each with the question it asks; a
   component includes one and writes no threshold of its own. The two widths that TypeScript also
   has to know are published as custom properties and read back off `<html>` in `core/layout.ts`, so

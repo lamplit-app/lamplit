@@ -25,6 +25,20 @@ written, and both have moved to where they belong:
 - The phone's bar and its one menu are unchanged. Preferences and the model were never offered
   there, and still are not.
 
+**The theme your computer is in.** **Reading** opens with a choice of three rather than a switch:
+**Follow my computer**, which is what a fresh install now does, or always dark, or always light for
+this app alone. Following it means following it — a desktop that turns dark at sunset takes Lamplit
+with it, mid-chapter, with nothing to reload — and it reaches everything the theme touches,
+including the ten page palettes and the colours of your cast. A settings file that already named a
+theme still opens in it; nothing moves under a reader who had chosen.
+
+And the app no longer opens dark on its way to being light. The theme is in `settings.json`, which
+arrives from the server a moment after the page does, so every load used to start on the dark
+theme whatever you had chosen — most visible in the desktop window, where a splash screen that had
+correctly followed your computer handed over to a dark frame and then to a light app. The chosen
+theme is now kept on the device as well, and read before the stylesheet: one colour from the first
+frame.
+
 **Contrast and motion, and the computer you are on.** Preferences has an **Accessibility**
 section. Lamplit has always followed what your computer asks for — a machine set to more contrast
 gets a stronger set of rules, one asking for less motion gets an app that stands still — and both

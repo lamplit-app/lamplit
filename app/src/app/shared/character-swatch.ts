@@ -106,7 +106,7 @@ export class CharacterSwatch {
   private readonly settings = inject(SettingsStore);
   private readonly trigger = viewChild.required(MatMenuTrigger);
 
-  protected readonly theme = computed(() => this.settings.ui().theme);
+  protected readonly theme = this.settings.theme;
   protected readonly colour = computed(() => characterColour(this.character(), this.theme()));
 
   protected readonly label = computed(

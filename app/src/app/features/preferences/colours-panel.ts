@@ -98,8 +98,9 @@ const PAIRS: readonly Pair[] = [
       />
 
       <p class="li-hint editing">
-        You are editing the <strong>{{ ui().theme }}</strong> theme. Switch it above and the other
-        set is edited instead; each keeps its own colours.
+        You are editing the <strong>{{ theme() }}</strong> theme. Switch it under
+        <strong>Reading</strong> — or on your computer, while the theme is following it — and the
+        other set is edited instead; each keeps its own colours.
       </p>
 
       <div class="swatches">
@@ -126,7 +127,7 @@ const PAIRS: readonly Pair[] = [
 
       <div class="reset">
         <button matButton [disabled]="!customised()" (click)="reset()">
-          Reset the {{ ui().theme }} colours
+          Reset the {{ theme() }} colours
         </button>
       </div>
 
@@ -287,6 +288,14 @@ export class ColoursPanel {
   protected readonly ui = this.settings.ui;
 
   /**
+   * The theme whose colours this panel edits, which is the one on screen and
+   * not the one in the settings file: with the theme following the machine
+   * there is no `system` set of overrides to write to, and the reader is
+   * looking at one of the two.
+   */
+  protected readonly theme = this.settings.theme;
+
+  /**
    * Whether the page is at the stronger contrast. Over a computed of the one
    * setting rather than over `ui()` itself, so that dragging a swatch does not
    * ask the machine the same question sixty times a second.
@@ -328,7 +337,7 @@ export class ColoursPanel {
 
   /** The presets, with the page as it ships in front of them. */
   protected readonly paletteOptions = computed(() => {
-    const theme = this.ui().theme;
+    const theme = this.theme();
     const shipped = (key: ColourKey) => this.shipped().get(`${theme}/${key}`) || '#000000';
     return [
       {
@@ -356,7 +365,7 @@ export class ColoursPanel {
 
   /** The open story's cast, each with the colour the input should show. */
   protected readonly cast = computed(() => {
-    const theme = this.ui().theme;
+    const theme = this.theme();
     return this.stories.story().characters.map((character) => ({
       ...character,
       colour: characterColour(character, theme),
@@ -376,8 +385,8 @@ export class ColoursPanel {
 
   /** Each colour as the page draws it now: the override, or the shipped one. */
   protected readonly swatches = computed(() => {
-    const { theme, colours } = this.ui();
-    const overrides = colours[theme] ?? {};
+    const theme = this.theme();
+    const overrides = this.ui().colours[theme] ?? {};
     return THEME_COLOURS.map((spec) => ({
       ...spec,
       custom: !!overrides[spec.key],
@@ -392,7 +401,7 @@ export class ColoursPanel {
 
   protected readonly summary = computed(() => {
     const changed = this.swatches().filter((s) => s.custom).length;
-    if (changed) return `${changed} changed in ${this.ui().theme}`;
+    if (changed) return `${changed} changed in ${this.theme()}`;
     return this.currentPalette()
       ? paletteLabel(this.currentPalette()).toLowerCase()
       : 'as it ships';
@@ -425,11 +434,11 @@ export class ColoursPanel {
 
   protected setColour(key: ColourKey, event: Event): void {
     const colour = fieldValue(event);
-    this.settings.setColour(this.ui().theme, key, colour);
+    this.settings.setColour(this.theme(), key, colour);
   }
 
   protected async reset(): Promise<void> {
-    const theme = this.ui().theme;
+    const theme = this.theme();
     const ok = await this.dialogs.confirm({
       title: `Put the ${theme} colours back?`,
       message: `Every colour you have changed in the ${theme} theme returns to the one underneath — the palette you picked, or what Lamplit ships. The other theme keeps yours.`,

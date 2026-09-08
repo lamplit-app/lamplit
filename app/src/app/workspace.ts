@@ -103,6 +103,10 @@ export class Workspace {
     // before the dialog has finished handling the event. The palette under
     // those colours comes from the open chapter, so switching chapters switches
     // pages by the same route.
+    //
+    // `settings.theme` is a signal over the machine's own `prefers-color-scheme`
+    // as well as the setting, so a desktop turning dark at sunset comes through
+    // here too — which is why the theme needs none of the listener below.
     effect(() => this.paint());
 
     // The machine's own answer to `prefers-contrast`, which is the one input to
@@ -126,7 +130,12 @@ export class Workspace {
    * either way.
    */
   private paint(): void {
-    applyUi(document.documentElement, this.settings.ui(), this.chapters.palette());
+    applyUi(
+      document.documentElement,
+      this.settings.ui(),
+      this.settings.theme(),
+      this.chapters.palette(),
+    );
   }
 
   /**

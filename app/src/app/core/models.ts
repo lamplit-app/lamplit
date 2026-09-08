@@ -48,7 +48,37 @@ export interface GenerationParams {
 
 export type ReasoningEffort = 'none' | 'low' | 'medium' | 'high';
 
+/**
+ * Which of the two palettes is on screen.
+ *
+ * Not a setting — the setting is `ThemeMode` below, and this is what it
+ * resolves to. Everything that is written down twice is written down under
+ * these two names: the halves of every colour in `styles.scss`, the two sets
+ * of overrides in `colours` here, the light and dark of a page palette, and
+ * the pair every character's colour is written as. `SettingsStore.theme` is
+ * the one answer to which of them the reader is looking at.
+ */
 export type ThemeName = 'dark' | 'light';
+
+/**
+ * How the app chooses between them, and the third of the three preferences
+ * that answer to the reader's machine.
+ *
+ * `system` is `prefers-color-scheme`, and it is what a fresh install is: the
+ * app opens in the theme the rest of the desktop is already in, and follows it
+ * when the machine changes its mind mid-session. The other two are the reader
+ * saying otherwise for this app alone.
+ *
+ * Unlike `ContrastMode` there is nothing asymmetric to account for here —
+ * neither theme takes anything away from the other, both clear WCAG AA on
+ * every pair the story is read in, and a reader who wants the dark one at noon
+ * is not overruling a preference their machine holds for their benefit.
+ *
+ * A `settings.json` written before this existed says `dark` or `light`, which
+ * is exactly what it meant then and still means: the reader is not moved onto
+ * the machine's answer by an upgrade.
+ */
+export type ThemeMode = 'system' | ThemeName;
 
 /**
  * The names in the reading palette, mirroring `$palette` in `styles.scss`.
@@ -111,7 +141,8 @@ export type MotionMode = 'system' | 'reduced';
 export type PanelSection = 'scene' | 'narrator' | 'persona' | 'cast';
 
 export interface UiSettings {
-  theme: ThemeName;
+  /** The setting; `ThemeName` is what it resolves to. */
+  theme: ThemeMode;
   bookStyleDialogue: boolean;
   fontSize: number;
   showTokenCounts: boolean;

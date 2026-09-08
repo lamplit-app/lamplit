@@ -3,7 +3,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { SPEECH_RATE } from '../../core/defaults';
-import { ReadingFont } from '../../core/models';
+import { ReadingFont, ThemeMode } from '../../core/models';
 import { READING_FONTS } from '../../core/theming';
 import { Field, fieldValue } from '../../shared/field';
 import { ReadAloud } from '../../shared/read-aloud';
@@ -29,12 +29,24 @@ import { SettingsStore } from '../../store/settings-store';
       </mat-expansion-panel-header>
 
       <div class="stack">
-        <mat-slide-toggle
-          [checked]="ui().theme === 'dark'"
-          (change)="settings.patchUi({ theme: $event.checked ? 'dark' : 'light' })"
+        <!-- Three choices rather than a switch, and worded like the two under
+             Accessibility, because it is the same kind of answer: what the
+             reader's computer already says, and the two ways of saying
+             otherwise here. -->
+        <li-field
+          label="Theme"
+          class="choice"
+          hint="The page, the paper and everything drawn on them."
         >
-          Dark theme
-        </mat-slide-toggle>
+          <select (change)="setTheme(value($event))">
+            @for (choice of themes; track choice.key) {
+              <option [value]="choice.key" [selected]="choice.key === ui().theme">
+                {{ choice.label }}
+              </option>
+            }
+          </select>
+        </li-field>
+
         <mat-slide-toggle
           [checked]="ui().bookStyleDialogue"
           (change)="settings.patchUi({ bookStyleDialogue: $event.checked })"
@@ -61,7 +73,11 @@ import { SettingsStore } from '../../store/settings-store';
         <!-- The other half of how the story is set, beside the size of it.
              It lived under Colours, which is where the page is chosen and
              not where the story is set. -->
-        <li-field label="Reading font" class="font" hint="The story itself, not the app around it.">
+        <li-field
+          label="Reading font"
+          class="choice"
+          hint="The story itself, not the app around it."
+        >
           <select (change)="setFont(value($event))">
             @for (font of fonts; track font.key) {
               <option [value]="font.key" [selected]="font.key === ui().font">
@@ -92,7 +108,7 @@ import { SettingsStore } from '../../store/settings-store';
 
           <li-field
             label="Voice"
-            class="font"
+            class="choice"
             hint="The voices this machine has. Nothing is sent anywhere to read."
           >
             <select (change)="settings.patchUi({ voice: value($event) })">
@@ -133,7 +149,10 @@ import { SettingsStore } from '../../store/settings-store';
       color: var(--li-muted);
     }
 
-    .font {
+    /* A box as wide as the words in it and no wider, for the three questions
+       on this panel that are answered by choosing rather than by dragging.
+       The same name and the same width as the two under Accessibility. */
+    .choice {
       width: 18rem;
       max-width: 100%;
     }
@@ -145,6 +164,18 @@ export class ReadingPanel {
 
   protected readonly ui = this.settings.ui;
   protected readonly fonts = READING_FONTS;
+
+  /**
+   * The three, in the order a reader meets them: what they already have, then
+   * the two ways of saying otherwise. *Computer* rather than *system*, which is
+   * the word the rest of the app avoids — the same labels the contrast and
+   * motion rows use.
+   */
+  protected readonly themes: readonly { key: ThemeMode; label: string }[] = [
+    { key: 'system', label: 'Follow my computer' },
+    { key: 'dark', label: 'Always dark' },
+    { key: 'light', label: 'Always light' },
+  ];
   protected readonly rate = SPEECH_RATE;
   protected readonly value = fieldValue;
 
@@ -158,11 +189,23 @@ export class ReadingPanel {
     const font = READING_FONTS.find((f) => f.key === ui.font);
     const face = font && font !== READING_FONTS[0] ? `, ${font.label.toLowerCase()}` : '';
     const aloud = ui.readAloud ? ', read aloud' : '';
-    return `${ui.theme} theme, ${ui.fontSize}px${face}${aloud}`;
+    // Following the machine says the theme it landed on and that it is not a
+    // choice made here, which is what the folded panel is for: the answer, and
+    // where it came from.
+    const theme =
+      ui.theme === 'system'
+        ? `${this.settings.theme()} theme from your computer`
+        : `${ui.theme} theme`;
+    return `${theme}, ${ui.fontSize}px${face}${aloud}`;
   });
 
   /** A select hands back a string; these three are the whole of what it can be. */
   protected setFont(font: string): void {
     this.settings.patchUi({ font: font as ReadingFont });
+  }
+
+  /** And the same for the theme's three. */
+  protected setTheme(theme: string): void {
+    this.settings.patchUi({ theme: theme as ThemeMode });
   }
 }

@@ -14,7 +14,13 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
     />
-    <meta name="color-scheme" content="dark light" />
+    <!-- Both, and neither preferred: the theme follows this machine unless the
+         reader has chosen a side, and `styles.scss` says the same thing in the
+         property itself. -->
+    <meta name="color-scheme" content="light dark" />
+    <!-- Which side, if they have chosen one, on the first frame rather than a
+         fetch later. The file says why it is a file and not three lines here. -->
+    <script src="boot-theme.js"></script>
     <!-- The .ico first, the SVG after it: browsers take the last one they
          understand, so anything modern gets the scalable mark. -->
     <link rel="icon" href="favicon.ico" sizes="32x32" />

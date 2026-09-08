@@ -765,7 +765,7 @@ export class ChapterPanel {
   }
 
   protected colourOf(character: Character): string {
-    return characterColour(character, this.settings.ui().theme);
+    return characterColour(character, this.settings.theme());
   }
 
   protected isPlaying(characterId: string): boolean {

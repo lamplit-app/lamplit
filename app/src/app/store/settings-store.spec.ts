@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS } from '../core/defaults';
 import { KEYS } from './documents';
 import { SettingsStore } from './settings-store';
@@ -44,8 +44,27 @@ describe('SettingsStore', () => {
     });
   });
 
+  afterEach(() => {
+    delete (window as { matchMedia?: unknown }).matchMedia;
+  });
+
   /** The store reads at construction, so seed the document before asking. */
   const store = () => TestBed.inject(SettingsStore);
+
+  /**
+   * A machine with an answer about the theme, which jsdom has not: it ships no
+   * media-query engine at all, so `Layout` reads nothing as matching and the
+   * theme following the machine lands on light. This is the other half of that
+   * question, and it is the whole reason `Layout` is asked rather than the
+   * setting being read as the answer.
+   */
+  function machineIsDark(): void {
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('dark'),
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+  }
 
   it('opens a 0.1.0 settings file with no colours customised', () => {
     storage.write(KEYS.settings, SETTINGS_0_1_0);
@@ -66,6 +85,44 @@ describe('SettingsStore', () => {
     // inside it when it is opened for the first time.
     expect(ui.sidebarOpen).toBe(false);
     expect(ui.sidebarSections).toEqual({});
+  });
+
+  /**
+   * The theme is the one preference with three states *and* a resolved answer
+   * the app has to draw with: a colour per character, a set of overrides, a
+   * page palette's half. So the store answers which of the two is on screen,
+   * and nothing else in the app resolves it a second time.
+   */
+  describe('which theme is on screen', () => {
+    it('follows the machine on a fresh install, which is what system means', () => {
+      machineIsDark();
+      expect(store().ui().theme).toBe('system');
+      expect(store().theme()).toBe('dark');
+    });
+
+    it('is light where the machine says nothing at all', () => {
+      // jsdom, and every spec in the app: nothing matches, so neither does the
+      // dark query, and light is what a page with no preference is.
+      expect(store().theme()).toBe('light');
+    });
+
+    it('is the setting the moment there is one, whatever the machine says', () => {
+      machineIsDark();
+      const settings = store();
+
+      settings.patchUi({ theme: 'light' });
+      expect(settings.theme()).toBe('light');
+
+      settings.patchUi({ theme: 'dark' });
+      expect(settings.theme()).toBe('dark');
+    });
+
+    it('opens a 0.1.x file in the theme it names, whatever the machine is in', () => {
+      machineIsDark();
+      storage.write(KEYS.settings, SETTINGS_0_1_0);
+
+      expect(store().theme()).toBe('light');
+    });
   });
 
   it('keeps developer mode once it is switched on', () => {
