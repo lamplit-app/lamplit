@@ -316,12 +316,6 @@ interface Group {
       border-radius: var(--li-radius-lg);
     }
 
-    mat-panel-description {
-      flex: none;
-      color: var(--li-muted);
-      font-size: var(--li-text-sm);
-    }
-
     .preset {
       margin: var(--li-space-sm) 0 0;
       padding: var(--li-space-md);
@@ -329,7 +323,7 @@ interface Group {
       border-radius: var(--li-radius-md);
       font-family: var(--li-serif);
       font-size: var(--li-text-md);
-      line-height: 1.6;
+      line-height: var(--li-line-note);
       color: var(--li-ink-soft);
     }
 
@@ -370,7 +364,7 @@ interface Group {
 
     .entry.open {
       padding: var(--li-space-sm) var(--li-space-md) var(--li-space-md);
-      background: color-mix(in srgb, var(--li-ink) 3%, transparent);
+      background: var(--li-tint-1);
     }
 
     /* Collapsed, an entry is one line: what it is called, and what fires it. */
@@ -402,7 +396,7 @@ interface Group {
     }
 
     .tag.warn {
-      border-color: color-mix(in srgb, var(--li-danger) 45%, var(--li-border));
+      border-color: var(--li-edge-danger);
       color: var(--li-danger);
     }
 
@@ -413,13 +407,13 @@ interface Group {
     /* Required, and said out loud: an entry with no text can never fire. */
     .entry.unwritten {
       border-style: dashed;
-      border-color: color-mix(in srgb, var(--li-danger) 45%, var(--li-border));
+      border-color: var(--li-edge-danger);
     }
 
     .unfinished {
       margin: 0;
       font-size: var(--li-text-sm);
-      line-height: 1.5;
+      line-height: var(--li-line-ui);
       color: var(--li-danger);
     }
 

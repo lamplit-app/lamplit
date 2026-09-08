@@ -212,7 +212,7 @@ const PINNED_SLACK = 96;
     .jump:hover,
     .jump:focus-visible {
       color: var(--li-ink);
-      border-color: color-mix(in srgb, var(--li-accent) 55%, var(--li-border));
+      border-color: var(--li-edge-accent);
     }
 
     .jump svg {
@@ -227,8 +227,8 @@ const PINNED_SLACK = 96;
 
     @include bp.touch {
       .jump {
-        width: 2.75rem;
-        height: 2.75rem;
+        width: var(--li-target);
+        height: var(--li-target);
       }
     }
 
@@ -257,7 +257,7 @@ const PINNED_SLACK = 96;
     p {
       font-family: var(--li-serif);
       font-size: var(--li-text-lg);
-      line-height: 1.6;
+      line-height: var(--li-line-note);
       color: var(--li-ink-soft);
       margin: 0 0 var(--li-space-lg);
     }
@@ -267,7 +267,9 @@ const PINNED_SLACK = 96;
       white-space: pre-wrap;
       text-align: left;
       padding: var(--li-space-md) var(--li-space-lg);
-      border-left: 2px solid color-mix(in srgb, var(--li-accent) 55%, transparent);
+      border-left: 2px solid var(--li-edge-accent);
+      /* The paper at an alpha, not a wash: the block sits on the page and is
+         meant to read as a sheet laid over it. */
       background: color-mix(in srgb, var(--li-surface) 70%, transparent);
     }
 

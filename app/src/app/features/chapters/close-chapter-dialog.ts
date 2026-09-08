@@ -243,8 +243,8 @@ export interface ChapterClose {
     }
 
     .proposal.on {
-      border-color: color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
-      background: color-mix(in srgb, var(--li-accent) 8%, transparent);
+      border-color: var(--li-edge-accent);
+      background: var(--li-wash-accent-1);
     }
 
     /* The box itself is the app's, in the global styles; this is only where
@@ -276,7 +276,7 @@ export interface ChapterClose {
     .category {
       padding: 0 var(--li-space-xs);
       border-radius: var(--li-radius-pill);
-      background: color-mix(in srgb, var(--li-ink) 8%, transparent);
+      background: var(--li-tint-2);
       color: var(--li-muted);
     }
 
@@ -299,7 +299,7 @@ export interface ChapterClose {
       margin: 0;
       font-family: var(--li-serif);
       font-size: var(--li-text-md);
-      line-height: 1.55;
+      line-height: var(--li-line-ui);
       color: var(--li-ink-soft);
     }
 
@@ -308,10 +308,10 @@ export interface ChapterClose {
     .was {
       margin: 0;
       padding-left: var(--li-space-sm);
-      border-left: 2px solid color-mix(in srgb, var(--li-muted) 40%, transparent);
+      border-left: 2px solid var(--li-edge-quiet);
       font-family: var(--li-serif);
       font-size: var(--li-text-md);
-      line-height: 1.5;
+      line-height: var(--li-line-ui);
       color: var(--li-muted);
     }
 
@@ -328,12 +328,6 @@ export interface ChapterClose {
       border-radius: var(--li-radius-lg);
     }
 
-    mat-panel-description {
-      flex: none;
-      color: var(--li-muted);
-      font-size: var(--li-text-sm);
-    }
-
     .preset {
       margin: 0 0 var(--li-space-sm);
       padding: var(--li-space-md);
@@ -341,18 +335,18 @@ export interface ChapterClose {
       border-radius: var(--li-radius-md);
       font-family: var(--li-serif);
       font-size: var(--li-text-md);
-      line-height: 1.6;
+      line-height: var(--li-line-note);
       color: var(--li-ink-soft);
     }
 
     .error {
       margin: 0;
       padding: var(--li-space-sm) var(--li-space-md);
-      border: 1px solid color-mix(in srgb, var(--li-danger) 40%, var(--li-border));
+      border: 1px solid var(--li-edge-danger);
       border-radius: var(--li-radius-md);
       color: var(--li-danger);
       font-size: var(--li-text-md);
-      line-height: 1.5;
+      line-height: var(--li-line-ui);
     }
   `,
 })

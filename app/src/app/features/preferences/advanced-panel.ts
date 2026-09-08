@@ -216,7 +216,7 @@ import { UpdatesStore } from '../../store/updates-store';
       font-size: var(--li-text-sm);
 
       &.on {
-        border-color: color-mix(in srgb, var(--li-accent) 60%, transparent);
+        border-color: var(--li-edge-accent);
         color: var(--li-ink);
       }
     }

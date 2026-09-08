@@ -17,6 +17,12 @@
 
       The words are the same ones `app/src/index.html` shows until Angular
       boots, so nothing changes on screen when the window navigates.
+
+      The three colours are `page`, `ink` and `muted` out of `$palette`, and
+      the comment over that map names this file so that moving one of them
+      moves it here too. That is not a precaution: #48 moved `muted` and this
+      copy was left where it was, because nothing on either side of the copy
+      knew the other existed.
     -->
     <style>
       :root {
@@ -24,7 +30,7 @@
 
         --page: light-dark(#f6f3ec, #14151a);
         --ink: light-dark(#22201c, #e7e4dd);
-        --muted: light-dark(#8a8478, #7c8090);
+        --muted: light-dark(#6f6a5f, #8f94a6);
         --glow: light-dark(rgba(214, 154, 74, 0.18), rgba(255, 198, 128, 0.14));
         --serif:
           'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;

@@ -86,7 +86,7 @@ import { Dialogs } from './dialogs';
     .blurb {
       margin-top: var(--li-space-lg);
       font-size: var(--li-text-md);
-      line-height: 1.6;
+      line-height: var(--li-line-note);
       color: var(--li-ink-soft);
     }
 

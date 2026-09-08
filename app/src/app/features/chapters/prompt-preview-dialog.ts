@@ -186,7 +186,7 @@ export interface PromptPreviewData {
       gap: var(--li-space-lg);
       padding: var(--li-space-xs) var(--li-space-md);
       border-bottom: 1px solid var(--li-border);
-      background: color-mix(in srgb, var(--li-accent) 6%, transparent);
+      background: var(--li-wash-accent-1);
     }
 
     .name {
@@ -203,7 +203,7 @@ export interface PromptPreviewData {
       padding: 0 var(--li-space-md) var(--li-space-md) var(--li-space-xl);
       font-family: var(--li-serif);
       font-size: var(--li-text-md);
-      line-height: 1.5;
+      line-height: var(--li-line-ui);
       color: var(--li-ink-soft);
     }
 
@@ -214,7 +214,7 @@ export interface PromptPreviewData {
       overflow-wrap: break-word;
       font-family: var(--li-serif);
       font-size: var(--li-text-md);
-      line-height: 1.55;
+      line-height: var(--li-line-ui);
       color: var(--li-ink);
     }
 
@@ -222,7 +222,7 @@ export interface PromptPreviewData {
       margin: 0;
       padding: var(--li-space-sm) var(--li-space-md) var(--li-space-sm) var(--li-space-xl);
       font-size: var(--li-text-md);
-      line-height: 1.6;
+      line-height: var(--li-line-note);
       color: var(--li-ink-soft);
     }
 
@@ -246,7 +246,7 @@ export interface PromptPreviewData {
       background: none;
       color: var(--li-muted);
       font-size: var(--li-text-lg);
-      line-height: 1;
+      line-height: var(--li-line-flush);
       cursor: grab;
     }
 
@@ -260,9 +260,11 @@ export interface PromptPreviewData {
     .pin {
       flex: none;
       width: 1.25rem;
+      /* An ink at an alpha rather than an edge: this is the quietest text in
+         the app, standing where a handle would be on a block that has none. */
       color: color-mix(in srgb, var(--li-muted) 55%, transparent);
       font-size: var(--li-text-lg);
-      line-height: 1;
+      line-height: var(--li-line-flush);
       text-align: center;
     }
 
@@ -273,14 +275,14 @@ export interface PromptPreviewData {
     .why {
       margin: 0;
       padding: var(--li-space-xs) var(--li-space-md) var(--li-space-sm);
-      border-top: 1px dashed color-mix(in srgb, var(--li-border) 80%, transparent);
+      border-top: 1px dashed var(--li-edge-soft);
       font-size: var(--li-text-xs);
-      line-height: 1.5;
+      line-height: var(--li-line-ui);
       color: var(--li-muted);
     }
 
     .movable header {
-      background: color-mix(in srgb, var(--li-accent) 12%, transparent);
+      background: var(--li-wash-accent-2);
     }
 
     /* The dragged copy is a clone of the element, so it carries this
@@ -298,9 +300,9 @@ export interface PromptPreviewData {
     /* The gap the block will land in, so a drag has somewhere to aim. */
     .ghost {
       height: 100%;
-      border: 1px dashed color-mix(in srgb, var(--li-accent) 55%, transparent);
+      border: 1px dashed var(--li-edge-accent);
       border-radius: var(--li-radius-md);
-      background: color-mix(in srgb, var(--li-accent) 5%, transparent);
+      background: var(--li-wash-accent-1);
     }
 
     .cdk-drop-list-dragging .block:not(.cdk-drag-placeholder) {

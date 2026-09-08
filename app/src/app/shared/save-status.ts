@@ -64,25 +64,25 @@ import { Persistence } from '../store/persistence';
     .status.offline {
       color: var(--li-ink);
       border-color: var(--li-border);
-      background: color-mix(in srgb, var(--li-ink) 6%, var(--li-surface));
+      background: var(--li-tint-1);
       cursor: pointer;
     }
 
     .status.offline:hover {
-      background: color-mix(in srgb, var(--li-ink) 12%, var(--li-surface));
+      background: var(--li-tint-3);
     }
 
     /* A refusal will not clear itself the way a missing server might: the same
        chip, in the colour that says a decision is wanted. */
     .status.refused {
       color: var(--li-danger);
-      border-color: color-mix(in srgb, var(--li-danger) 45%, var(--li-border));
-      background: color-mix(in srgb, var(--li-danger) 10%, var(--li-surface));
+      border-color: var(--li-edge-danger);
+      background: var(--li-wash-danger-1);
       cursor: pointer;
     }
 
     .status.refused:hover {
-      background: color-mix(in srgb, var(--li-danger) 18%, var(--li-surface));
+      background: var(--li-wash-danger-2);
     }
 
     .dot {

@@ -91,9 +91,9 @@ let nextId = 0;
 
     .save {
       margin-left: auto;
-      border: 1px solid color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
+      border: 1px solid var(--li-edge-accent);
       border-radius: var(--li-radius-pill);
-      background: color-mix(in srgb, var(--li-accent) 12%, transparent);
+      background: var(--li-wash-accent-2);
       color: var(--li-accent);
       font: inherit;
       font-size: var(--li-text-xs);

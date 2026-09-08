@@ -190,7 +190,7 @@ const IDLE: Status = { kind: 'idle', message: '' };
     .lede {
       margin: 0 0 var(--li-space-md);
       color: var(--li-muted);
-      line-height: 1.5;
+      line-height: var(--li-line-ui);
     }
 
     /* Guidance beside the choice it is about, in the hint voice rather than the lede. */
@@ -198,7 +198,7 @@ const IDLE: Status = { kind: 'idle', message: '' };
       margin: 0 0 var(--li-space-sm);
       font-size: var(--li-text-sm);
       color: var(--li-muted);
-      line-height: 1.45;
+      line-height: var(--li-line-ui);
     }
 
     /* The key and the eye that shows it, on one line inside the field. */
@@ -229,7 +229,7 @@ const IDLE: Status = { kind: 'idle', message: '' };
     .status {
       font-size: var(--li-text-sm);
       color: var(--li-muted);
-      line-height: 1.35;
+      line-height: var(--li-line-ui);
     }
 
     .status.good {

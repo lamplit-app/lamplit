@@ -324,6 +324,10 @@ const SWIPE_DISTANCE = 48;
       }
     }
 
+    /* Off the strength scale, and one of the three places in the app that is.
+       These are the paper at an alpha rather than an ink washed into it: what
+       is being chosen is how much of the page shows through the grip, which is
+       a question about this edge and not a step anything else would take. */
     .handle {
       display: flex;
       flex-direction: column;
@@ -351,11 +355,14 @@ const SWIPE_DISTANCE = 48;
       letter-spacing: 0.06em;
     }
 
+    /* The same ink over the page that the CDK's backdrop paints under every
+       sheet, from the palette: the panel over the story is the same claim as a
+       dialog over it, and this used to make it at its own strength. */
     .scrim {
       position: absolute;
       inset: 0;
       z-index: var(--li-layer-page);
-      background: light-dark(rgb(30 26 20 / 24%), rgb(6 7 10 / 46%));
+      background: var(--li-scrim);
     }
 
     .panel {
@@ -410,7 +417,7 @@ const SWIPE_DISTANCE = 48;
        44px, which is what both Apple and Google call a target. */
     .close {
       flex: none;
-      min-height: 2.75rem;
+      min-height: var(--li-target);
       padding: 0 var(--li-space-md);
       font-size: var(--li-text-md);
     }
@@ -429,7 +436,7 @@ const SWIPE_DISTANCE = 48;
     }
 
     .block {
-      border-bottom: 1px solid color-mix(in srgb, var(--li-border) 70%, transparent);
+      border-bottom: 1px solid var(--li-edge-soft);
     }
 
     /* A band across the panel, so it takes the whole width; the rest of what
@@ -531,8 +538,8 @@ const SWIPE_DISTANCE = 48;
 
     /* Round, and small enough to sit on a cast row beside a name. */
     .icon {
-      width: 1.6rem;
-      height: 1.6rem;
+      width: var(--li-control);
+      height: var(--li-control);
       border-radius: 50%;
       font-size: var(--li-text-md);
     }
@@ -545,8 +552,8 @@ const SWIPE_DISTANCE = 48;
       }
 
       .icon {
-        width: 2.25rem;
-        height: 2.25rem;
+        width: var(--li-target);
+        height: var(--li-target);
         font-size: var(--li-text-lg);
       }
     }

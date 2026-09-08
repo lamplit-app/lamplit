@@ -147,7 +147,7 @@ import { PagePalette } from './page-palette';
 
       /* A changed colour says so, so that Reset is not the only way to tell. */
       &.custom {
-        border-color: color-mix(in srgb, var(--li-accent) 45%, transparent);
+        border-color: var(--li-edge-accent);
       }
 
       &.wide {

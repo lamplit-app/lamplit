@@ -89,13 +89,13 @@ export interface ConfirmData {
       max-width: 26rem;
       margin: 0;
       font-size: var(--li-text-md);
-      line-height: 1.6;
+      line-height: var(--li-line-note);
       color: var(--li-ink-soft);
     }
 
     .go.danger {
       --mat-button-filled-container-color: var(--li-danger);
-      --mat-button-filled-label-text-color: light-dark(#fff, #1a0f0d);
+      --mat-button-filled-label-text-color: var(--li-on-danger);
     }
   `,
 })

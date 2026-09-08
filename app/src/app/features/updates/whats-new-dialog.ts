@@ -126,7 +126,7 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
        what they are set in — a note on a card rather than the reading page. */
     .notes {
       font-size: var(--li-text-md);
-      line-height: 1.6;
+      line-height: var(--li-line-note);
       color: var(--li-ink-soft);
     }
 
@@ -147,9 +147,9 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
     .how {
       margin-top: var(--li-space-lg);
       padding: var(--li-space-md);
-      border: 1px solid color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
+      border: 1px solid var(--li-edge-accent);
       border-radius: var(--li-radius-lg);
-      background: color-mix(in srgb, var(--li-accent) 7%, transparent);
+      background: var(--li-wash-accent-1);
     }
 
     h3 {
@@ -163,7 +163,7 @@ const ZIP = `${REPOSITORY}/releases/latest/download/Lamplit.zip`;
     .how p {
       margin: 0;
       font-size: var(--li-text-md);
-      line-height: 1.55;
+      line-height: var(--li-line-ui);
       color: var(--li-ink-soft);
     }
 

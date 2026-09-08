@@ -189,7 +189,7 @@ const EFFORTS: { value: ReasoningEffort; label: string }[] = [
       margin-bottom: var(--li-space-sm);
       border: 1px solid var(--li-border);
       border-radius: var(--li-radius-lg);
-      background: color-mix(in srgb, var(--li-accent) 6%, transparent);
+      background: var(--li-wash-accent-1);
     }
 
     .advanced {
@@ -198,12 +198,6 @@ const EFFORTS: { value: ReasoningEffort; label: string }[] = [
          folded to nothing at the bottom rather than scrolled to. */
       flex-shrink: 0;
       margin: var(--li-space-sm) 0 var(--li-space-2xs);
-    }
-
-    mat-panel-description {
-      flex: none;
-      color: var(--li-muted);
-      font-size: var(--li-text-sm);
     }
 
     .pair {

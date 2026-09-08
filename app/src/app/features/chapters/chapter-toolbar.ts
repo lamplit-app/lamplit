@@ -58,7 +58,7 @@ import { chapterTitle } from '../../core/prompt-builder';
 
     button.li-pill:hover:not(:disabled) {
       color: var(--li-ink-soft);
-      border-color: color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
+      border-color: var(--li-edge-accent);
     }
   `,
 })

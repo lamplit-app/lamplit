@@ -213,7 +213,7 @@ import { TextValue } from '../../shared/text-value';
     }
 
     .box:focus-within {
-      border-color: color-mix(in srgb, var(--li-accent) 65%, var(--li-border));
+      border-color: var(--li-ring);
     }
 
     /* The page's own prose rules do the setting; the box only gives it room. */
@@ -259,7 +259,7 @@ import { TextValue } from '../../shared/text-value';
       gap: var(--li-space-sm);
       margin-top: var(--li-space-xs);
       padding-top: var(--li-space-xs);
-      border-top: 1px solid color-mix(in srgb, var(--li-border) 70%, transparent);
+      border-top: 1px solid var(--li-edge-soft);
     }
 
     .direction .tag {
@@ -304,8 +304,8 @@ import { TextValue } from '../../shared/text-value';
     }
 
     .quiet.on {
-      border-color: color-mix(in srgb, var(--li-accent) 55%, var(--li-border));
-      background: color-mix(in srgb, var(--li-accent) 12%, transparent);
+      border-color: var(--li-edge-accent);
+      background: var(--li-wash-accent-2);
       color: var(--li-accent);
     }
 
@@ -317,6 +317,9 @@ import { TextValue } from '../../shared/text-value';
       letter-spacing: 0;
     }
 
+    /* Two inks blended into a third rather than a wash of one: the mark has
+       to read as the dialogue colour while staying as quiet as the four marks
+       beside it, and neither ink on its own does both. */
     .mark.speech {
       color: color-mix(in srgb, var(--li-speech) 65%, var(--li-muted));
     }

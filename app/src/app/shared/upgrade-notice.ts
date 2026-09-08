@@ -43,7 +43,7 @@ import { SettingsStore } from '../store/settings-store';
       gap: var(--li-space-md);
       padding: var(--li-space-xs) var(--li-space-sm) var(--li-space-xs) var(--li-space-lg);
       border-bottom: 1px solid var(--li-border);
-      background: color-mix(in srgb, var(--li-accent) 12%, var(--li-surface));
+      background: var(--li-wash-accent-2);
       font-size: var(--li-text-md);
       color: var(--li-ink);
     }
@@ -58,7 +58,7 @@ import { SettingsStore } from '../store/settings-store';
       flex: none;
       margin-left: auto;
       font-size: var(--li-text-lg);
-      line-height: 1;
+      line-height: var(--li-line-flush);
       color: var(--li-muted);
     }
   `,

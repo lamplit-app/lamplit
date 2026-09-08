@@ -281,12 +281,12 @@ export interface MessageEdit {
     }
 
     .message + .message {
-      border-top: 1px solid color-mix(in srgb, var(--li-border) 55%, transparent);
+      border-top: 1px solid var(--li-edge-soft);
     }
 
     .message.user {
       padding-left: var(--li-space-lg);
-      border-left: 2px solid color-mix(in srgb, var(--li-accent) 55%, transparent);
+      border-left: 2px solid var(--li-edge-accent);
     }
 
     .message.user .story-prose {
@@ -306,7 +306,7 @@ export interface MessageEdit {
       align-items: center;
       gap: var(--li-space-xs);
       margin: 0 0 var(--li-space-xs);
-      line-height: 1.2;
+      line-height: var(--li-line-tight);
     }
 
     /* The reader's own persona, and a character who is no longer in the cast:
@@ -328,11 +328,11 @@ export interface MessageEdit {
     .direction {
       margin: var(--li-space-sm) 0 0;
       padding-left: var(--li-space-md);
-      border-left: 2px solid color-mix(in srgb, var(--li-muted) 45%, transparent);
+      border-left: 2px solid var(--li-edge-quiet);
       font-family: var(--li-sans);
       font-size: var(--li-text-md);
       font-style: italic;
-      line-height: 1.5;
+      line-height: var(--li-line-ui);
       color: var(--li-muted);
     }
 
@@ -341,6 +341,8 @@ export interface MessageEdit {
       margin-right: var(--li-space-sm);
       /* The direction on the page is italic; the tag in front of it is not. */
       font-style: normal;
+      /* Two inks blended into a third: a step darker than the note it labels,
+         which is a smaller step than the next colour in the palette is. */
       color: color-mix(in srgb, var(--li-muted) 80%, var(--li-ink));
     }
 
@@ -380,8 +382,8 @@ export interface MessageEdit {
       /* Right of whatever the line says, and right of nothing when it says
          nothing: the corner is where a reader looks for a message's own menu. */
       margin-left: auto;
-      width: 1.6rem;
-      height: 1.4rem;
+      width: var(--li-control);
+      height: var(--li-control);
       padding: 0;
       border: 0;
       border-radius: var(--li-radius-sm);
@@ -389,7 +391,7 @@ export interface MessageEdit {
       color: var(--li-muted);
       font: inherit;
       font-size: var(--li-text-lg);
-      line-height: 1;
+      line-height: var(--li-line-flush);
       cursor: pointer;
       opacity: 0.45;
       transition: opacity 120ms ease;
@@ -574,8 +576,8 @@ export interface MessageEdit {
        on a touch screen either, so it is simply there. */
     @include bp.touch {
       .more {
-        width: 2.75rem;
-        height: 2.75rem;
+        width: var(--li-target);
+        height: var(--li-target);
         margin-right: calc(-1 * var(--li-space-sm));
         opacity: 1;
       }

@@ -253,7 +253,7 @@ export interface StoryDialogData {
       border-radius: var(--li-radius-md);
       font-family: var(--li-serif);
       font-size: var(--li-text-md);
-      line-height: 1.6;
+      line-height: var(--li-line-note);
       color: var(--li-ink-soft);
     }
 
@@ -317,8 +317,8 @@ export interface StoryDialogData {
     }
 
     .length.on {
-      border-color: color-mix(in srgb, var(--li-accent) 70%, var(--li-border));
-      background: color-mix(in srgb, var(--li-accent) 12%, transparent);
+      border-color: var(--li-edge-accent);
+      background: var(--li-wash-accent-2);
       color: var(--li-ink);
     }
   `,

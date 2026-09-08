@@ -56,7 +56,7 @@ import { Persistence } from '../store/persistence';
 
     p {
       color: var(--li-muted);
-      line-height: 1.6;
+      line-height: var(--li-line-note);
       margin: 0 0 var(--li-space-md);
     }
 

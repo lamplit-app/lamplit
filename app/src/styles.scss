@@ -49,7 +49,17 @@ html {
 // shipped colour of a theme back off <html> at any time: it overrides
 // `--li-page` inline, and "Reset to default" is that property removed rather
 // than a colour copied out of a second list in the TypeScript that could drift
-// from this one. `core/theming.ts` puts a label on each name.
+// from this one. `core/theming.ts` puts a label on the eleven a reader is
+// offered; the six at the end of the list are not among them and say why
+// there.
+//
+// One reader of this list is not a stylesheet at all. `electron/splash.html`
+// is what the desktop window shows while the server behind it starts, and it
+// is loaded from `file:` before there is anything to ask, so it copies `page`,
+// `ink` and `muted` out of here by hand. Moving one of those three means
+// moving it there too, or the window changes colour as it hands over. #48
+// moved `muted` and left this copy where it was, which is what #81 found. The
+// type sizes are copied the same way and say so beside `.booting-mark`.
 //
 // Two of these are contrast decisions rather than colours somebody liked.
 //
@@ -117,6 +127,55 @@ $palette: (
   success: (
     light: #2b7a4b,
     dark: #6fd39b,
+  ),
+
+  // The six the app used to write out by hand where it drew them: a code
+  // block's paper and the three colours a highlighted token is set in, the
+  // ink drawn over the page when something is in front of it, and the label on
+  // a filled Delete. Every one was a `light-dark(#…, #…)` typed into the rule
+  // that needed it, which is to say a colour nothing else could reach — not
+  // Preferences, not a page palette, not a contrast mode.
+  //
+  // Here they get the same three-name emission as everything above, and a
+  // contrast mode could move any of them by naming it in `$contrast`. What
+  // they do not get is a swatch in Preferences or a value in the ten page
+  // palettes: both of those read `ColourKey` in `core/models.ts`, and that
+  // list is the set a reader is offered *and* the set every page in
+  // `page-palettes.ts` has to answer for — eleven colours walked to a floor
+  // apiece, with a spec holding all ten pages to it. Adding six more is sixty
+  // colours a page and not a rename. So these fall back to the shipped pair
+  // wherever a palette is on, and it shows in one place: a code block on a
+  // Hearth page is still cut from the shipped paper rather than Hearth's.
+  //
+  // `scrim` is the one that is an amount as much as a colour: it is ink over
+  // the app, and how much of it is what makes a scrim rather than a lid. It
+  // was written twice — the CDK's backdrop under every sheet, and the chapter
+  // panel's own under the drawer on a narrow window — at two strengths nobody
+  // chose over each other. There is one answer to "something is in front of
+  // the page", and this is the backdrop's; the panel's went a shade darker.
+  code-bg: (
+      light: #f2eee4,
+      dark: #16181e,
+    ),
+  code-string: (
+    light: #2d6b4a,
+    dark: #8fd9a8,
+  ),
+  code-number: (
+    light: #8a5a1f,
+    dark: #e0b070,
+  ),
+  code-attr: (
+    light: #7a3f6d,
+    dark: #e0a0d8,
+  ),
+  scrim: (
+    light: rgb(30 26 20 / 38%),
+    dark: rgb(6 7 10 / 68%),
+  ),
+  on-danger: (
+    light: #ffffff,
+    dark: #1a0f0d,
   ),
 );
 
@@ -209,7 +268,8 @@ $contrast: (
   --li-reading-line: 1.65;
 
   // -------------------------------------------------------------------------
-  // The scales: how big, how far apart, how round, how lifted, how far forward.
+  // The scales: how big, how far apart, how round, how lifted, how far
+  // forward, and how strong.
   // -------------------------------------------------------------------------
   //
   // A custom property on `:root` reaches through every component's emulated
@@ -217,12 +277,12 @@ $contrast: (
   // inside a `@Component` nothing at all to use: no import, no mixin, just the
   // name. That is the whole reason the scales live here rather than as Sass.
   //
-  // The rule is the same for all five, and it is the rule that makes a scale a
-  // scale rather than a list: **take the nearest step.** Before there was one,
-  // eight font sizes lived between 0.65rem and 0.78rem and no reader could tell
-  // one from the next, and `--li-radius` was two of the sixty-six border-radius
-  // declarations in the app — which is what a token nobody is obliged to use is
-  // worth.
+  // The rule is the same for every one of them, and it is the rule that makes
+  // a scale a scale rather than a list: **take the nearest step.** Before
+  // there was one, eight font sizes lived between 0.65rem and 0.78rem and no
+  // reader could tell one from the next, and `--li-radius` was two of the
+  // sixty-six border-radius declarations in the app — which is what a token
+  // nobody is obliged to use is worth.
   //
   // A value off the scale needs a reason in a comment beside it. There are a
   // few — a glyph sized to line up with the word next to it, two numbers that
@@ -242,6 +302,54 @@ $contrast: (
   --li-text-lg: 1rem;
   --li-text-xl: 1.3rem;
   --li-text-2xl: 1.9rem;
+
+  // How far apart the lines of a block are set. Three, plus one that is not
+  // leading at all.
+  //
+  // There were nine values across thirty-three declarations — 1, 1.2, 1.25,
+  // 1.35, 1.45, 1.5, 1.55, 1.6 and 1.65 — and `close-chapter-dialog.ts` used
+  // four of them on one sheet. Nobody chose nine: each was written by somebody
+  // looking at one box, and leading is exactly the thing a reader compares
+  // down a page without being able to say what changed.
+  //
+  // `ui` is the app's voice, the same way `--li-text-md` is: a row, a hint, a
+  // line of a form, the text in a box. `note` is a paragraph somebody is meant
+  // to read at length in the interface face — release notes, a proposed lore
+  // entry, the sentence a sheet opens with. `tight` is a heading or a label,
+  // where the words are one unit and the leading is what keeps them one.
+  //
+  // The story is not on this scale, for the reason the reading size is not on
+  // the type scale: `--li-reading-line` above is whatever the page is set at,
+  // and 1.65 is a fourth step nothing in the app's furniture should reach for.
+  //
+  // `flush` is the odd one and it is deliberately not a step between the
+  // others. A glyph alone in a box — the six icon buttons, the drag handle, a
+  // dismiss — wants a line box the size of the glyph, because the box is
+  // centring it and any leading at all is room the centring has to guess at.
+  // It is `1` rather than `normal` for the same reason: `normal` is the face's,
+  // and two faces do not agree about it.
+  --li-line-tight: 1.2;
+  --li-line-ui: 1.5;
+  --li-line-note: 1.6;
+  --li-line-flush: 1;
+
+  // How big a thing you press is. Two, and they are the two ends of it.
+  //
+  // `target` is 44px, which is the smallest square Apple and Google both call
+  // a target and the size everything a finger has to hit is drawn at. It was
+  // written as `2.75rem` in four places and as `2.25rem` in a fifth doing the
+  // same job, which is the number that misses.
+  //
+  // `control` is the resting size of a glyph you press with a pointer: the
+  // close and edit on a cast row, a message's own menu in the corner of its
+  // meta line. Those were `1.6rem` three times and `1.4rem` twice, and one of
+  // them was 1.6 wide by 1.4 tall — a square that is not one.
+  //
+  // The rail is a third size and stays where it is, at the foot of this block:
+  // it is a column in the margin as much as a button, and the margin's
+  // arithmetic is written beside it.
+  --li-target: 2.75rem;
+  --li-control: 1.6rem;
 
   // Space. Seven steps at about 1.45 apart, which is far enough that two
   // neighbours never look like a mistake and close enough to reach for.
@@ -297,6 +405,79 @@ $contrast: (
   --li-layer-under: 0;
   --li-layer-page: 1;
   --li-layer-over: 3;
+
+  // -------------------------------------------------------------------------
+  // Strength. How much of a colour, and where the edge of a thing is.
+  // -------------------------------------------------------------------------
+  //
+  // This is the layer under the tokens, and it is where the drift was living:
+  // seventy-eight `color-mix()` calls across twenty-two files at about twenty
+  // distinct percentages, encoding four ideas by hand. The quiet row tint was
+  // the ink at 3%, 5%, 6%, 8% and 12% in five files. The accent-lit edge was
+  // the accent mixed into the border at 45% six times, 55% four times, 65%
+  // twice and 70% twice. The danger edge was 45% everywhere and 40% in one
+  // place — which is the exact drift the note beside `.li-warning` says it
+  // removed, still alive two files away.
+  //
+  // Three strengths of each, because that is what the sites cluster into: a
+  // wash you can only just see, one that says a row is chosen, and one that
+  // says a control is on. The three ladders are not the same numbers and that
+  // is not sloppiness — how strong a mix has to be to be seen at all depends
+  // on how far the colour is from the paper, and the ink is much further from
+  // it than the accent is.
+  //
+  // `transparent` rather than a paper, in every one of them. A mix with
+  // `--li-surface` is a colour that is only right on the surface, and half of
+  // these are drawn on the page, on raised paper, on a translucent bar or on
+  // whatever a page palette made the paper. Mixed with `transparent` the
+  // result is the colour at that alpha, the browser composites it over
+  // whatever is actually behind, and 5% of the ink is 5% of the ink
+  // everywhere.
+  //
+  // The rule is the scales' rule: take the nearest step. A `color-mix()` left
+  // in a component now means one of two things — a colour these cannot know
+  // (`--li-cast-colour`, `currentColor`, the paper at an alpha chosen for what
+  // shows through it), or two inks blended into a third — and each of those
+  // says so where it is written.
+
+  // The ink, washed into whatever is behind it: a row under the pointer, a
+  // row that is chosen, a chip that reports rather than acts.
+  --li-tint-1: color-mix(in srgb, var(--li-ink) 5%, transparent);
+  --li-tint-2: color-mix(in srgb, var(--li-ink) 8%, transparent);
+  --li-tint-3: color-mix(in srgb, var(--li-ink) 12%, transparent);
+
+  // The accent, the same way: a block the accent is about, a thing that is
+  // chosen, a control that is on.
+  --li-wash-accent-1: color-mix(in srgb, var(--li-accent) 6%, transparent);
+  --li-wash-accent-2: color-mix(in srgb, var(--li-accent) 12%, transparent);
+  --li-wash-accent-3: color-mix(in srgb, var(--li-accent) 24%, transparent);
+
+  // And the danger colour, which only ever has two things to say: this wants
+  // reading, and this is the one you are about to press.
+  --li-wash-danger-1: color-mix(in srgb, var(--li-danger) 8%, transparent);
+  --li-wash-danger-2: color-mix(in srgb, var(--li-danger) 18%, transparent);
+
+  // The four edges. `soft` is the app's hairline turned down — a divider
+  // inside a box that is already drawn, rather than the box's own line.
+  // `quiet` is the bar beside something set back: a direction, an entry as it
+  // reads today.
+  //
+  // `accent` and `danger` are the app's line lit by a colour, which is why
+  // both mix into `--li-border` rather than into nothing: the result is the
+  // hairline every other box is drawn in, moved towards the colour, and it
+  // stays a line at the width a line is. Measured, the accent edge is 4.01:1
+  // on raised paper in the light theme, over the 3:1 WCAG 1.4.11 asks of
+  // anything that marks out a control.
+  --li-edge-soft: color-mix(in srgb, var(--li-border) 65%, transparent);
+  --li-edge-quiet: color-mix(in srgb, var(--li-muted) 45%, transparent);
+  --li-edge-accent: color-mix(in srgb, var(--li-accent) 55%, var(--li-border));
+  --li-edge-danger: color-mix(in srgb, var(--li-danger) 45%, var(--li-border));
+
+  // And the one edge that is not furniture: the ring that says where the
+  // keyboard is. Stronger than the accent edge above and mixed with nothing,
+  // because it is drawn over whatever it lands on — a field's paper, a tick,
+  // one of ten page previews — and it has to be the same ring on all of them.
+  --li-ring: color-mix(in srgb, var(--li-accent) 65%, transparent);
 
   // How tall a dialog's content is allowed to get before it scrolls inside
   // itself. The long ones need the cap — a card that is all but the height of
@@ -408,6 +589,12 @@ html {
   // the stronger contrast set raises every control's edge with every other one.
   --mat-sys-primary: var(--li-accent);
   --mat-sys-on-primary: var(--li-page);
+
+  // The two containers mix into the paper rather than into `transparent` like
+  // the app's own washes, and that is not an oversight: Material draws a
+  // container as the fill of a thing — a tonal button, a selected chip — and a
+  // fill you can see the page through is a fill that changes colour as the
+  // thing moves over the page.
   --mat-sys-primary-container: color-mix(in srgb, var(--li-accent) 30%, var(--li-surface));
   --mat-sys-on-primary-container: var(--li-ink);
   --mat-sys-secondary-container: color-mix(in srgb, var(--li-accent) 16%, var(--li-surface));
@@ -424,6 +611,49 @@ html {
   // slider and the resting track of a toggle. All four are the same hairline,
   // and the app has a colour for that.
   --mat-sys-surface-variant: var(--li-border);
+
+  // The two names a tooltip is drawn in, and the last two the palette above
+  // had not reached. Every tooltip in the app was `mat.theme()`'s own
+  // violet-derived neutral with a near-white label on it, because nothing else
+  // this app uses reads either name and a wrong colour nobody looks at twice
+  // is a wrong colour that stays. The app's answer to "the page, inverted" has
+  // been written down since the palette was: the ink, with the page on it.
+  //
+  // These are `var(--li-*)` for the reason the rest are: a tooltip over a page
+  // with a palette of its own is drawn in that palette, because the reader
+  // overrode `--li-ink` and this follows.
+  --mat-sys-inverse-surface: var(--li-ink);
+  --mat-sys-inverse-on-surface: var(--li-page);
+
+  // -------------------------------------------------------------------------
+  // Material's type scale, pointed at the app's.
+  // -------------------------------------------------------------------------
+  //
+  // The same hole as the palette had, in the other half of the theme. Every
+  // Material component sets its text through one of the M3 type roles — a
+  // button through `label-large`, an expansion header through `title-medium`,
+  // a dialog's body copy through `body-medium` — and `mat.theme()` writes all
+  // three off its own scale. The app's rows are `--li-text-md`. So a
+  // Preferences panel header was 16px at weight 500 beside app rows at 14.4,
+  // which is two type systems on one sheet, and the only role that had been
+  // brought over was the dialog title below.
+  //
+  // Sizes and tracking, and nothing else. The faces are already the app's —
+  // `mat.theme()` is handed `system-ui` for both families at the top of this
+  // file — and the weights are Material saying "this is a control", which is a
+  // fair thing for a control to say. The tracking is not: M3 letterspaces its
+  // small text by fractions of a rem, and the only tracked type in this app is
+  // the three capitals classes, which are tracked because capitals close up.
+  //
+  // Three roles rather than all fifteen, because three is what the twelve
+  // components this app draws with actually read. A fourth arrives with the
+  // next component, and arrives looking wrong, which is the same way these did.
+  --mat-sys-label-large-size: var(--li-text-md);
+  --mat-sys-label-large-tracking: 0;
+  --mat-sys-title-medium-size: var(--li-text-lg);
+  --mat-sys-title-medium-tracking: 0;
+  --mat-sys-body-medium-size: var(--li-text-md);
+  --mat-sys-body-medium-tracking: 0;
 
   // A sheet is titled in the reading face, at the size a title is set in.
   --mat-dialog-subhead-font: var(--li-serif);
@@ -450,6 +680,15 @@ html {
   // The panels that fold Advanced away sit on the sheet rather than on a card
   // of their own; the two that want an edge draw their own border.
   --mat-expansion-container-background-color: transparent;
+
+  // What a folded panel says while it is folded, in the voice a note is
+  // written in. Said here rather than inherited from `on-surface-variant`,
+  // which is where Material's fallback would find the same colour: four
+  // components had each written the rule out by hand, and a token that names
+  // the thing is what stops a fifth from doing it again. The size and the
+  // shape of the aside are a selector further down — Material has no token for
+  // either.
+  --mat-expansion-header-description-color: var(--li-muted);
 
   // -------------------------------------------------------------------------
   // The switch, turned the other way round.
@@ -522,6 +761,11 @@ body {
 }
 
 // Subtle page texture so the reading surface does not look like a form.
+//
+// The accent's half is a step off the strength scale. The dialogue colour's is
+// a mix of its own and stays one: it is drawn here and nowhere else, and a
+// second ladder of washes for the sake of one gradient is a scale with one
+// user.
 body::before {
   content: '';
   position: fixed;
@@ -529,11 +773,7 @@ body::before {
   pointer-events: none;
   z-index: var(--li-layer-under);
   background:
-    radial-gradient(
-      1200px 600px at 15% -10%,
-      color-mix(in srgb, var(--li-accent) 12%, transparent),
-      transparent 70%
-    ),
+    radial-gradient(1200px 600px at 15% -10%, var(--li-wash-accent-2), transparent 70%),
     radial-gradient(
       900px 500px at 100% 0%,
       color-mix(in srgb, var(--li-speech) 10%, transparent),
@@ -631,7 +871,7 @@ app-root {
   h4 {
     font-family: inherit;
     font-weight: 600;
-    line-height: 1.25;
+    line-height: var(--li-line-tight);
     margin: 1.1em 0 0.5em;
   }
 
@@ -666,7 +906,7 @@ app-root {
   code {
     font-family: var(--li-mono);
     font-size: 0.85em;
-    background: color-mix(in srgb, var(--li-ink) 8%, transparent);
+    background: var(--li-tint-2);
     padding: 0.12em 0.35em;
     border-radius: var(--li-radius-sm);
   }
@@ -677,13 +917,13 @@ app-root {
     overflow-x: auto;
     border: 1px solid var(--li-border);
     border-radius: var(--li-radius-md);
-    background: light-dark(#f2eee4, #16181e);
+    background: var(--li-code-bg);
 
     code {
       background: none;
       padding: 0;
       font-size: 0.82em;
-      line-height: 1.5;
+      line-height: var(--li-line-ui);
     }
   }
 
@@ -741,12 +981,12 @@ app-root {
 .hljs-string,
 .hljs-meta .hljs-string,
 .hljs-regexp {
-  color: light-dark(#2d6b4a, #8fd9a8);
+  color: var(--li-code-string);
 }
 
 .hljs-number,
 .hljs-symbol {
-  color: light-dark(#8a5a1f, #e0b070);
+  color: var(--li-code-number);
 }
 
 .hljs-title,
@@ -759,7 +999,7 @@ app-root {
 .hljs-attribute,
 .hljs-variable,
 .hljs-template-variable {
-  color: light-dark(#7a3f6d, #e0a0d8);
+  color: var(--li-code-attr);
 }
 
 // ---------------------------------------------------------------------------
@@ -795,7 +1035,7 @@ select {
   color: var(--li-ink);
   font: inherit;
   font-size: var(--li-text-md);
-  line-height: 1.55;
+  line-height: var(--li-line-ui);
 
   &::placeholder {
     color: var(--li-muted);
@@ -803,14 +1043,14 @@ select {
 
   &:focus {
     outline: none;
-    border-color: color-mix(in srgb, var(--li-accent) 65%, var(--li-border));
+    border-color: var(--li-ring);
   }
 
   // Shown but not to be answered: the keys of an entry that is always on, and
   // fires on nothing. The hairline goes quiet along with the text, so an empty
   // one still reads as closed rather than as waiting.
   &:disabled {
-    border-color: color-mix(in srgb, var(--li-border) 55%, transparent);
+    border-color: var(--li-edge-soft);
     color: var(--li-muted);
   }
 }
@@ -969,8 +1209,8 @@ input[type='checkbox'] {
   }
 
   &:checked {
-    border-color: color-mix(in srgb, var(--li-accent) 55%, var(--li-border));
-    background: color-mix(in srgb, var(--li-accent) 14%, var(--li-surface-raised));
+    border-color: var(--li-edge-accent);
+    background: var(--li-wash-accent-2);
   }
 
   &:checked::after {
@@ -978,7 +1218,7 @@ input[type='checkbox'] {
   }
 
   &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--li-accent) 65%, transparent);
+    outline: 2px solid var(--li-ring);
     outline-offset: 2px;
   }
 }
@@ -1013,22 +1253,20 @@ input[type='checkbox'] {
 // one of them — and for the palette row inside one of those.
 //
 // The panels are one sheet to the reader and four files to us, and these are
-// the rules every one of them was written with: the word beside a panel's
-// name, the column its settings stand in, the rule between two groups of
-// them, the sentence a panel opens with. Before the sheet was split they were
-// declared once because there was one component; they are declared once still,
-// here, rather than four times over — a divider a step lighter in Advanced
-// than in Reading is not a decision anybody would make on purpose.
+// the rules every one of them was written with: the column its settings stand
+// in, the rule between two groups of them, the sentence a panel opens with.
+// Before the sheet was split they were declared once because there was one
+// component; they are declared once still, here, rather than four times over —
+// a divider a step lighter in Advanced than in Reading is not a decision
+// anybody would make on purpose.
+//
+// The word beside a panel's name used to be here too. It has gone further
+// down, beside Material's own selectors: three sheets outside Preferences fold
+// a panel as well, and all three had written the same rule again.
 //
 // Worn by the `mat-expansion-panel` itself, so nothing outside Preferences —
 // the world sheet's entries, a parameter group — is touched by any of it.
 .li-panel {
-  mat-panel-description {
-    flex: none;
-    color: var(--li-muted);
-    font-size: var(--li-text-sm);
-  }
-
   .stack {
     display: flex;
     flex-direction: column;
@@ -1087,7 +1325,7 @@ input[type='checkbox'] {
   // The app's quiet row tint, on the two things in here that are pressed.
   .palette:hover,
   .swatch:hover {
-    background: color-mix(in srgb, var(--li-ink) 5%, transparent);
+    background: var(--li-tint-1);
   }
 }
 
@@ -1110,6 +1348,10 @@ input[type='checkbox'] {
 // Everything else about the geometry is Material's and still lands: a folded
 // panel is squared by a rule that reaches any descendant of the accordion, and
 // a panel one level deeper is still a descendant.
+//
+// These three are Material's own selectors and belong to the list under
+// "Material's own selectors" further down; they are here rather than there
+// because they read beside `.li-panel`, which is the class they vary.
 .mat-accordion > * > .mat-expansion-panel.li-panel:not(.mat-expansion-panel-spacing) {
   border-radius: 0;
 }
@@ -1181,8 +1423,8 @@ input[type='checkbox'] {
   cursor: pointer;
 
   &[aria-checked='true'] {
-    border-color: color-mix(in srgb, var(--li-accent) 55%, var(--li-border));
-    background: color-mix(in srgb, var(--li-accent) 30%, transparent);
+    border-color: var(--li-edge-accent);
+    background: var(--li-wash-accent-3);
   }
 }
 
@@ -1214,6 +1456,10 @@ input[type='checkbox'] {
 //
 // Both buttons that wear this are in the top bar, and both are named things
 // that can be long: the story and chapter you are in, and the model answering.
+//
+// `.mdc-button__label` is Material's own, and the oldest name of the twelve
+// this app reaches for — see "Material's own selectors" further down, where it
+// is the first one to check on an upgrade.
 .li-truncates > .mdc-button__label {
   min-width: 0;
   overflow: hidden;
@@ -1248,22 +1494,26 @@ input[type='checkbox'] {
   }
 
   &.on {
-    border-color: color-mix(in srgb, var(--li-accent) 70%, var(--li-border));
-    background: color-mix(in srgb, var(--li-accent) 10%, transparent);
+    border-color: var(--li-edge-accent);
+    background: var(--li-wash-accent-2);
   }
 }
 
 .li-hint {
   color: var(--li-muted);
   font-size: var(--li-text-sm);
-  line-height: 1.5;
+  line-height: var(--li-line-ui);
 }
 
 // Something that has to be read before going on: a request that came back an
 // error, a colour the reader has overridden into illegibility. A ring and a
-// wash in the danger colour, at one strength — the two that draw this box had
-// written the ring at 40% and at 45% of the same ink, which is two people
-// choosing the same thing twice and getting it slightly different.
+// wash in the danger colour, both off the strength scale at the top of this
+// file.
+//
+// This note used to claim it had settled the 40%-and-45% two people wrote for
+// the same ring. It had settled two of the three: the third was still in
+// `close-chapter-dialog.ts`, at 40%, for as long as the claim stood. A comment
+// cannot hold a value in one place; a token can.
 //
 // What is said inside it stays with the caller, and the two are not saying the
 // same kind of thing: the model's failure is spoken in the danger colour
@@ -1271,12 +1521,12 @@ input[type='checkbox'] {
 // ordinary ink because the ring is.
 .li-warning {
   padding: var(--li-space-sm) var(--li-space-md);
-  border: 1px solid color-mix(in srgb, var(--li-danger) 45%, var(--li-border));
+  border: 1px solid var(--li-edge-danger);
   border-radius: var(--li-radius-md);
-  background: color-mix(in srgb, var(--li-danger) 8%, transparent);
+  background: var(--li-wash-danger-1);
   color: var(--li-ink-soft);
   font-size: var(--li-text-sm);
-  line-height: 1.5;
+  line-height: var(--li-line-ui);
 }
 
 // Naming a box: the word above it. The size a note is set in and the ink a
@@ -1352,13 +1602,13 @@ input[type='checkbox'] {
   background: none;
   color: var(--li-muted);
   font: inherit;
-  line-height: 1;
+  line-height: var(--li-line-flush);
   cursor: pointer;
 
   &:hover:not(:disabled),
   &:focus-visible {
     color: var(--li-ink);
-    background: color-mix(in srgb, var(--li-ink) 8%, transparent);
+    background: var(--li-tint-2);
   }
 
   &:disabled {
@@ -1398,7 +1648,7 @@ input[type='checkbox'] {
   cursor: pointer;
 
   &:hover {
-    background: color-mix(in srgb, var(--li-ink) 5%, transparent);
+    background: var(--li-tint-1);
   }
 }
 
@@ -1472,6 +1722,61 @@ input[type='checkbox'] {
   font-size: var(--li-text-xs);
   font-variant-caps: all-small-caps;
   letter-spacing: 0.06em;
+}
+
+// ---------------------------------------------------------------------------
+// Material's own selectors. Re-verify every one of these on an upgrade.
+// ---------------------------------------------------------------------------
+//
+// Everything above this line that touches Material sets a custom property, and
+// a property is a contract: the library reads it at the point it draws, so
+// there is no selector to write and nothing for the next version to beat. What
+// follows is the other kind — fourteen rules that reach into Material's own
+// DOM by class name, because there is no token for what they say — and the
+// whole point of collecting them under one heading is that they are the rules
+// an upgrade can silently break. A renamed class does not error; it stops
+// applying, and the app is drawn the library's way with nobody told.
+//
+// The fourteen, and what each is for:
+//
+//   `.mat-expansion-panel-header-description`  the aside on a folding row
+//   `.mat-mdc-dialog-surface`                  the border round a card
+//   `.mat-mdc-dialog-content`                  the height cap
+//   `.mat-mdc-dialog-content` again            the shadow that says it scrolls
+//   `.cdk-overlay-dark-backdrop`               the scrim, from the palette
+//   `.cdk-overlay-pane.mat-mdc-dialog-panel`   a sheet is the whole screen
+//   `.mat-mdc-dialog-surface` (phone)          no corners, and the safe area
+//   `.mat-mdc-dialog-content` (phone)          the cap undone
+//   `.mat-mdc-dialog-actions` (phone)          Done stays where the thumb is
+//   `.mat-mdc-menu-item` (touch)               44px for a finger
+//   `.mat-accordion > * > .mat-expansion-panel` ×3, further up beside
+//                                              `.li-panel`: an accordion's ends
+//   `.li-truncates > .mdc-button__label`, further up: a label that ellipses
+//
+// The last two runs stay where they are because they read beside the classes
+// of ours they vary, which is how they are found; they belong to this list and
+// each says so.
+//
+// `.mdc-button__label` is the one to check first. `mdc-` is the old Material
+// Components for Web naming, kept alive inside Angular Material's button and
+// nothing else the app touches; every other selector here is `mat-`. When it
+// goes, the rule beside it goes quiet and two buttons in the top bar start
+// pushing the bar wide instead of ellipsing.
+
+// The aside on a row that folds, wherever one folds: Preferences' four panels,
+// the world sheet's summary instruction, the close sheet's, and the sampling
+// parameters. The colour is a token in the block above; these two are not
+// tokens at all, so they were written out four times over — three components
+// and `.li-panel`, at a size and a `flex` nobody chose four times.
+//
+// Two classes deep because Material's own rule is one class and injected after
+// this sheet: an equal specificity loses on order, and this has to win.
+// `flex: none` is what beats its `flex-grow: 2` — the aside is as wide as its
+// words and the row's name takes the rest, rather than the two splitting the
+// row two-to-one.
+.mat-expansion-panel-header .mat-expansion-panel-header-description {
+  flex: none;
+  font-size: var(--li-text-sm);
 }
 
 // The one thing about the card that Material has no token for.
@@ -1555,8 +1860,10 @@ input[type='checkbox'] {
   background-attachment: local, local, scroll, scroll;
 }
 
+// Ink over the app, from the palette: the chapter panel draws the same scrim
+// under its own drawer, and one name is what keeps the two the same amount.
 .cdk-overlay-dark-backdrop {
-  background: light-dark(rgb(30 26 20 / 38%), rgb(6 7 10 / 68%));
+  background: var(--li-scrim);
 }
 
 // ---------------------------------------------------------------------------
@@ -1627,10 +1934,10 @@ button {
 
 @include bp.touch {
   // The menus are what the phone layout puts everything behind, so they are
-  // what a finger has to hit. 44px is the smallest target Apple and Google
-  // both call a target; Material's own density setting is smaller than that.
+  // what a finger has to hit. `--li-target` is the app's 44px, and Material's
+  // own density setting is smaller than that.
   .mat-mdc-menu-item {
-    min-height: 2.75rem;
+    min-height: var(--li-target);
   }
 
   // The switch and its knob grow in step, so that it still reads as one thing

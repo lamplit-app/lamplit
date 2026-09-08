@@ -83,7 +83,7 @@ export interface PaletteOption {
        that preset any more, and Reset is the only way back to one. The ring is
        the accent's, which is what tells it from the pills that only report. */
     .tag {
-      border-color: color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
+      border-color: var(--li-edge-accent);
     }
 
     .palette-lead {
@@ -122,7 +122,7 @@ export interface PaletteOption {
        whether it is the chosen one or not. As a border on the tile it read as
        a larger, lower object than the nine beside it. */
     .palette.on .preview {
-      outline: 2px solid color-mix(in srgb, var(--li-accent) 70%, transparent);
+      outline: 2px solid var(--li-ring);
       outline-offset: 2px;
     }
 

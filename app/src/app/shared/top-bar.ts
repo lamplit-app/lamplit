@@ -164,6 +164,9 @@ import { SaveStatus } from './save-status';
       height: 3.25rem;
       padding: 0 var(--li-space-md) 0 var(--li-space-lg);
       border-bottom: 1px solid var(--li-border);
+      /* The paper at an alpha rather than one of the washes, and the blur
+         under it is why: the bar is glass over the page, so what is being
+         chosen is how much of the page comes through it. */
       background: color-mix(in srgb, var(--li-surface) 82%, transparent);
       backdrop-filter: blur(10px);
     }
@@ -281,12 +284,12 @@ import { SaveStatus } from './save-status';
       flex: none;
       margin-right: var(--li-space-xs);
       color: var(--li-accent);
-      border-color: color-mix(in srgb, var(--li-accent) 45%, var(--li-border));
-      background: color-mix(in srgb, var(--li-accent) 10%, var(--li-surface));
+      border-color: var(--li-edge-accent);
+      background: var(--li-wash-accent-2);
     }
 
     .available:hover {
-      background: color-mix(in srgb, var(--li-accent) 18%, var(--li-surface));
+      background: var(--li-wash-accent-3);
     }
 
     /* A name on the left and the keys that do the same thing on the right, the

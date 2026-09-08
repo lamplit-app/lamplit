@@ -68,11 +68,11 @@ interface Row {
       display: flex;
       align-items: center;
       gap: var(--li-space-2xs);
-      border-bottom: 1px solid color-mix(in srgb, var(--li-border) 60%, transparent);
+      border-bottom: 1px solid var(--li-edge-soft);
     }
 
     .row.active {
-      background: color-mix(in srgb, var(--li-accent) 8%, transparent);
+      background: var(--li-wash-accent-1);
     }
 
     .open {
@@ -92,7 +92,7 @@ interface Row {
     }
 
     .open:hover {
-      background: color-mix(in srgb, var(--li-ink) 5%, transparent);
+      background: var(--li-tint-1);
     }
 
     .line {
