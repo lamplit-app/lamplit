@@ -1,9 +1,7 @@
 import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
-import { dirname, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { fileURLToPath } from 'node:url';
 import { DEFAULT_PORT } from '../server/src/ports.js';
+import { importFromApp } from './lib/app-source.mjs';
 
 /**
  * `npm run providers` — asks every provider in the table whether it still lets
@@ -23,15 +21,13 @@ import { DEFAULT_PORT } from '../server/src/ports.js';
  * is being read is not the status: it is whether the browser let the answer
  * through at all.
  *
- * The table it reads lives in the app's TypeScript, imported straight from
- * this script: Node strips the types itself from 22.22 on, which is the floor
- * the root `engines` sets, so no flag is needed.
+ * The table it reads is the app's own, imported out of its TypeScript rather
+ * than copied: Node strips the types itself from 22.18 on, and `importFromApp`
+ * handles the one thing it will not do, which is resolve the extensionless
+ * imports the app is written with. See *lib/app-source.mjs*.
  */
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const TABLE = pathToFileURL(resolve(ROOT, 'app/src/app/core/providers.ts')).href;
-
-const { PROVIDERS, CUSTOM_PROVIDER_ID } = await import(TABLE);
+const { PROVIDERS, CUSTOM_PROVIDER_ID } = await importFromApp('app/core/providers.ts');
 
 async function main() {
   const targets = PROVIDERS.filter(
