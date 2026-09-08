@@ -6,21 +6,60 @@ import {
   nextColour,
   paletteColour,
 } from './character-colours';
+import { PAGE_PALETTES } from './page-palettes';
 import { AA_CONTRAST, contrastRatio } from './theming';
 
 /**
- * The palette is a claim — ten colours that read on both papers and can be
- * told apart — and this is the claim being checked rather than restated. The
- * simulation and the contrast maths are here rather than in the app because
- * nothing at runtime needs them: the palette is fixed, and what has to be true
- * about it has to be true when it is edited, which is now.
+ * The palette is a claim — ten colours that read on every paper the app has
+ * and can be told apart — and this is the claim being checked rather than
+ * restated. The simulation and the contrast maths are here rather than in the
+ * app because nothing at runtime needs them: the palette is fixed, and what has
+ * to be true about it has to be true when it is edited, which is now.
  */
 
-/** Every surface a character's colour is ever drawn against, per theme. */
-const PAPERS = {
-  light: ['#f6f3ec', '#fffdf8', '#ffffff'],
-  dark: ['#14151a', '#1c1e25', '#23262f'],
-} as const;
+/** A paper, and enough of a name to find it by when a pair comes up short. */
+interface Paper {
+  colour: string;
+  where: string;
+}
+
+/** The three sheets of any theme, shipped or preset. */
+const SHEETS = ['page', 'surface', 'surface-raised'] as const;
+
+/**
+ * Every surface a character's colour is ever drawn against: the three papers
+ * of the theme as it ships, and the three of each of the ten page palettes.
+ *
+ * Thirty-three rather than the three this began as, and the reason is what a
+ * cast colour is: the one colour in the app that is not a `--li-*` token, so
+ * it is the one colour a page palette cannot move. The ten pages repaint the
+ * paper under a name and leave the name where it was, and the story is read on
+ * all thirty of them. The contrast halves add nothing to the list — a palette's
+ * stronger set is the rules and nothing else, which is `page-palettes.spec`'s
+ * own assertion.
+ *
+ * The shipped three are written out rather than read off a stylesheet, because
+ * there is no stylesheet in a unit test; `styles.scss` is where they live and
+ * `page-palettes.spec` quotes them the same way.
+ */
+const PAPERS: Record<'light' | 'dark', readonly Paper[]> = {
+  light: papersOf('light'),
+  dark: papersOf('dark'),
+};
+
+function papersOf(theme: 'light' | 'dark'): Paper[] {
+  const shipped =
+    theme === 'light' ? ['#f6f3ec', '#fffdf8', '#ffffff'] : ['#14151a', '#1c1e25', '#23262f'];
+  return [
+    ...shipped.map((colour) => ({ colour, where: 'the page as it ships' })),
+    ...PAGE_PALETTES.flatMap((palette) =>
+      SHEETS.map((sheet) => ({
+        colour: palette[theme][sheet],
+        where: `${palette.label}'s ${sheet}`,
+      })),
+    ),
+  ];
+}
 
 describe('the character palette', () => {
   it('is ten colours, each with a name of its own', () => {
@@ -30,14 +69,14 @@ describe('the character palette', () => {
     expect(new Set(CHARACTER_COLOURS.map((c) => c.dark)).size).toBe(10);
   });
 
-  it('clears WCAG AA against every paper of its own theme', () => {
+  it('clears WCAG AA on every paper of its own theme, on all eleven pages', () => {
     for (const colour of CHARACTER_COLOURS) {
       for (const theme of ['light', 'dark'] as const) {
         for (const paper of PAPERS[theme]) {
-          const ratio = contrastRatio(colour[theme], paper);
+          const ratio = contrastRatio(colour[theme], paper.colour);
           expect(
             ratio,
-            `${colour.name} (${theme}) on ${paper} is ${ratio.toFixed(2)}:1`,
+            `${colour.name} (${theme}) on ${paper.where} ${paper.colour} is ${ratio.toFixed(2)}:1`,
           ).toBeGreaterThanOrEqual(AA_CONTRAST);
         }
       }

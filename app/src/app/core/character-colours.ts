@@ -5,12 +5,15 @@ import { Character, ThemeName } from './models';
  *
  * Ten of them, each written twice: a dark ink for the light papers and a light
  * one for the dark papers. They were not picked by eye. Each pair clears WCAG
- * AA against all three surfaces of its own theme, they sit in a narrow band of
- * lightness so no one of them shouts, and the hues were chosen by maximising
- * the smallest gap between any two of them once protanopia, deuteranopia and
- * tritanopia have each been simulated over the set — which is why the greens
- * and the teals are not evenly spaced round the wheel. `character-colours.spec`
- * holds all three of those to account.
+ * AA on every paper of its own theme — the three the app ships and the three of
+ * each of the ten pages in `page-palettes`, because this is the one colour set
+ * that is not a `--li-*` token and so the one a palette repaints the paper
+ * under and leaves where it is — they sit in a narrow band of lightness so no
+ * one of them shouts, and the hues were chosen by maximising the smallest gap
+ * between any two of them once protanopia, deuteranopia and tritanopia have
+ * each been simulated over the set — which is why the greens and the teals are
+ * not evenly spaced round the wheel. `character-colours.spec` holds all three
+ * of those to account.
  *
  * Ten colours cannot all be distinct to everyone: with red-green vision the
  * closest pair is a real pair, and the palette's job was to make the *worst*

@@ -398,8 +398,7 @@ export interface MessageEdit {
     }
 
     .message:hover .more,
-    .message:focus-within .more,
-    .more:focus-visible {
+    .message:focus-within .more {
       opacity: 1;
       color: var(--li-ink-soft);
     }

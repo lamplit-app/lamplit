@@ -250,8 +250,7 @@ export interface PromptPreviewData {
       cursor: grab;
     }
 
-    .handle:hover,
-    .handle:focus-visible {
+    .handle:hover {
       color: var(--li-accent);
     }
 

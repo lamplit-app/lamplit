@@ -298,6 +298,20 @@ const EnterKey = Extension.create<{ onEnter: () => boolean }>({
       overflow-y: auto;
       white-space: pre-wrap;
       color: var(--li-ink);
+    }
+
+    /* The one place in the app that turns the focus ring off, and it is said
+       here rather than in styles.scss because the reason is local: the composer
+       draws a .box round the editor, the author's own field and the four
+       marking pills, and lights it from :focus-within. A ring inside that lit
+       frame is a second box round the same act, which is what it looked like.
+
+       The contenteditable attribute is in the selector to win — one step over
+       the app's one focus rule in styles.scss, which catches the editor by its
+       tabindex — and it is the honest hook for it. Being contenteditable is
+       what makes a div an editor; the tabindex of 0 that brings it into reach
+       of that rule is TipTap's own and could go with any version of it. */
+    li-prose-editor .ProseMirror[contenteditable] {
       outline: none;
     }
 

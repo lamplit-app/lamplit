@@ -30,14 +30,14 @@ const CHAPTER_ID = 'chapter-1';
 /**
  * Two things on this panel decide something rather than record it.
  *
- * The contrast warning is the only place the app has an opinion about a choice
- * the reader made, and it has to be right about the arithmetic and quiet about
- * a colour it cannot read at all. And the palette row edits either the chapter
- * or the story, depending on which of them the page on screen came from —
- * writing to the wrong one looks exactly like the click doing nothing. The row
- * is `li-page-palette`, tested here rather than on its own because what it is
- * handed — the ten presets, drawn as the stylesheet draws them — is this
- * panel's answer to give.
+ * The contrast warnings are the only place the app has an opinion about a
+ * choice the reader made, and they have to be right about the arithmetic, right
+ * about which pair went under, and quiet about a colour they cannot read at
+ * all. And the palette row edits either the chapter or the story, depending on
+ * which of them the page on screen came from — writing to the wrong one looks
+ * exactly like the click doing nothing. The row is `li-page-palette`, tested
+ * here rather than on its own because what it is handed — the ten presets,
+ * drawn as the stylesheet draws them — is this panel's answer to give.
  */
 describe('ColoursPanel', () => {
   let storage: InMemoryStorage;
@@ -95,8 +95,28 @@ describe('ColoursPanel', () => {
     fixture.detectChanges();
   }
 
+  /** Every warning on the sheet, in the order the panel gives them. */
+  function warnings(): string[] {
+    return [...host().querySelectorAll('.warning')].map((p) => p.textContent.trim());
+  }
+
+  /** The one about the pair the story is read in, which most of these are. */
   function warning(): string {
-    return host().querySelector('.warning')?.textContent.trim() ?? '';
+    return warnings().find((text) => text.startsWith('Text on paper')) ?? '';
+  }
+
+  /**
+   * A page whose two watched pairs are both readable, so that a test says which
+   * one it is putting out of reach.
+   *
+   * Every swatch a settings file does not name falls back to `#000000` here —
+   * there is no stylesheet for `shippedColour` to read the shipped one off — so
+   * a panel opened on nothing at all has both pairs at 1:1 and warns twice.
+   */
+  const LEGIBLE = { ink: '#1a1a1a', surface: '#fbfaf7', page: '#f6f3ec', accent: '#6b4ea8' };
+
+  function openLegible(colours: Record<string, string> = {}): void {
+    open({ colours: { light: { ...LEGIBLE, ...colours } } });
   }
 
   /** One of the pages in the palette row, clicked by the name on it. */
@@ -116,14 +136,14 @@ describe('ColoursPanel', () => {
     });
   });
 
-  describe('the contrast warning', () => {
-    it('says nothing about text and paper a reader can actually read', () => {
-      open({ colours: { light: { ink: '#1a1a1a', surface: '#fbfaf7' } } });
-      expect(warning()).toBe('');
+  describe('the contrast warnings', () => {
+    it('says nothing about a page a reader can actually read', () => {
+      openLegible();
+      expect(warnings()).toEqual([]);
     });
 
     it('warns, with the ratio, when the pair falls under what AA asks', () => {
-      open({ colours: { light: { ink: '#1a1a1a', surface: '#fbfaf7' } } });
+      openLegible();
       pick('Text', '#b0aca4');
 
       expect(warning()).toContain('under the 4.5:1 that WCAG AA asks');
@@ -131,7 +151,7 @@ describe('ColoursPanel', () => {
     });
 
     it('stops warning the moment the pair is readable again', () => {
-      open({ colours: { light: { ink: '#b0aca4', surface: '#fbfaf7' } } });
+      openLegible({ ink: '#b0aca4' });
       expect(warning()).not.toBe('');
 
       pick('Text', '#1a1a1a');
@@ -139,7 +159,7 @@ describe('ColoursPanel', () => {
     });
 
     it('warns rather than blocks: the colour is still the one that was chosen', () => {
-      open({ colours: { light: { ink: '#1a1a1a', surface: '#fbfaf7' } } });
+      openLegible();
       pick('Text', '#b0aca4');
 
       expect(settings().ui().colours.light?.ink).toBe('#b0aca4');
@@ -149,9 +169,40 @@ describe('ColoursPanel', () => {
     it('says nothing at all about a colour it cannot read', () => {
       // Not something the picker can produce — but a settings file is a file,
       // and `NaN:1` on the page would be worse than saying nothing.
-      open({ colours: { light: { ink: 'rebeccapurple', surface: '#fbfaf7' } } });
+      openLegible({ ink: 'rebeccapurple' });
 
-      expect(warning()).toBe('');
+      expect(warnings()).toEqual([]);
+    });
+
+    /**
+     * The pair nothing on this sheet names: a filled button's label is
+     * `--mat-sys-on-primary`, which `styles.scss` sets to the page colour, so
+     * dragging Page far enough takes Send, Done and Delete with it — on sheets
+     * the reader is not looking at while they drag.
+     */
+    it('warns about a filled button when the page it is labelled in goes mid-tone', () => {
+      openLegible();
+      pick('Page', '#8a8a8a');
+
+      expect(warnings()).toHaveLength(1);
+      expect(warnings()[0]).toContain("A filled button's label is 1.9:1");
+      expect(warnings()[0]).toContain('the page colour drawn on the accent');
+    });
+
+    it('follows the accent as well, which is the other half of that pair', () => {
+      openLegible();
+      pick('Accent', '#f2efe6');
+
+      expect(warnings()[0]).toContain("A filled button's label");
+    });
+
+    it('says both when both pairs are under, story first', () => {
+      openLegible({ ink: '#b0aca4', page: '#8a8a8a' });
+
+      expect(warnings().map((text) => text.split(' is ')[0])).toEqual([
+        'Text on paper',
+        "A filled button's label",
+      ]);
     });
   });
 

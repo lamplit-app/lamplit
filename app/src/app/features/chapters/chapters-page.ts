@@ -209,8 +209,7 @@ const PINNED_SLACK = 96;
       box-shadow: var(--li-shadow-raised);
     }
 
-    .jump:hover,
-    .jump:focus-visible {
+    .jump:hover {
       color: var(--li-ink);
       border-color: var(--li-edge-accent);
     }

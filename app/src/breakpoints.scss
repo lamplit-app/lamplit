@@ -1,4 +1,4 @@
-// Every question the app asks the browser: the five widths, and the three
+// Every question the app asks the browser: the five widths, and the four
 // things the reader's own machine answers.
 //
 // All of it is here because a threshold written where it is used is a threshold
@@ -160,6 +160,20 @@ $margin-width: 42rem;
 /// Contrast turned up, which `styles.scss` answers with the stronger palette.
 @mixin more-contrast {
   @media (prefers-contrast: more) {
+    @content;
+  }
+}
+
+/// The palette taken away and the reader's own put in its place.
+///
+/// Windows High Contrast and every arrangement like it. Deliberately not the
+/// same question as `more-contrast`, which is a reader asking this app for a
+/// firmer version of its own colours; this one is the machine saying there
+/// will be no colours of ours at all. `styles.scss` answers it beside the
+/// contrast and motion blocks, and what it has to answer is only ever the same
+/// kind of thing: something the app draws that is nothing but a colour.
+@mixin forced-colors {
+  @media (forced-colors: active) {
     @content;
   }
 }

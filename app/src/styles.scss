@@ -1012,6 +1012,72 @@ app-root {
 }
 
 // ---------------------------------------------------------------------------
+// The ring. Where the keyboard is, on every control in the app.
+// ---------------------------------------------------------------------------
+//
+// One rule, because focus was eight rules in six files at four recipes: an
+// outline on the tick, a shadow round a cast's colour, a border on the swatch
+// beside it, and — five times — a change of colour and nothing else. Colour
+// alone is the one thing a focus indicator may not be. `.li-icon-button`
+// focused looked exactly like `.li-icon-button` hovered, which is a mark that
+// says "the pointer is here" being asked to say "the keyboard is here"; and
+// ten more classes had no rule at all and took whatever the browser draws,
+// with Material's own controls making a fifth look. WCAG 2.4.7 asks for the
+// mark and 2.4.11 asks that it be seen, and both are asking about the app's
+// own controls rather than the library's.
+//
+// The list is every element that stops the keyboard, and the two narrowings in
+// it are both that: `a[href]` rather than `a`, because an anchor with nowhere
+// to go is a word rather than a link; and `[tabindex='0']` rather than the
+// attribute in any state, because `-1` is the value that means *not* a stop.
+// Nothing in the app writes either — both are Material's, `0` on an
+// accordion's header and on the open tab of a tab strip, and `-1` on the sheet
+// itself, which it focuses as the sheet opens. Opened from the keyboard that
+// focus is a visible one, and it drew a 2px ring round the whole of
+// Preferences: a ring round everything says nothing at all about where the
+// keyboard is.
+//
+// Seven selectors rather than one `:where()` over the lot, which is what this
+// wanted to be, and Material is the reason it is not: `.mdc-button` carries
+// `outline: none` in a stylesheet the library injects at runtime, which is to
+// say after this file whatever this file does. A selector inside `:where()` is
+// worth nothing, ties with one class, and loses the tie by coming first — so
+// every named button in the top bar kept no ring at all. Written out, the
+// weakest of the seven is a type selector and a pseudo-class, which is one
+// step above a class and beats it. That is still nearly nothing: a component
+// with something else to say about its own focus says it in a rule of its own
+// and wins, because Angular adds an attribute to every selector in a
+// component's stylesheet and that is the step above this one.
+//
+// Two have something of their own to say, and only one of them says no. The
+// composer lights the border of the box around the editor from
+// `:focus-within`, and the ProseMirror inside it is `outline: none` so that
+// one act is not marked twice — `prose-editor.ts` is where that is written and
+// why. A box of text lights its border as well and keeps the ring, because a
+// border going from grey to violet is exactly the colour-only mark this rule
+// exists to stop being the whole of the answer.
+//
+// An `outline` rather than a border or a shadow, and this is the reason it can
+// be one rule: an outline takes no room in the layout and is drawn outside the
+// box, over whatever is beside it, so the ring can arrive on a control of any
+// size in any row without moving a word. The offset is what keeps it off the
+// control's own hairline.
+//
+// `--li-ring` is the colour and it is on the strength scale, so this, the
+// border a focused box lights, and the ring round the page palette a story is
+// read on are the same accent at the same strength.
+button:focus-visible,
+[role='button']:focus-visible,
+a[href]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex='0']:focus-visible {
+  outline: 2px solid var(--li-ring);
+  outline-offset: 2px;
+}
+
+// ---------------------------------------------------------------------------
 // The box. Every place the app takes a word from the writer.
 // ---------------------------------------------------------------------------
 //
@@ -1050,8 +1116,12 @@ select {
     color: var(--li-muted);
   }
 
+  // Both halves, on purpose. The ring is the rule above, and it is what says
+  // the keyboard is here; the border going to the accent is what a box in this
+  // app has always done and is a colour on its own, which is the thing that
+  // rule exists because a mark may not be. The `outline: none` that used to be
+  // here is the whole of what it took to lose the first one.
   &:focus {
-    outline: none;
     border-color: var(--li-ring);
   }
 
@@ -1224,11 +1294,6 @@ input[type='checkbox'] {
 
   &:checked::after {
     opacity: 1;
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--li-ring);
-    outline-offset: 2px;
   }
 }
 
@@ -1690,8 +1755,10 @@ hr {
   line-height: var(--li-line-flush);
   cursor: pointer;
 
-  &:hover:not(:disabled),
-  &:focus-visible {
+  // The pointer's mark only. It was the keyboard's as well, which made a
+  // focused button and a hovered one the same button; the ring says the other
+  // thing, and says it the way every other control in the app does.
+  &:hover:not(:disabled) {
     color: var(--li-ink);
     background: var(--li-tint-2);
   }
@@ -2141,4 +2208,66 @@ button {
 // with nothing to animate.
 :root[data-motion='reduced'] {
   @include still;
+}
+
+// ---------------------------------------------------------------------------
+// The palette taken away.
+// ---------------------------------------------------------------------------
+//
+// Windows High Contrast, and every arrangement like it, is not a contrast mode
+// of the app's. It does not ask for firmer colours — it takes the colours
+// away: every one a rule of ours sets is replaced by one of the handful the
+// reader chose, the text, the paper, a control's face and the highlight, and
+// the app has no say in which. For an app that is text on paper that is very
+// nearly the whole answer already, and what it costs is exactly the things
+// that are *only* a colour.
+//
+// There were three, and none of them had a rule anywhere in `app/src` before
+// this one.
+//
+// Two are the same thing twice. `appearance: none` is what makes the select
+// and the tick the app's own controls rather than the operating system's, and
+// it hands us a box to draw in colours we no longer have: the select's arrow
+// is two gradients in the muted ink, and a gradient is not one of the
+// properties that gets forced, so left alone it is the one off-palette mark on
+// the sheet. So the select goes back to the machine, which has a select of its
+// own and draws its arrow in the reader's palette, and our gradients go with
+// it — along with the room they were being given on the right.
+//
+// The tick stays ours, because the box is a box either way and the mark in it
+// is two borders, which *are* forced and so are drawn in the reader's ink for
+// free. What is lost is the accent wash that says it is ticked, and `Highlight`
+// with `HighlightText` over it is what this palette has instead: the pair the
+// reader's own machine uses for a thing that is chosen.
+//
+// The switch is the third and there is nothing to hand it back to: it is a
+// `role="switch"` button with a knob inside it, and no platform has that
+// control. So it is drawn. `ButtonText` is the ink of a control here, and it
+// is the knob's line always and its fill when the switch is on — which leaves
+// on and off saying two things rather than one, filled and at the far end of
+// the track.
+@include bp.forced-colors {
+  select {
+    appearance: auto;
+    padding-right: var(--field-pad-x);
+    background-image: none;
+  }
+
+  input[type='checkbox'] {
+    &:checked {
+      background: Highlight;
+    }
+
+    &::after {
+      border-color: HighlightText;
+    }
+  }
+
+  .li-knob {
+    border: 1px solid ButtonText;
+  }
+
+  .li-switch[aria-checked='true'] .li-knob {
+    background: ButtonText;
+  }
 }

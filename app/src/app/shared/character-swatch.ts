@@ -64,8 +64,7 @@ import { SettingsStore } from '../store/settings-store';
       cursor: pointer;
     }
 
-    .dot:hover,
-    .dot:focus-visible {
+    .dot:hover {
       box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 25%, transparent);
     }
 
@@ -93,8 +92,7 @@ import { SettingsStore } from '../store/settings-store';
         0 0 0 4px var(--li-ink-soft);
     }
 
-    .choice:hover,
-    .choice:focus-visible {
+    .choice:hover {
       border-color: var(--li-ink-soft);
     }
   `,

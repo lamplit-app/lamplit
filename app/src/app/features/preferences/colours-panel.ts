@@ -18,8 +18,55 @@ import { SettingsStore } from '../../store/settings-store';
 import { StoryStore } from '../../store/story-store';
 import { PagePalette } from './page-palette';
 
+/** One of the pairs the panel has an opinion about. */
+interface Pair {
+  /** For the template's `track`, and nothing else. */
+  key: string;
+  /** Drawn on `back`; both of them are swatches on this sheet. */
+  front: ColourKey;
+  back: ColourKey;
+  /** What the pair is, to open the sentence with. */
+  of: string;
+  /** Why it matters, to close it with. */
+  because: string;
+}
+
 /**
- * Every colour the story is read in, and the one opinion the app has about
+ * The two pairs, in the order the panel gives them.
+ *
+ * Text on paper is the story itself, and it is the pair a reader dragging
+ * either swatch can watch themselves ruin. The second cannot be seen from this
+ * sheet at all: `styles.scss` hands Material `--mat-sys-on-primary:
+ * var(--li-page)`, so the label of a filled button is the page colour drawn on
+ * the accent, and Send, Done and Delete are set in a pair no swatch here names.
+ * It ships at 5.78:1 in the light theme and 7.84 in the dark, and it held while
+ * both halves of it were the app's — Page is a swatch now, and a mid-tone one
+ * takes every filled button in the app with it, on sheets the reader is not
+ * looking at.
+ *
+ * Of the two ways to answer that — a pair for `on-primary` that is safe on any
+ * page, or the panel saying so — this is the second, because there is no such
+ * pair: every colour the app could alias it to is a swatch on this sheet too.
+ */
+const PAIRS: readonly Pair[] = [
+  {
+    key: 'story',
+    front: 'ink',
+    back: 'surface',
+    of: 'Text on paper',
+    because: 'this is the one pair the whole story is read in',
+  },
+  {
+    key: 'buttons',
+    front: 'page',
+    back: 'accent',
+    of: "A filled button's label",
+    because: 'Send, Done and Delete are the page colour drawn on the accent',
+  },
+];
+
+/**
+ * Every colour the story is read in, and the two opinions the app has about
  * them.
  *
  * Three layers, in the order the panel shows them: the page as it ships,
@@ -29,9 +76,10 @@ import { PagePalette } from './page-palette';
  * app, but this is where colours are changed, so this is where somebody comes
  * looking for them.
  *
- * The opinion is the contrast warning. It is the only place the app has one
- * about a choice the reader made, and it is a warning rather than a block:
- * somebody deliberately setting a low-contrast page is allowed to.
+ * The opinions are the contrast warnings, and `PAIRS` above is the whole of
+ * them. They are the only place the app has one about a choice the reader made,
+ * and they warn rather than block: somebody deliberately setting a low-contrast
+ * page is allowed to.
  */
 @Component({
   selector: 'li-colours-panel',
@@ -72,8 +120,8 @@ import { PagePalette } from './page-palette';
         }
       </div>
 
-      @if (contrastWarning()) {
-        <p class="warning li-warning" role="status">{{ contrastWarning() }}</p>
+      @for (warning of contrastWarnings(); track warning.key) {
+        <p class="warning li-warning" role="status">{{ warning.text }}</p>
       }
 
       <div class="reset">
@@ -212,6 +260,12 @@ import { PagePalette } from './page-palette';
       color: var(--li-ink);
     }
 
+    /* Both pairs can be under at once, and two warnings with nothing between
+       them read as one paragraph that has lost its way. */
+    .warning + .warning {
+      margin-top: var(--li-space-sm);
+    }
+
     .reset {
       display: flex;
       justify-content: flex-end;
@@ -345,20 +399,28 @@ export class ColoursPanel {
   });
 
   /**
-   * Text on paper, which is the pair a reader loses the story over. A warning
-   * and not a block: someone deliberately setting a low-contrast palette is
-   * allowed to, they just should not do it by accident.
+   * Whichever of the two pairs the reader has put out of reach. Warnings and
+   * not blocks: someone deliberately setting a low-contrast palette is allowed
+   * to, they just should not do it by accident.
+   *
+   * Silent about a colour it cannot read — a settings file is a file, and
+   * `NaN:1` on the sheet would be worse than saying nothing.
    */
-  protected readonly contrastWarning = computed(() => {
+  protected readonly contrastWarnings = computed(() => {
     const swatches = this.swatches();
-    const ink = swatches.find((s) => s.key === 'ink')?.colour ?? '';
-    const paper = swatches.find((s) => s.key === 'surface')?.colour ?? '';
-    const ratio = contrastRatio(ink, paper);
-    if (Number.isNaN(ratio) || ratio >= AA_CONTRAST) return '';
-    return (
-      `Text on paper is ${ratio.toFixed(1)}:1, under the ${AA_CONTRAST}:1 that WCAG AA asks of ` +
-      `body text. Nothing stops you — but this is the one pair the whole story is read in.`
-    );
+    const colour = (key: ColourKey) => swatches.find((s) => s.key === key)?.colour ?? '';
+    return PAIRS.flatMap((pair) => {
+      const ratio = contrastRatio(colour(pair.front), colour(pair.back));
+      if (Number.isNaN(ratio) || ratio >= AA_CONTRAST) return [];
+      return [
+        {
+          key: pair.key,
+          text:
+            `${pair.of} is ${ratio.toFixed(1)}:1, under the ${AA_CONTRAST}:1 that WCAG AA asks ` +
+            `of body text. Nothing stops you — but ${pair.because}.`,
+        },
+      ];
+    });
   });
 
   protected setColour(key: ColourKey, event: Event): void {

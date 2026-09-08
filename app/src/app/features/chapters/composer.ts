@@ -293,8 +293,7 @@ import { TextValue } from '../../shared/text-value';
       background: none;
     }
 
-    .quiet:hover,
-    .quiet:focus-visible {
+    .quiet:hover {
       color: var(--li-ink-soft);
       border-color: var(--li-border);
     }

@@ -38,6 +38,19 @@ are now yours to overrule in this app alone:
 - **Motion** has two: follow it, or always still. There is no *always animate*, and that is
   deliberate — nothing here moves in order to tell you something, so a computer asking for
   stillness is never argued with from a panel.
+- **One focus ring, on everything.** Wherever the keyboard is, the same accent ring says so — on a
+  button in the bar, a field in a sheet, a pill under the composer, the handle beside a block of
+  the prompt. Nine controls used to answer that in four different ways and a dozen more not at all,
+  and five of the nine said it by changing colour alone: a focused message action looked exactly
+  like one under the pointer.
+- **Windows' contrast themes are answered as well**, and they are not a question this panel asks:
+  with one on, your palette replaces Lamplit's outright. The three controls the app draws for
+  itself used to disappear into it — a dropdown lost its arrow, a tick box its fill, a cast row's
+  switch its knob — and all three are now drawn in your own colours.
+- **The contrast warning under Colours watches a second pair.** It has always said when your text
+  and your paper fall under what WCAG AA asks; it now says the same of the label on a filled
+  button, which is the page colour drawn on the accent. A mid-tone **Page** takes *Send*, *Done*
+  and *Delete* with it, on sheets you are not looking at while you drag.
 
 **A read through the whole of it, and the things that read found.** Nothing here is a feature; all
 of it is something that was wrong. The ones you could have noticed:

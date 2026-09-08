@@ -278,6 +278,14 @@ There is no *always animate*, and that is deliberate: nothing in Lamplit moves i
 something, so a computer asking for stillness is never overruled from this panel. **Always still**
 is for a computer that has no such setting, or one you would rather leave alone.
 
+**Windows' *Contrast themes*** — and anything else that replaces the colours of every app with a
+set of your own — is a third thing your computer can ask, and it is not one of the questions here:
+your palette wins outright, and there is nothing for a panel to overrule. Lamplit's part is only to
+stay drawn in it. Nearly all of the app is text, a rule and a box, which follow for free; the three
+controls it draws for itself used to vanish into your colours, and now keep an arrow on a dropdown,
+a fill in a tick box and a knob on a cast row's switch. **Wherever the keyboard is**, in any of
+this, the same accent ring says so — one ring, on every button, field, pill and handle in the app.
+
 > Both live in `settings.json` rather than in the story, so they are the app being set up and not
 > one story's look — and **Follow my computer** is answered by whichever computer is showing
 > Lamplit, which matters when the same `settings.json` is being read on a phone as well.
@@ -313,7 +321,9 @@ when it moves.
   or what Lamplit ships — and asks first. It clears only what you changed, so a colour you never
   touched cannot drift.
 - **A contrast warning**, not a block. If your text and your paper fall below the 4.5:1 that WCAG
-  AA asks of body text, it says so and lets you carry on.
+  AA asks of body text, it says so and lets you carry on. It watches a second pair you cannot see
+  from here, too: the label on a filled button — **Send**, **Done**, **Delete** — is the page
+  colour drawn on the accent, so a mid-tone **Page** takes every one of them with it.
 
 Only what you changed is written down, so a colour a later version of Lamplit improves still
 reaches you unless you had overridden that exact one.
