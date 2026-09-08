@@ -3,6 +3,7 @@ import { DEFAULT_STORY_TITLE } from '../core/defaults';
 import {
   BlockId,
   Character,
+  Instruction,
   LoreCategory,
   LoreEntry,
   RoleplaySettings,
@@ -43,6 +44,16 @@ export class StoryStore {
   readonly stories = computed(() =>
     [...this.state()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
   );
+
+  /**
+   * Whether the open story is still called what the app called it.
+   *
+   * Two places ask, and neither should be comparing a title to a constant of
+   * its own: the first-run questions open the title box empty rather than with
+   * our word already in it, and `ChapterStore.isUntouched` counts it as one of
+   * the signs that nobody has started yet.
+   */
+  readonly isUntitled = computed(() => this.story().title === DEFAULT_STORY_TITLE);
 
   /** There is always an open story: the app creates one rather than ask. */
   readonly story = computed<Story>(() => {
@@ -214,7 +225,17 @@ export class StoryStore {
     if (text) this.setStorySoFar(text);
   }
 
-  setSummaryPrompt(patch: Partial<Story['world']['summary']>): void {
+  /**
+   * The narrator's preamble: the switch under Story, the box under Story, and
+   * the box in the chapter panel, which adopts ours by writing into it. All
+   * three are this, so that "whose words are these" is one field of one
+   * document and not three spellings of a patch.
+   */
+  setNarrator(patch: Partial<Instruction>): void {
+    this.patch({ narrator: { ...this.story().narrator, ...patch } });
+  }
+
+  setSummaryPrompt(patch: Partial<Instruction>): void {
     const world = this.story().world;
     this.patch({ world: { ...world, summary: { ...world.summary, ...patch } } });
   }

@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { AUTHOR_DIRECTIONS_PROMPT, DEFAULT_GENERATION } from './defaults';
 import { Chapter, ChapterMessage, Story } from './models';
-import { PINNED_LAST, buildPrompt, buildSummaryPrompt, withDirection } from './prompt-builder';
+import {
+  PINNED_LAST,
+  buildPrompt,
+  buildSummaryPrompt,
+  splitDirection,
+  withDirection,
+} from './prompt-builder';
 import { heuristicEstimator } from './tokens';
 import { newChapter, newStory } from './fixtures';
 
@@ -85,6 +91,57 @@ describe('what goes on the wire', () => {
     );
 
     expect(built.messages[1].content).toContain('[Author: The storm arrives tonight.]');
+  });
+});
+
+/**
+ * The tag the composer takes apart and the brackets the request puts back
+ * together are one grammar, and these are the two halves of it meeting. Both
+ * halves used to be true and only one of them was tested: the split lived in
+ * `composer.ts`, where a spec could not reach it.
+ */
+describe('the [AUTHOR] shorthand', () => {
+  it('takes the tag and everything after it out of the prose', () => {
+    expect(splitDirection('Mara pushes the door open.\n[AUTHOR] The room is empty.')).toEqual({
+      prose: 'Mara pushes the door open.',
+      direction: 'The room is empty.',
+    });
+  });
+
+  it('is a line of its own, in any case, however it is indented', () => {
+    expect(splitDirection('Prose.\n  \t[Author]   Keep it short.')?.direction).toBe(
+      'Keep it short.',
+    );
+    expect(splitDirection('[author] Keep it short.')).toEqual({
+      prose: '',
+      direction: 'Keep it short.',
+    });
+  });
+
+  it('says nothing about a draft with no tag in it, which is most of them', () => {
+    expect(splitDirection('Mara pushes the door open.')).toBeNull();
+    // Not at the start of a line, so it is prose that mentions the word.
+    expect(splitDirection('She wrote [AUTHOR] on the slate.')).toBeNull();
+  });
+
+  it('is the same request as the button and the field beside Send', () => {
+    // The round trip: what the shorthand splits out, put back together, is the
+    // message the other way in produces from the same two halves.
+    const typed = 'Mara pushes the door open.\n[AUTHOR] The room is empty.';
+    const split = splitDirection(typed)!;
+    expect(withDirection(split.prose, split.direction)).toBe(
+      withDirection('Mara pushes the door open.', 'The room is empty.'),
+    );
+    expect(withDirection(split.prose, split.direction)).toBe(
+      'Mara pushes the door open.\n\n[Author: The room is empty.]',
+    );
+  });
+
+  it('carries a direction alone the same way, with no prose to hold it up', () => {
+    const split = splitDirection('[AUTHOR] The storm arrives tonight.')!;
+    expect(withDirection(split.prose, split.direction)).toBe(
+      '[Author: The storm arrives tonight.]',
+    );
   });
 });
 

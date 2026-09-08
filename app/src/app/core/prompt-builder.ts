@@ -10,6 +10,7 @@ import {
   ChapterMessage,
   Character,
   GenerationParams,
+  Instruction,
   LoreEntry,
   OutboundMessage,
   Story,
@@ -74,6 +75,30 @@ export function blockOrder(story: Pick<Story, 'promptOrder'>): BlockId[] {
 export function isDefaultOrder(story: Pick<Story, 'promptOrder'>): boolean {
   const order = movableOrder(story);
   return MOVABLE_BLOCKS.every((id, i) => order[i] === id);
+}
+
+/**
+ * The order to store when the preview's own rows have been dragged into
+ * `shown`.
+ *
+ * A block with nothing in it is not drawn, so what is on screen is only part
+ * of the story's order: the shown blocks are written back into the slots they
+ * occupied, which leaves the invisible ones exactly where they were. An empty
+ * persona should not jump about because the world moved.
+ *
+ * Here rather than in the sheet that drags them because it is an invariant of
+ * `promptOrder` — the same one `movableOrder` above enforces from the other
+ * side — and because it is the only part of that sheet a spec can hold.
+ */
+export function movableOrderFrom(story: Pick<Story, 'promptOrder'>, shown: BlockId[]): BlockId[] {
+  const order = movableOrder(story);
+  const slots = order.flatMap((id, i) => (shown.includes(id) ? [i] : []));
+  const next = [...order];
+  slots.forEach((slot, i) => {
+    const id = shown[i];
+    if (id) next[slot] = id;
+  });
+  return next;
 }
 
 export interface PromptBlock {
@@ -233,6 +258,32 @@ export function withDirection(content: string, direction: string | undefined): s
 }
 
 /**
+ * The other half of that grammar: `[AUTHOR]` at the start of a line takes that
+ * line and everything after it out of the prose.
+ *
+ * `null` when there is no tag, which is the common case and the one the caller
+ * has nothing to do about. The tag is a shorthand for the button beside Send
+ * rather than a syntax of the story's — the composer splits as it is typed and
+ * shows both halves, so what leaves the box is always what the writer can see
+ * in it — and it lives here beside the function that puts the two halves back
+ * together, because one half of a grammar in core and the other in a component
+ * is how the two come to disagree.
+ *
+ * Case-insensitive and multiline: the tag can open the draft or begin any line
+ * of it, with leading spaces or tabs, and it takes the rest of the draft with
+ * it. Whatever was typed before it is the prose, with the whitespace that ran
+ * up to the tag dropped.
+ */
+export function splitDirection(typed: string): { prose: string; direction: string } | null {
+  const match = /^[ \t]*\[author\][ \t]*/im.exec(typed);
+  if (!match) return null;
+  return {
+    prose: typed.slice(0, match.index).replace(/\s+$/, ''),
+    direction: typed.slice(match.index + match[0].length).trim(),
+  };
+}
+
+/**
  * What the model is told at the point the cast changed. Short and firm: it is
  * read as an instruction, and the history above it is left exactly as it was
  * written — the model is told what it was, not handed a rewritten past.
@@ -294,7 +345,7 @@ export function buildSummaryPrompt(story: Story, chapter: Chapter): OutboundMess
     existing
       ? `The story so far, as it stands:\n${existing}`
       : 'There is no summary of the story yet: this is the first chapter to fold in.',
-    `Chapter ${chapter.number}${title ? `, ${title}` : ''} has just finished.`,
+    `${chapterName(chapter)}${title ? `, ${title}` : ''} has just finished.`,
   ];
   if (chapter.scene.trim()) parts.push(`The scene it opened on:\n${chapter.scene.trim()}`);
   const transcript = chapterTranscript(story, chapter);
@@ -332,15 +383,94 @@ function speakerLabel(story: Story, message: ChapterMessage): string {
   return speaker?.name.trim() || 'Story';
 }
 
-/** Ours, or the writer's own once they have overridden it. */
-export function summaryInstruction(story: Story): string {
-  const custom = story.world.summary.prompt.trim();
-  return story.world.summary.useDefault || !custom ? DEFAULT_SUMMARY_INSTRUCTION : custom;
+// ---------------------------------------------------------------------------
+// The two instructions the writer may take over
+// ---------------------------------------------------------------------------
+//
+// The narrator's preamble and the instruction a chapter is closed with are the
+// same object twice: ours until the writer says otherwise, theirs after that.
+// Each is asked about in three or four places — the block builder below, the
+// chapter panel, the sheet that edits it, the sheet that uses it — and every
+// one of those has to give the same answer the request does, because the guide
+// promises that what "What the model sees" shows is what goes on the wire.
+//
+// It did not. The panel showed `useDefault ? ours : theirs` while the request
+// sent `useDefault || nothing-written ? ours : theirs`, so a story with the
+// override on and the box emptied showed an empty narrator and was sent the
+// default. These three are what everything asks now.
+
+/**
+ * Whether that instruction is the one Lamplit ships.
+ *
+ * An override with an empty box is not an instruction, it is a box somebody
+ * emptied — and the alternative to falling back is a request with no preamble
+ * at all, which nobody asked for. So this is the honest answer to what is
+ * *being sent*, and it is what a box dims for.
+ */
+export function isDefaultInstruction(chosen: Instruction): boolean {
+  return chosen.useDefault || !chosen.prompt.trim();
 }
+
+/** Ours, or the writer's own once they have overridden it and written one. */
+export function narratorInstruction(story: Pick<Story, 'narrator'>): string {
+  return instructionOf(story.narrator, DEFAULT_NARRATOR_PROMPT);
+}
+
+/** And the same for the instruction a chapter is closed with. */
+export function summaryInstruction(story: Pick<Story, 'world'>): string {
+  return instructionOf(story.world.summary, DEFAULT_SUMMARY_INSTRUCTION);
+}
+
+function instructionOf(chosen: Instruction, ours: string): string {
+  return isDefaultInstruction(chosen) ? ours : chosen.prompt.trim();
+}
+
+/**
+ * And what to store when the "write my own" switch is thrown, which was the
+ * same six lines under Story and under World.
+ *
+ * Turning it on starts from ours rather than from an empty box: somebody who
+ * wants their own words almost always wants to edit ours, and a blank page is
+ * not an offer. Turning it off keeps what was written, so the switch is a way
+ * back rather than a delete — which is what makes it safe to throw twice.
+ */
+export function overriding(chosen: Instruction, own: boolean, ours: string): Instruction {
+  return { useDefault: !own, prompt: chosen.prompt || (own ? ours : '') };
+}
+
+// ---------------------------------------------------------------------------
+// What a chapter is called, and what was written in it
+// ---------------------------------------------------------------------------
+//
+// Here because the builder names a chapter twice itself — the scene block and
+// the instruction a chapter is closed with both open with it — and because the
+// app was composing the heading by hand in four components at two different
+// fallback rules. The em dash is the app's own and never goes to the model: the
+// two prompt sites use a comma, and say so where they are written.
 
 /** A chapter with no title of its own is known by its scene's first line. */
 export function chapterTitle(chapter: Pick<Chapter, 'title' | 'scene'>): string {
   return chapter.title.trim() || firstLine(chapter.scene);
+}
+
+/** What a chapter is called with nothing but its place in the story to go by. */
+export function chapterName(chapter: Pick<Chapter, 'number'>): string {
+  return `Chapter ${chapter.number}`;
+}
+
+/** Its place and its name: the heading the app puts over a chapter. */
+export function chapterHeading(chapter: Pick<Chapter, 'number' | 'title' | 'scene'>): string {
+  const title = chapterTitle(chapter);
+  return title ? `${chapterName(chapter)} — ${title}` : chapterName(chapter);
+}
+
+/**
+ * What was written in a chapter. The records of the cast changing are in the
+ * list but are not of it: they carry no words, they are nobody's turn, and a
+ * chapter's size is what was written in it.
+ */
+export function writtenIn(chapter: Pick<Chapter, 'messages'>): ChapterMessage[] {
+  return chapter.messages.filter((m) => m.kind !== 'cast');
 }
 
 /** The scene's opening line, trimmed to something a list row can hold. */
@@ -381,10 +511,7 @@ function systemBlocks(
 }
 
 function modeBlock(story: Story): string {
-  if (story.mode === 'narrator') {
-    const custom = story.narrator.prompt.trim();
-    return story.narrator.useDefault || !custom ? DEFAULT_NARRATOR_PROMPT : custom;
-  }
+  if (story.mode === 'narrator') return narratorInstruction(story);
 
   const cast = story.characters.filter((c) => c.enabled && c.name.trim());
   if (!cast.length) {
@@ -442,11 +569,17 @@ function loreBlock(lore: readonly LoreHit[]): string {
   return `What is true in this world:\n${lines.join('\n')}`;
 }
 
-function sceneBlock(chapter: Chapter): string {
+/**
+ * The chapter, as the model is told about it. Exported and over a `Pick`
+ * because the scene sheet costs this exact string as it is typed — it used to
+ * cost a copy of it, which wrote the comma whether or not there was a title for
+ * it to follow.
+ */
+export function sceneBlock(chapter: Pick<Chapter, 'number' | 'title' | 'scene'>): string {
   const scene = chapter.scene.trim();
   if (!scene) return '';
   const title = chapter.title.trim();
-  return `Chapter ${chapter.number}${title ? `, ${title}` : ''}. The scene:\n${scene}`;
+  return `${chapterName(chapter)}${title ? `, ${title}` : ''}. The scene:\n${scene}`;
 }
 
 function styleBlock(story: Story): string {

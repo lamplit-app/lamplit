@@ -29,11 +29,13 @@ type Fixture = ReturnType<typeof TestBed.createComponent<Host>>;
 
 /** Types into the box the way a person does, without any focus involved. */
 function type(fixture: Fixture, text: string): void {
-  const host = fixture.nativeElement as HTMLElement;
-  const box = host.querySelector('textarea')!;
-  box.value = text;
-  box.dispatchEvent(new Event('input'));
+  box(fixture).value = text;
+  box(fixture).dispatchEvent(new Event('input'));
   fixture.detectChanges();
+}
+
+function box(fixture: Fixture): HTMLTextAreaElement {
+  return (fixture.nativeElement as HTMLElement).querySelector('textarea')!;
 }
 
 describe('EditorField', () => {
@@ -62,6 +64,42 @@ describe('EditorField', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.saved).toEqual([]);
+  });
+
+  /**
+   * The document is what the box shows, and a store is allowed to answer a
+   * save with something other than what it was handed — an emptied narrator
+   * instruction comes back as the one Lamplit ships, because an empty
+   * instruction is not one. The box used to keep the emptiness it had saved,
+   * and when the answer happened to be the string it already held, nothing
+   * put it right: the box read empty while the request went out full.
+   */
+  it('goes back to showing the document, whatever the document made of the save', async () => {
+    const fixture = await open();
+
+    // Emptied and left, which is the save. The host holds what it held — a
+    // store answering an empty instruction with the one it falls back to gives
+    // the box the same string it was already bound to, so nothing about the
+    // binding changes and only the box going back to it can put it right.
+    type(fixture, '');
+    box(fixture).dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.saved).toEqual(['']);
+    expect(box(fixture).value).toBe('The lighthouse keeper, missing since spring.');
+  });
+
+  it('hands the box back to a document that changed under it', async () => {
+    const fixture = await open();
+    type(fixture, 'Half a sentence, still being');
+
+    // The model writing a summary into this box, or a reset putting text back.
+    fixture.componentInstance.stored.set('Written from somewhere else.');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(box(fixture).value).toBe('Written from somewhere else.');
   });
 
   it('never writes back a box that was only ever shown', async () => {

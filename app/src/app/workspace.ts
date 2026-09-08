@@ -1,5 +1,4 @@
 import { Component, afterNextRender, effect, inject, untracked } from '@angular/core';
-import { DEFAULT_STORY_TITLE } from './core/defaults';
 import { desktop } from './core/desktop';
 import { MORE_CONTRAST, applyUi } from './core/theming';
 import { ChapterPanel } from './features/chapters/chapter-panel';
@@ -191,20 +190,8 @@ export class Workspace {
   private async askWhatIsMissing(): Promise<void> {
     if (!this.settings.isConnected()) await this.dialogs.openModel(true);
     if (this.chapters.chapter().scene.trim()) return;
-    if (this.neverWrittenIn()) await this.dialogs.setUpFirstStory();
+    if (this.chapters.isUntouched()) await this.dialogs.setUpFirstStory();
     await this.dialogs.openScene(this.chapters.chapter().id, true);
-  }
-
-  /** One default story, one empty chapter, nothing typed anywhere yet. */
-  private neverWrittenIn(): boolean {
-    const story = this.stories.story();
-    return (
-      story.title === DEFAULT_STORY_TITLE &&
-      !story.persona.name.trim() &&
-      !story.world.storySoFar.trim() &&
-      this.chapters.chapters().length === 1 &&
-      this.chapters.isEmpty()
-    );
   }
 
   /**

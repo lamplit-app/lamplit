@@ -365,6 +365,18 @@ export interface ScanSettings {
   matchWholeWords: boolean;
 }
 
+/**
+ * One of the two instructions the writer may take over: ours until they say
+ * otherwise, theirs after that. The narrator's preamble and the instruction a
+ * chapter is closed with are the same object, and `isDefaultInstruction` in
+ * `prompt-builder.ts` is the one place that decides which of the two is being
+ * sent — an override with an empty box is still ours.
+ */
+export interface Instruction {
+  useDefault: boolean;
+  prompt: string;
+}
+
 export interface StoryWorld {
   /**
    * Compulsory, always injected. Closing a chapter rewrites it rather than
@@ -372,7 +384,7 @@ export interface StoryWorld {
    */
   storySoFar: string;
   /** How "close chapter" is asked to rewrite it; `useDefault` keeps ours. */
-  summary: { useDefault: boolean; prompt: string };
+  summary: Instruction;
   entries: LoreEntry[];
   scan: ScanSettings;
   /**
@@ -396,7 +408,7 @@ export interface Story {
   updatedAt: string;
   mode: StoryMode;
   /** Narrator mode only; `useDefault` keeps the built-in preamble. */
-  narrator: { useDefault: boolean; prompt: string };
+  narrator: Instruction;
   characters: Character[];
   /** Role-play only; ensemble, which is what every story before it did. */
   roleplay: RoleplaySettings;

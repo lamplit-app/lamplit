@@ -676,4 +676,46 @@ describe('ChapterStore and a story that has just been made', () => {
     expect(store().chapters()).toHaveLength(1);
     expect(store().chapter().storyId).toBe(stories().story().id);
   });
+
+  /**
+   * What the app asks before it puts the first-run questions over a story that
+   * already exists — it always exists, because the app makes one rather than
+   * ask. The test lived in `Workspace`, where nothing could hold it; each of
+   * these five is a way somebody could already have begun, and any one of them
+   * means the questions would be asked over their work.
+   */
+  describe('and whether anybody has begun', () => {
+    it('is untouched on an install with nothing in it', () => {
+      expect(store().isUntouched()).toBe(true);
+    });
+
+    it('is not, the moment the story has a name of its own', () => {
+      stories().patch({ title: 'The Lighthouse' });
+      expect(store().isUntouched()).toBe(false);
+    });
+
+    it('is not, once there is a persona or a story so far', () => {
+      stories().patch({ persona: { name: 'Mara', description: '' } });
+      expect(store().isUntouched()).toBe(false);
+
+      stories().patch({ persona: { name: '', description: '' } });
+      expect(store().isUntouched()).toBe(true);
+
+      stories().setStorySoFar('She arrived on the island.');
+      expect(store().isUntouched()).toBe(false);
+    });
+
+    it('is not, once a line has been written or a second chapter started', () => {
+      store().update(store().chapter().id, {
+        messages: [{ id: 'm1', role: 'user', content: 'I knock.', createdAt: '' }],
+      });
+      expect(store().isUntouched()).toBe(false);
+
+      store().clearMessages();
+      expect(store().isUntouched()).toBe(true);
+
+      store().createChapter('A second scene.');
+      expect(store().isUntouched()).toBe(false);
+    });
+  });
 });

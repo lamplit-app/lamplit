@@ -5,6 +5,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { DEFAULT_NARRATOR_PROMPT } from '../../core/defaults';
 import { ReplyLength, RoleplayCasting, StoryMode } from '../../core/models';
+import { isDefaultInstruction, narratorInstruction, overriding } from '../../core/prompt-builder';
 import { StoryStore } from '../../store/story-store';
 import { CharacterSwatch } from '../../shared/character-swatch';
 import { EditorField } from '../../shared/editor-field';
@@ -67,13 +68,19 @@ export interface StoryDialogData {
                 Write my own narrator instructions
               </mat-slide-toggle>
 
+              <!-- The switch is the story's own flag, so it is what decides
+                   whether there is a box at all. What is in the box is what the
+                   request is being sent: the story's words, or — with the box
+                   emptied — ours, dimmed, exactly as the chapter panel shows
+                   them. Typing over them is what adopts them. -->
               @if (story().narrator.useDefault) {
-                <p class="li-preset">{{ defaultPrompt }}</p>
+                <p class="li-preset">{{ narratorText() }}</p>
               } @else {
                 <li-editor-field
                   class="li-rows-tall"
                   label="Narrator instructions"
-                  [value]="story().narrator.prompt"
+                  [value]="narratorText()"
+                  [dimmed]="!ownNarrator()"
                   (save)="setNarratorPrompt($event)"
                 />
               }
@@ -293,7 +300,9 @@ export interface StoryDialogData {
 export class StoryDialog {
   protected readonly stories = inject(StoryStore);
   protected readonly story = this.stories.story;
-  protected readonly defaultPrompt = DEFAULT_NARRATOR_PROMPT;
+  /** The words being sent, and whether they are the story's own; see the panel. */
+  protected readonly narratorText = computed(() => narratorInstruction(this.story()));
+  protected readonly ownNarrator = computed(() => !isDefaultInstruction(this.story().narrator));
 
   protected readonly lengths: { value: ReplyLength; label: string }[] = [
     { value: 'short', label: 'Short' },
@@ -330,18 +339,11 @@ export class StoryDialog {
   }
 
   protected setOverride(override: boolean): void {
-    const narrator = this.story().narrator;
-    this.stories.patch({
-      narrator: {
-        useDefault: !override,
-        // Starting from the default beats starting from an empty box.
-        prompt: narrator.prompt || (override ? DEFAULT_NARRATOR_PROMPT : ''),
-      },
-    });
+    this.stories.setNarrator(overriding(this.story().narrator, override, DEFAULT_NARRATOR_PROMPT));
   }
 
   protected setNarratorPrompt(prompt: string): void {
-    this.stories.patch({ narrator: { ...this.story().narrator, prompt } });
+    this.stories.setNarrator({ prompt });
   }
 
   protected setPersona(patch: Partial<{ name: string; description: string }>): void {

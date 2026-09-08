@@ -23,7 +23,9 @@ what the world does in return. The default instruction asks for third person, pa
 literary prose, and for it to end on something you can answer — and never to write for you.
 
 **Write my own** replaces that instruction entirely, for this story. The default is shown so you
-can see what you are replacing.
+can see what you are replacing, and it stays in the box, greyed, until you write over it — so an
+empty box is never a story with no narrator instruction at all. Whatever the box shows is what the
+request is sent, here, in the chapter panel and under **What the model sees** alike.
 
 ### Role-play
 

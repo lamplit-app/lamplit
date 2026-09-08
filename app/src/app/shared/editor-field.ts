@@ -56,10 +56,10 @@ let nextId = 0;
         [attr.aria-label]="label() ? null : ariaLabel() || null"
         [class.serif]="serif()"
         [class.dimmed]="dimmed()"
-        [liText]="draft()"
+        [liText]="shown()"
         [placeholder]="placeholder()"
         [readOnly]="readOnly()"
-        (input)="draft.set(text($event))"
+        (input)="onInput($event)"
         (blur)="commit()"
       ></textarea>
 
@@ -136,15 +136,46 @@ export class EditorField implements OnDestroy {
   readonly save = output<string>();
 
   protected readonly id = `li-editor-${++nextId}`;
-  protected readonly draft = signal('');
 
-  protected readonly dirty = computed(() => this.draft() !== this.value());
-  protected readonly words = computed(() => countWords(this.draft()));
+  /**
+   * What is being typed, or `null` when nothing is — which is the state the
+   * box is in nearly all of the time, and the state it goes back to the moment
+   * the text is committed.
+   *
+   * It used to be a copy of the document that was made once and then lived its
+   * own life, and that copy could disagree with what the document said without
+   * anything putting it right: a box emptied by hand saved its emptiness, the
+   * document answered with the text it falls back to — the narrator's shipped
+   * instruction — and because that was the same string the box had been given
+   * in the first place, nothing changed, no effect ran, and the box stayed
+   * empty while the request went out full. The box shows the document unless
+   * somebody is writing in it.
+   */
+  private readonly draft = signal<string | null>(null);
+
+  /** What is in the box: the draft while there is one, the document otherwise. */
+  protected readonly shown = computed(() => this.draft() ?? this.value());
+
+  protected readonly dirty = computed(() => {
+    const draft = this.draft();
+    return draft !== null && draft !== this.value();
+  });
+  protected readonly words = computed(() => countWords(this.shown()));
 
   constructor() {
-    // The document is the source of truth; an outside edit replaces the draft,
-    // and [liText] puts it in the box when it lands.
-    effect(() => this.draft.set(this.value()));
+    // The document is still the source of truth, so an edit from outside — the
+    // model streaming a summary into this box, a reset putting text back —
+    // takes the box back off whoever was typing, exactly as replacing the copy
+    // used to. Reading `value()` is what makes this run when it changes.
+    effect(() => {
+      this.value();
+      this.draft.set(null);
+    });
+  }
+
+  /** Typed into, which is what makes the box the writer's for a moment. */
+  protected onInput(event: Event): void {
+    this.draft.set(fieldValue(event));
   }
 
   /**
@@ -164,10 +195,17 @@ export class EditorField implements OnDestroy {
     this.commit();
   }
 
-  protected readonly text = fieldValue;
-
+  /**
+   * The text, to the document — and the box back to following it, whatever the
+   * document makes of what it was handed. A store that answers an empty box
+   * with the words it falls back to is answering correctly, and the box says
+   * so rather than staying as it was left.
+   */
   protected commit(): void {
-    if (this.dirty() && !this.readOnly()) this.save.emit(this.draft());
+    const draft = this.draft();
+    const changed = draft !== null && draft !== this.value();
+    this.draft.set(null);
+    if (changed && !this.readOnly()) this.save.emit(draft);
   }
 }
 

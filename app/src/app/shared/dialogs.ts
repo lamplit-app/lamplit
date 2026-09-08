@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { DEFAULT_STORY_TITLE } from '../core/defaults';
 import { ChapterStore } from '../store/chapter-store';
 import { StoryStore } from '../store/story-store';
 import type { ChapterClose } from '../features/chapters/close-chapter-dialog';
@@ -280,7 +279,7 @@ export class Dialogs {
     const setup = await this.askSetup({
       heading: 'Your first story',
       confirm: 'Write the first scene',
-      title: story.title === DEFAULT_STORY_TITLE ? '' : story.title,
+      title: this.stories.isUntitled() ? '' : story.title,
       mode: story.mode,
       persona: story.persona,
     });

@@ -13,7 +13,12 @@ import { StoryStore } from '../../store/story-store';
 import { EditorField } from '../../shared/editor-field';
 import { fieldValue } from '../../shared/field';
 import { TextValue } from '../../shared/text-value';
-import { chapterTitle } from '../../core/prompt-builder';
+import {
+  chapterHeading,
+  isDefaultInstruction,
+  overriding,
+  summaryInstruction,
+} from '../../core/prompt-builder';
 import { countWords } from '../../shared/editor-field';
 
 /**
@@ -145,18 +150,19 @@ export interface ChapterClose {
         <mat-expansion-panel-header>
           <mat-panel-title>What was asked for</mat-panel-title>
           <mat-panel-description>
-            {{ story().world.summary.useDefault ? 'default instruction' : 'your own instruction' }}
+            {{ ownInstruction() ? 'your own instruction' : 'default instruction' }}
           </mat-panel-description>
         </mat-expansion-panel-header>
 
         @if (story().world.summary.useDefault) {
-          <p class="preset li-preset">{{ defaultInstruction }}</p>
+          <p class="preset li-preset">{{ instruction() }}</p>
           <button matButton="outlined" (click)="override()">Write my own</button>
         } @else {
           <li-editor-field
             class="li-rows-medium"
             label="Instruction"
-            [value]="story().world.summary.prompt"
+            [value]="instruction()"
+            [dimmed]="!ownInstruction()"
             (save)="stories.setSummaryPrompt({ prompt: $event })"
           />
           <button matButton (click)="restoreDefault()">Back to the default</button>
@@ -325,7 +331,16 @@ export class CloseChapterDialog {
   private readonly chapters = inject(ChapterStore);
   protected readonly stories = inject(StoryStore);
   protected readonly story = this.stories.story;
-  protected readonly defaultInstruction = DEFAULT_SUMMARY_INSTRUCTION;
+  /**
+   * The instruction this sheet is about to send, and whether it is the story's
+   * own. Through `prompt-builder` like everything else that shows prompt text:
+   * this sheet used to read the document, which is not the same question the
+   * request asks of it.
+   */
+  protected readonly instruction = computed(() => summaryInstruction(this.story()));
+  protected readonly ownInstruction = computed(
+    () => !isDefaultInstruction(this.story().world.summary),
+  );
 
   protected readonly summary = signal('');
   protected readonly busy = signal(false);
@@ -343,8 +358,7 @@ export class CloseChapterDialog {
 
   protected readonly heading = computed(() => {
     const chapter = this.chapters.chapter();
-    const title = chapterTitle(chapter);
-    return `Chapter ${chapter.number}${title ? ` — ${title}` : ''}`;
+    return chapterHeading(chapter);
   });
 
   private controller: AbortController | null = null;
@@ -369,7 +383,9 @@ export class CloseChapterDialog {
   }
 
   protected override(): void {
-    this.stories.setSummaryPrompt({ useDefault: false, prompt: DEFAULT_SUMMARY_INSTRUCTION });
+    this.stories.setSummaryPrompt(
+      overriding(this.story().world.summary, true, DEFAULT_SUMMARY_INSTRUCTION),
+    );
   }
 
   protected restoreDefault(): void {

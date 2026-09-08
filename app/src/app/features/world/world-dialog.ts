@@ -7,7 +7,12 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTabsModule } from '@angular/material/tabs';
 import { DEFAULT_SUMMARY_INSTRUCTION } from '../../core/defaults';
 import { Chapter, LoreCategory, LoreEntry } from '../../core/models';
-import { chapterTitle } from '../../core/prompt-builder';
+import {
+  chapterTitle,
+  isDefaultInstruction,
+  overriding,
+  summaryInstruction,
+} from '../../core/prompt-builder';
 import { ChapterStore } from '../../store/chapter-store';
 import { StoryStore } from '../../store/story-store';
 import { EditorField } from '../../shared/editor-field';
@@ -58,7 +63,7 @@ interface Group {
               <mat-expansion-panel-header>
                 <mat-panel-title>How a chapter is folded in</mat-panel-title>
                 <mat-panel-description>
-                  {{ story().world.summary.useDefault ? 'default' : 'your own' }}
+                  {{ ownSummary() ? 'your own' : 'default' }}
                 </mat-panel-description>
               </mat-expansion-panel-header>
 
@@ -75,13 +80,16 @@ interface Group {
                 Write my own instruction
               </mat-slide-toggle>
 
+              <!-- As under Story: the switch decides whether there is a box,
+                   and the box holds what is being sent. -->
               @if (story().world.summary.useDefault) {
-                <p class="preset li-preset">{{ defaultSummaryInstruction }}</p>
+                <p class="preset li-preset">{{ summaryText() }}</p>
               } @else {
                 <li-editor-field
                   class="li-rows-tall"
                   label="Instruction"
-                  [value]="story().world.summary.prompt"
+                  [value]="summaryText()"
+                  [dimmed]="!ownSummary()"
                   (save)="stories.setSummaryPrompt({ prompt: $event })"
                 />
               }
@@ -433,7 +441,9 @@ export class WorldDialog {
 
   protected readonly story = this.stories.story;
   protected readonly categories = CATEGORIES;
-  protected readonly defaultSummaryInstruction = DEFAULT_SUMMARY_INSTRUCTION;
+  /** The words being sent, and whether they are the story's own; see the panel. */
+  protected readonly summaryText = computed(() => summaryInstruction(this.story()));
+  protected readonly ownSummary = computed(() => !isDefaultInstruction(this.story().world.summary));
   protected readonly filter = signal('');
 
   /**
@@ -465,13 +475,10 @@ export class WorldDialog {
     })).filter((group) => group.entries.length);
   });
 
-  /** Starting from the default beats starting from an empty box. */
   protected setSummaryOverride(override: boolean): void {
-    const summary = this.story().world.summary;
-    this.stories.setSummaryPrompt({
-      useDefault: !override,
-      prompt: summary.prompt || (override ? DEFAULT_SUMMARY_INSTRUCTION : ''),
-    });
+    this.stories.setSummaryPrompt(
+      overriding(this.story().world.summary, override, DEFAULT_SUMMARY_INSTRUCTION),
+    );
   }
 
   protected isOpen(id: string): boolean {

@@ -3,7 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Layout } from '../core/layout';
-import { chapterTitle } from '../core/prompt-builder';
+import { chapterHeading } from '../core/prompt-builder';
 import { SettingsStore } from '../store/settings-store';
 import { ChapterStore } from '../store/chapter-store';
 import { StoryStore } from '../store/story-store';
@@ -317,11 +317,7 @@ export class TopBar {
   protected readonly dialogs = inject(Dialogs);
   protected readonly speech = inject(ReadAloud);
 
-  protected readonly chapterLabel = computed(() => {
-    const chapter = this.chapters.chapter();
-    const title = chapterTitle(chapter);
-    return `Chapter ${chapter.number}${title ? ` — ${title}` : ''}`;
-  });
+  protected readonly chapterLabel = computed(() => chapterHeading(this.chapters.chapter()));
 
   protected readonly modelLabel = computed(() => {
     const connection = this.settings.connection();

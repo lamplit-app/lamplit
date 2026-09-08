@@ -7,6 +7,7 @@ import {
   composer,
   fillProse,
   openPanel,
+  openPromptPreview,
   panelSection,
   SCENE,
   send,
@@ -153,6 +154,54 @@ test('the narrator default is adopted by writing into it, and given back by the 
   await panelSection(page, 'narrator').getByRole('button', { name: 'Back to the default' }).click();
   await expect(narrator).toHaveValue(/You are the narrator of an ongoing story/);
   await expect(panelSection(page, 'narrator')).toContainText('default');
+});
+
+/**
+ * The narrator instruction, in the three places it is shown and the one place
+ * it is sent, with the box emptied.
+ *
+ * That state — the override on and nothing written — is the one the app used to
+ * disagree with itself about: the panel and the Story sheet showed the
+ * document, which is empty, and the request fell back to the instruction
+ * Lamplit ships. So the app showed an empty narrator and sent a full one, and
+ * the guide's promise that "What the model sees" is what goes on the wire was
+ * false for exactly one setting.
+ */
+test('an emptied narrator box shows what is being sent, everywhere it is shown', async ({
+  page,
+  app,
+}) => {
+  await app.open({ developerMode: true });
+  await openPanel(page);
+
+  const narrator = panelSection(page, 'narrator').locator('textarea');
+  await narrator.fill('Write it as a diary, in the first person.');
+  await narrator.blur();
+  await expect(panelSection(page, 'narrator')).toContainText('your own');
+
+  // Emptied by hand, which leaves the override on and the document blank.
+  await narrator.fill('');
+  await narrator.blur();
+  await expect(panelSection(page, 'narrator')).toContainText('default');
+  await expect(narrator).toHaveValue(/You are the narrator of an ongoing story/);
+
+  // The Story sheet: the switch is still on, so the box is still there — with
+  // the words that are being sent in it, dimmed, as in the panel.
+  await page.getByRole('button', { name: 'Story', exact: true }).click();
+  const sheet = page.getByRole('dialog');
+  await expect(
+    sheet.getByRole('switch', { name: 'Write my own narrator instructions' }),
+  ).toHaveAttribute('aria-checked', 'true');
+  // `exact`, or the switch beside it — "Write my own narrator instructions" —
+  // is a second match for the words.
+  await expect(sheet.getByLabel('Narrator instructions', { exact: true })).toHaveValue(
+    /You are the narrator of an ongoing story/,
+  );
+  await page.keyboard.press('Escape');
+
+  // And what the model sees, which is the answer the other two now give.
+  await openPromptPreview(page);
+  await expect(page.getByRole('dialog')).toContainText('You are the narrator of an ongoing story');
 });
 
 test('a cast row says who they are, and the edit mark opens the sheet on them', async ({

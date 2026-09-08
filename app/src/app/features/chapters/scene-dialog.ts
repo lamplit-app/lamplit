@@ -6,7 +6,7 @@ import { StoryStore } from '../../store/story-store';
 import { TOKEN_ESTIMATOR, formatTokens } from '../../core/tokens';
 import { countWords } from '../../shared/editor-field';
 import { Field, fieldValue } from '../../shared/field';
-import { firstLine } from '../../core/prompt-builder';
+import { firstLine, sceneBlock } from '../../core/prompt-builder';
 import { buildPalettePrompt, paletteLabel } from '../../core/page-palettes';
 import { TextValue } from '../../shared/text-value';
 
@@ -107,9 +107,18 @@ export class SceneDialog {
   protected readonly words = computed(() => countWords(this.scene()));
   protected readonly fallbackTitle = computed(() => firstLine(this.scene(), 40) || 'Untitled');
 
-  /** What the scene block will cost in every request of this chapter. */
+  /**
+   * What the scene block will cost in every request of this chapter — the
+   * block itself, as the builder writes it, over the words in the boxes rather
+   * than the ones on disk. It used to be a copy of that string, and the copy
+   * wrote the comma whether or not there was a title to follow it.
+   */
   protected readonly cost = computed(() =>
-    formatTokens(this.estimator.count(`Chapter 0, ${this.title()}. The scene:\n${this.scene()}`)),
+    formatTokens(
+      this.estimator.count(
+        sceneBlock({ number: this.chapter().number, title: this.title(), scene: this.scene() }),
+      ),
+    ),
   );
 
   /**

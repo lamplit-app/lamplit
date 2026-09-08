@@ -20,7 +20,9 @@ import {
   activeCharacter,
   buildPrompt,
   buildSummaryPrompt,
+  chapterName,
   isOneAtATime,
+  writtenIn,
 } from '../core/prompt-builder';
 import { TOKEN_ESTIMATOR } from '../core/tokens';
 import { SettingsStore } from './settings-store';
@@ -85,10 +87,33 @@ export class ChapterStore {
   );
 
   /** What the chapter reads as: the records of the cast changing are not it. */
-  readonly written = computed(() => this.messages().filter((m) => m.kind !== 'cast'));
+  readonly written = computed(() => writtenIn(this.chapter()));
   readonly isEmpty = computed(() => this.written().length === 0);
   readonly hasScene = computed(() => !!this.chapter().scene.trim());
   readonly isClosed = computed(() => this.chapter().status === 'closed');
+
+  /**
+   * A story nobody has started: our own title, no persona, no story so far,
+   * one chapter, and nothing written in it.
+   *
+   * Here rather than in `Workspace`, which is the one thing that asks it, for
+   * two reasons: it is a question about the documents and this is where they
+   * are, and a component cannot be held to it by a spec. Five tests and every
+   * one of them a way somebody could have begun — a title, a persona, a
+   * paragraph of story, a second chapter, a line of prose — because what turns
+   * on the answer is whether the app opens the first-run questions over the
+   * story that is already there.
+   */
+  readonly isUntouched = computed(() => {
+    const story = this.stories.story();
+    return (
+      this.stories.isUntitled() &&
+      !story.persona.name.trim() &&
+      !story.world.storySoFar.trim() &&
+      this.chapters().length === 1 &&
+      this.isEmpty()
+    );
+  });
 
   /**
    * The one compulsory step in the app: a chapter cannot be written into until
@@ -99,7 +124,7 @@ export class ChapterStore {
       return { reason: 'This chapter has no scene yet', action: 'scene' };
     }
     if (this.isClosed()) {
-      return { reason: `Chapter ${this.chapter().number} is closed`, action: 'continue' };
+      return { reason: `${chapterName(this.chapter())} is closed`, action: 'continue' };
     }
     if (!this.settings.isConnected()) {
       return { reason: this.settings.connectionHint(), action: 'connection' };

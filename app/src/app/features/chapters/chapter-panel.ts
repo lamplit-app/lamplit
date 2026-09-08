@@ -1,10 +1,14 @@
 import { Component, DestroyRef, computed, effect, inject, untracked } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { DEFAULT_NARRATOR_PROMPT } from '../../core/defaults';
 import { characterColour } from '../../core/character-colours';
 import { Layout } from '../../core/layout';
 import { Character, PanelSection } from '../../core/models';
-import { firstLine, isOneAtATime } from '../../core/prompt-builder';
+import {
+  firstLine,
+  isDefaultInstruction,
+  isOneAtATime,
+  narratorInstruction,
+} from '../../core/prompt-builder';
 import { Dialogs } from '../../shared/dialogs';
 import { CharacterSwatch } from '../../shared/character-swatch';
 import { EditorField } from '../../shared/editor-field';
@@ -123,21 +127,23 @@ const SWIPE_DISTANCE = 48;
                 <span class="li-caret">{{ isOpen('narrator') ? '▾' : '▸' }}</span>
                 <span class="name">Narrator</span>
                 <span class="aside li-aside li-one-line">{{
-                  story().narrator.useDefault ? 'default' : 'your own'
+                  ownNarrator() ? 'your own' : 'default'
                 }}</span>
               </button>
               @if (isOpen('narrator')) {
                 <div class="body">
                   <!-- The default sits in the box it would be edited in, greyed
-                       until it is written over. Typing is what adopts it. -->
+                       until it is written over. Typing is what adopts it, and
+                       emptying the box gives it back: an empty instruction is
+                       not one, and the request falls back to ours. -->
                   <li-editor-field
                     class="li-rows-tall"
                     ariaLabel="Narrator instructions"
                     [value]="narratorText()"
-                    [dimmed]="story().narrator.useDefault"
+                    [dimmed]="!ownNarrator()"
                     (save)="setNarrator($event)"
                   />
-                  @if (story().narrator.useDefault) {
+                  @if (!ownNarrator()) {
                     <p class="li-hint">
                       The instructions Lamplit ships with. Write into them and they become yours.
                     </p>
@@ -577,10 +583,16 @@ export class ChapterPanel {
   /** No room left to push the page aside, so it goes over it instead. */
   protected readonly overlay = computed(() => !this.layout.roomForPanel());
 
-  protected readonly narratorText = computed(() => {
-    const narrator = this.story().narrator;
-    return narrator.useDefault ? DEFAULT_NARRATOR_PROMPT : narrator.prompt;
-  });
+  /**
+   * The words the model is being sent, which is what the box has to show: the
+   * story's own once there are any, and ours until then. It used to show the
+   * document — so an override with the box emptied showed nothing at all while
+   * the request went out with the default in it.
+   */
+  protected readonly narratorText = computed(() => narratorInstruction(this.story()));
+
+  /** Whether those words are the story's own, which is the whole of the state. */
+  protected readonly ownNarrator = computed(() => !isDefaultInstruction(this.story().narrator));
 
   protected readonly sceneLabel = computed(() =>
     this.chapters.isClosed() ? 'closed' : firstLine(this.chapters.chapter().scene, 34),
@@ -752,12 +764,12 @@ export class ChapterPanel {
 
   /** Writing over the default is what adopts it; the text is kept as written. */
   protected setNarrator(prompt: string): void {
-    this.stories.patch({ narrator: { useDefault: false, prompt } });
+    this.stories.setNarrator({ useDefault: false, prompt });
   }
 
   /** The custom text stays in the document, so switching back finds it again. */
   protected backToDefault(): void {
-    this.stories.patch({ narrator: { ...this.story().narrator, useDefault: true } });
+    this.stories.setNarrator({ useDefault: true });
   }
 
   protected setPersona(patch: Partial<{ name: string; description: string }>): void {

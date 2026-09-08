@@ -15,7 +15,7 @@ import { ChapterStore } from '../../store/chapter-store';
 import { SettingsStore } from '../../store/settings-store';
 import { StoryStore } from '../../store/story-store';
 import { Dialogs } from '../../shared/dialogs';
-import { chapterTitle } from '../../core/prompt-builder';
+import { chapterName, chapterTitle } from '../../core/prompt-builder';
 import { ChapterToolbar } from './chapter-toolbar';
 import { Composer } from './composer';
 import { MessageList } from './message-list';
@@ -288,9 +288,16 @@ export class ChaptersPage {
   protected readonly settings = inject(SettingsStore);
   protected readonly dialogs = inject(Dialogs);
 
-  protected readonly title = computed(
-    () => chapterTitle(this.chapters.chapter()) || `Chapter ${this.chapters.chapter().number}`,
-  );
+  /**
+   * The chapter's own name over the page, which is the one place the number is
+   * a fallback rather than a prefix: the bar above already says which chapter
+   * this is, so the page says what it is called and says "Chapter 3" only when
+   * there is nothing else to call it.
+   */
+  protected readonly title = computed(() => {
+    const chapter = this.chapters.chapter();
+    return chapterTitle(chapter) || chapterName(chapter);
+  });
 
   private readonly scroller = viewChild.required<ElementRef<HTMLElement>>('scroller');
   private readonly content = viewChild.required<ElementRef<HTMLElement>>('content');

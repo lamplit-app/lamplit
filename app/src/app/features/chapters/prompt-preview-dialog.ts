@@ -12,7 +12,7 @@ import {
   PINNED_LAST,
   PIN_REASONS,
   isDefaultOrder,
-  movableOrder,
+  movableOrderFrom,
   withDirection,
 } from '../../core/prompt-builder';
 import { formatTokens } from '../../core/tokens';
@@ -383,21 +383,9 @@ export class PromptPreviewDialog {
     this.writeOrder(shown);
   }
 
-  /**
-   * A block with nothing in it is not drawn, so the order on screen is only
-   * part of the story's own. The blocks that were shown are written back into
-   * the slots they occupied, which leaves the invisible ones exactly where they
-   * were — an empty persona should not jump about because the world moved.
-   */
+  /** What the shown rows mean for the story's own order is `movableOrderFrom`. */
   private writeOrder(shown: BlockId[]): void {
-    const order = movableOrder(this.stories.story());
-    const slots = order.map((id, i) => [id, i] as const).filter(([id]) => shown.includes(id));
-    const next = [...order];
-    slots.forEach(([, slot], i) => {
-      const id = shown[i];
-      if (id) next[slot] = id;
-    });
-    this.stories.setPromptOrder(next);
+    this.stories.setPromptOrder(movableOrderFrom(this.stories.story(), shown));
   }
 
   protected resetOrder(): void {

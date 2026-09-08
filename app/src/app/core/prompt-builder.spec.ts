@@ -8,11 +8,19 @@ import { BlockId, Chapter, ChapterMessage, LoreEntry, Story } from './models';
 import {
   buildPrompt,
   buildSummaryPrompt,
+  chapterHeading,
+  chapterName,
   chapterTitle,
   firstLine,
+  isDefaultInstruction,
   isDefaultOrder,
   movableOrder,
+  movableOrderFrom,
+  narratorInstruction,
+  overriding,
+  sceneBlock,
   summaryInstruction,
+  writtenIn,
 } from './prompt-builder';
 import { heuristicEstimator } from './tokens';
 import { newChapter, newStory } from './fixtures';
@@ -209,6 +217,35 @@ describe('buildPrompt: the order of the blocks', () => {
     expect(isDefaultOrder({})).toBe(true);
   });
 
+  /**
+   * What the preview's rows mean for the document, which is the other side of
+   * the rule above: only the blocks with something in them are drawn, so the
+   * ones that were dragged go back into the slots they occupied and the
+   * invisible ones stay where they are. It lived in the sheet that drags them,
+   * where no spec could reach it.
+   */
+  it('writes the shown blocks back into their own slots', () => {
+    const order: BlockId[] = ['persona', 'story-so-far', 'lore', 'scene'];
+    // Persona is empty and not on screen; the other three, dragged.
+    expect(movableOrderFrom({ promptOrder: order }, ['scene', 'lore', 'story-so-far'])).toEqual([
+      'persona',
+      'scene',
+      'lore',
+      'story-so-far',
+    ]);
+    // Nothing dragged is nothing changed, whatever is on screen.
+    expect(movableOrderFrom({ promptOrder: order }, ['story-so-far', 'lore', 'scene'])).toEqual(
+      order,
+    );
+    // A story with no order of its own gets one, from the shipped order.
+    expect(movableOrderFrom({}, ['scene', 'persona', 'story-so-far', 'lore'])).toEqual([
+      'scene',
+      'persona',
+      'story-so-far',
+      'lore',
+    ]);
+  });
+
   it('leaves an empty block out without disturbing the order around it', () => {
     // Persona is unset here, so it is not drawn and not sent — but it is still
     // named in the story's order, and the blocks either side of it hold.
@@ -381,6 +418,115 @@ describe('chapter titles', () => {
       'The lantern room.',
     );
     expect(firstLine('x'.repeat(200)).endsWith('…')).toBe(true);
+  });
+
+  /**
+   * The heading was composed by hand in four components at two fallback rules,
+   * so this is the rule: the number, and the title after a dash when there is
+   * one to put there. The dash is the app's own — the two places the model is
+   * told which chapter this is use a comma, and are asserted where they are
+   * built.
+   */
+  it('is the number and the name, with nothing between them when there is no name', () => {
+    expect(chapterHeading({ number: 3, title: 'Aloft', scene: 'anything' })).toBe(
+      'Chapter 3 — Aloft',
+    );
+    expect(chapterHeading({ number: 3, title: '', scene: 'The lantern room.' })).toBe(
+      'Chapter 3 — The lantern room.',
+    );
+    // Nothing to fall back to: no dash left hanging off the number.
+    expect(chapterHeading({ number: 3, title: '', scene: '   ' })).toBe('Chapter 3');
+    expect(chapterName({ number: 12 })).toBe('Chapter 12');
+  });
+
+  it('counts what was written in a chapter, and not the cast changing', () => {
+    const cast: ChapterMessage = {
+      id: 'c1',
+      role: 'system',
+      content: '',
+      createdAt: '',
+      kind: 'cast',
+    };
+    const written = writtenIn({ messages: [said('user', 'I knock.'), cast] });
+    expect(written.map((m) => m.content)).toEqual(['I knock.']);
+  });
+});
+
+/**
+ * The chapter block, exported because the scene sheet costs it as it is typed.
+ * The comma is the point: a copy of this string in that sheet wrote one whether
+ * or not there was a title to follow it, and costed `Chapter 0, . The scene:`.
+ */
+describe('the scene block', () => {
+  it('names the chapter, with a comma only when there is a title', () => {
+    expect(sceneBlock({ number: 2, title: 'Aloft', scene: 'The lamp is out.' })).toBe(
+      'Chapter 2, Aloft. The scene:\nThe lamp is out.',
+    );
+    expect(sceneBlock({ number: 2, title: '  ', scene: 'The lamp is out.' })).toBe(
+      'Chapter 2. The scene:\nThe lamp is out.',
+    );
+  });
+
+  it('is nothing at all until there is a scene', () => {
+    expect(sceneBlock({ number: 2, title: 'Aloft', scene: '   ' })).toBe('');
+  });
+});
+
+/**
+ * The two instructions the writer may take over, and the one rule the request
+ * and every box that shows it now share. The rule matters because the two used
+ * to differ: the panel showed the document, the request fell back to ours, and
+ * an override with an emptied box showed nothing while sending the default.
+ */
+describe('the instructions the writer may take over', () => {
+  const narrator = (patch: Partial<Story['narrator']>) =>
+    narratorInstruction(story({ narrator: { useDefault: false, prompt: '', ...patch } }));
+
+  it('is ours until the writer has both said so and written something', () => {
+    expect(narrator({ useDefault: true })).toBe(DEFAULT_NARRATOR_PROMPT);
+    expect(narrator({ prompt: 'Write it cold.' })).toBe('Write it cold.');
+    // The override is on and the box is empty: ours, because an empty
+    // instruction is not one and a request with no preamble is not the ask.
+    expect(narrator({ prompt: '   ' })).toBe(DEFAULT_NARRATOR_PROMPT);
+    // And ours are kept, so turning the switch off finds the words again.
+    expect(narrator({ useDefault: true, prompt: 'Write it cold.' })).toBe(DEFAULT_NARRATOR_PROMPT);
+  });
+
+  it('says which of the two is being sent, which is what a box dims for', () => {
+    expect(isDefaultInstruction({ useDefault: true, prompt: 'Write it cold.' })).toBe(true);
+    expect(isDefaultInstruction({ useDefault: false, prompt: '  ' })).toBe(true);
+    expect(isDefaultInstruction({ useDefault: false, prompt: 'Write it cold.' })).toBe(false);
+  });
+
+  it('is the same rule for the summary instruction', () => {
+    const summary = (patch: Partial<Story['world']['summary']>) => {
+      const base = story();
+      return summaryInstruction({
+        world: { ...base.world, summary: { useDefault: false, prompt: '', ...patch } },
+      });
+    };
+    expect(summary({ useDefault: true })).toBe(DEFAULT_SUMMARY_INSTRUCTION);
+    expect(summary({ prompt: 'Two paragraphs, no more.' })).toBe('Two paragraphs, no more.');
+    expect(summary({ prompt: '' })).toBe(DEFAULT_SUMMARY_INSTRUCTION);
+  });
+
+  it('starts from ours when the switch is thrown, and keeps what was written', () => {
+    const empty = { useDefault: true, prompt: '' };
+    expect(overriding(empty, true, DEFAULT_NARRATOR_PROMPT)).toEqual({
+      useDefault: false,
+      prompt: DEFAULT_NARRATOR_PROMPT,
+    });
+    // Thrown back: ours again, and their words are still in the document.
+    const own = { useDefault: false, prompt: 'Write it cold.' };
+    expect(overriding(own, false, DEFAULT_NARRATOR_PROMPT)).toEqual({
+      useDefault: true,
+      prompt: 'Write it cold.',
+    });
+    // And thrown on again, it is their words that come back rather than ours.
+    expect(overriding({ useDefault: true, prompt: 'Write it cold.' }, true, 'ours')).toEqual({
+      useDefault: false,
+      prompt: 'Write it cold.',
+    });
   });
 });
 

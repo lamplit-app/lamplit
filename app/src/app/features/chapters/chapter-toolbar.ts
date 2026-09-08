@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChapterStore } from '../../store/chapter-store';
 import { Dialogs } from '../../shared/dialogs';
-import { chapterTitle } from '../../core/prompt-builder';
+import { chapterHeading } from '../../core/prompt-builder';
 
 /**
  * The chapter's own controls, sitting where a writer looks between paragraphs:
@@ -66,10 +66,10 @@ export class ChapterToolbar {
   protected readonly chapters = inject(ChapterStore);
   protected readonly dialogs = inject(Dialogs);
 
+  /** The heading, and the one thing only this bar says: whether it is closed. */
   protected readonly label = computed(() => {
     const chapter = this.chapters.chapter();
-    const title = chapterTitle(chapter);
     const state = chapter.status === 'closed' ? ' · closed' : '';
-    return `Chapter ${chapter.number}${title ? ` — ${title}` : ''}${state}`;
+    return `${chapterHeading(chapter)}${state}`;
   });
 }

@@ -69,6 +69,15 @@ are now yours to overrule in this app alone:
 **A read through the whole of it, and the things that read found.** Nothing here is a feature; all
 of it is something that was wrong. The ones you could have noticed:
 
+- **An emptied narrator box shows what is actually being sent.** With *Write my own* on and the
+  text deleted, the box was empty and the request went out with the instruction Lamplit ships —
+  so the app showed one thing and sent another, which is the one promise **What the model sees**
+  makes. The instruction is now the same words in the panel, under Story and in the preview, and
+  an empty box shows the default greyed out, as the chapter panel always did. The instruction a
+  chapter is closed with had the same split and is answered the same way.
+- **An untitled scene is costed as the block it is.** The token count under a scene wrote a comma
+  after the chapter number whether or not there was a title to follow it, because it was a copy of
+  the real block rather than the block itself.
 - **A chapter you deleted stays deleted.** Deleting one and closing the window in the same breath
   left the file on disk, and it came back on the next start. Deleting a story did it story-wide.
 - **The last thing you wrote is not lost to a closed window.** A save still on its way was

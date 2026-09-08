@@ -15,7 +15,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChapterStore } from '../../store/chapter-store';
 import { SettingsStore } from '../../store/settings-store';
 import { Layout } from '../../core/layout';
-import { withDirection } from '../../core/prompt-builder';
+import { splitDirection, withDirection } from '../../core/prompt-builder';
 import { TOKEN_ESTIMATOR, formatTokens } from '../../core/tokens';
 import { Dialogs } from '../../shared/dialogs';
 import { fieldValue } from '../../shared/field';
@@ -449,28 +449,28 @@ export class Composer {
 
   /**
    * `[AUTHOR]` at the start of a line takes that line and everything after it
-   * out of the prose and into the author's field, tag and all.
+   * out of the prose and into the author's field.
    *
-   * It is a shorthand for the button beside Send rather than a syntax: the
-   * split happens as it is typed and is shown, so what leaves the composer is
-   * always what the writer can see in it. The editor is given the prose back
-   * at once, and forgets the rest: the next keystroke must not land on a tag
-   * that has already been taken out, or it would be taken out again.
+   * Where the tag is and what it takes is `splitDirection` in core, beside the
+   * `withDirection` that puts the two halves back together for the request —
+   * one grammar, one place. What is left here is what only the composer can
+   * do: merge into a direction that is already open, and hand the editor the
+   * prose back at once so the next keystroke does not land on a tag that has
+   * already been taken out and take it out again.
    */
   protected onDraft(typed: string): void {
-    const match = /^[ \t]*\[author\][ \t]*/im.exec(typed);
-    if (!match) {
+    const split = splitDirection(typed);
+    if (!split) {
       this.draft.set(typed);
       return;
     }
 
-    const prose = typed.slice(0, match.index).replace(/\s+$/, '');
-    const said = typed.slice(match.index + match[0].length).trim();
     const already = this.direction().trim();
-
-    this.draft.set(prose);
-    this.input()?.show(prose);
-    this.direction.set(already && said ? `${already}\n${said}` : already || said);
+    this.draft.set(split.prose);
+    this.input()?.show(split.prose);
+    this.direction.set(
+      already && split.direction ? `${already}\n${split.direction}` : already || split.direction,
+    );
     this.authoring.set(true);
     this.focusDirection();
   }

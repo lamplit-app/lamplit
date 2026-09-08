@@ -3,7 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { Chapter } from '../../core/models';
-import { chapterTitle, firstLine } from '../../core/prompt-builder';
+import { chapterName, chapterTitle, firstLine, writtenIn } from '../../core/prompt-builder';
 import { ChapterStore } from '../../store/chapter-store';
 import { StoryStore } from '../../store/story-store';
 import { Dialogs } from '../../shared/dialogs';
@@ -151,9 +151,7 @@ export class ChaptersDialog {
   protected readonly rows = computed<Row[]>(() => {
     const active = this.chapters.chapter().id;
     return this.chapters.chapters().map((chapter) => {
-      // The records of the cast changing are in the list but are not of it:
-      // a chapter's size is what was written in it.
-      const written = chapter.messages.filter((m) => m.kind !== 'cast');
+      const written = writtenIn(chapter);
       return {
         chapter,
         title: chapterTitle(chapter),
@@ -176,7 +174,7 @@ export class ChaptersDialog {
 
   protected async rename(row: Row): Promise<void> {
     const title = await this.dialogs.askText({
-      title: `Chapter ${row.chapter.number}`,
+      title: chapterName(row.chapter),
       label: 'Chapter title',
       value: row.chapter.title,
     });
