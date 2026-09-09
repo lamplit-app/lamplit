@@ -5,7 +5,7 @@ onto the draft release, so it is written for the person downloading, not for the
 person who wrote the code. A section is written as the work happens, under
 `## Unreleased`, and renamed to the version when the tag goes out.
 
-## Unreleased
+## 0.2.0
 
 **Role-play is told how it is played.** Narrator mode has always opened with a full instruction;
 role-play opened with the cast list and nothing else, so the only way to shape how the characters

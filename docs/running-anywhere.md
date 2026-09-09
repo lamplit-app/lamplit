@@ -24,7 +24,7 @@ Unzip it anywhere and make one call:
 ## What is in it
 
 ```
-lamplit-0.1.0/
+lamplit-0.2.0/
   start.bat          Windows: double-click it
   start.command      macOS: double-click it
   start.sh           Linux: ./start.sh
@@ -163,8 +163,8 @@ That builds the app and writes two things into `build/`:
 
 ```
 build/
-  lamplit-0.1.0/          the folder, ready to run
-  lamplit-0.1.0.zip       the same folder, ~1 MB
+  lamplit-0.2.0/          the folder, ready to run
+  lamplit-0.2.0.zip       the same folder, ~1 MB
 ```
 
 ```bash

@@ -1,6 +1,6 @@
 {
   "name": "lamplit-desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "The desktop shell: the same server and the same app, in a window, with Node inside.",
