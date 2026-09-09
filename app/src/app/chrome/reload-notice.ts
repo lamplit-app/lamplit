@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Notice } from './notice';
+import { Notice } from '../shared/notice';
 import { Persistence } from '../store/persistence';
 
 /**

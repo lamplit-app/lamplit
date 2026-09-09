@@ -1,15 +1,28 @@
 import { Injectable } from '@angular/core';
-import { GenerationParams, ModelInfo, OutboundMessage, TokenUsage } from './models';
+import { DEFAULT_GENERATION } from './defaults';
+import {
+  ConnectionSettings,
+  GenerationParams,
+  ModelInfo,
+  OutboundMessage,
+  TokenUsage,
+} from './models';
 import { ProviderPreset, providerPreset } from './providers';
 import { readSseData } from './sse';
 import { ModelError, errorFromResponse, errorFromThrown } from './model-errors';
 
-export interface ChatStreamRequest {
-  /** A row in `providers.ts`; decides the extra headers, nothing else. */
-  provider?: string;
-  baseUrl: string;
-  apiKey: string;
-  model: string;
+/**
+ * Where a request goes and how it is signed: the connection document, minus
+ * the model list fetched off it.
+ *
+ * Named as a slice of `ConnectionSettings` rather than as four fields of its
+ * own, so that renaming one of them in the document renames it here. Every
+ * caller had spelled the four out by hand — four times in one file — and each
+ * of those was a place a fifth field would not arrive.
+ */
+export type ChatEndpoint = Pick<ConnectionSettings, 'provider' | 'baseUrl' | 'apiKey' | 'model'>;
+
+export interface ChatStreamRequest extends ChatEndpoint {
   messages: readonly OutboundMessage[];
   params: GenerationParams;
 }
@@ -74,21 +87,23 @@ export class ModelClient {
     return models;
   }
 
-  /** One short round trip, used by the Connection modal's Test button. */
-  async testConnection(
-    baseUrl: string,
-    apiKey: string,
-    model: string,
-    provider?: string,
-  ): Promise<string> {
+  /**
+   * One short round trip, used by the Connection modal's Test button.
+   *
+   * The shipped parameters with two of them replaced, rather than three fields
+   * cast into a `GenerationParams` that was missing the other four. The cast
+   * compiled and the request was correct — `buildBody` only ever sends what is
+   * a number — but it was a promise the type could not keep, and the day
+   * `buildBody` reads a fifth field the probe is the one caller that would not
+   * have it. Two overrides, because a probe wants the shortest answer the
+   * endpoint will give and the same answer every time.
+   */
+  async testConnection(endpoint: ChatEndpoint): Promise<string> {
     const result = await this.streamChat(
       {
-        provider,
-        baseUrl,
-        apiKey,
-        model,
+        ...endpoint,
         messages: [{ role: 'user', content: 'Say OK.' }],
-        params: { maxResponseTokens: 8, temperature: 0, stop: [] } as unknown as GenerationParams,
+        params: { ...DEFAULT_GENERATION, maxResponseTokens: 8, temperature: 0 },
       },
       () => {
         /* the probe wants the answer whole, not as it arrives */

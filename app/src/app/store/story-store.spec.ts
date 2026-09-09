@@ -4,25 +4,8 @@ import { Chapter, Story } from '../core/models';
 import { KEYS, readChapters } from './documents';
 import { SettingsStore } from './settings-store';
 import { StoryStore } from './story-store';
-import { STORAGE_BACKEND, StorageBackend } from './storage';
-
-/** The documents, in a Map. What Persistence is, minus the server behind it. */
-class InMemoryStorage implements StorageBackend {
-  readonly documents = new Map<string, unknown>();
-
-  read<T>(key: string): T | null {
-    return (this.documents.get(key) as T) ?? null;
-  }
-  write(key: string, value: unknown): void {
-    this.documents.set(key, value);
-  }
-  remove(key: string): void {
-    this.documents.delete(key);
-  }
-  keys(prefix: string): string[] {
-    return [...this.documents.keys()].filter((key) => key.startsWith(prefix));
-  }
-}
+import { STORAGE_BACKEND } from './storage';
+import { InMemoryStorage } from './testing/in-memory-storage';
 
 const STORY_ID = 'story-1';
 

@@ -8,7 +8,7 @@ import { SettingsStore } from '../store/settings-store';
 import { ChapterStore } from '../store/chapter-store';
 import { StoryStore } from '../store/story-store';
 import { UpdatesStore } from '../store/updates-store';
-import { Dialogs } from './dialogs';
+import { Dialogs } from '../dialogs';
 import { ReadAloud } from './read-aloud';
 import { SaveStatus } from './save-status';
 

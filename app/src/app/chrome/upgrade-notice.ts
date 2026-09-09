@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { Notice } from './notice';
+import { Notice } from '../shared/notice';
 import { REPOSITORY } from '../core/project';
 import { BuildInfoStore } from '../store/build-info-store';
 import { SettingsStore } from '../store/settings-store';

@@ -9,14 +9,22 @@
 ```
 app/        Angular 22 workspace — standalone components, signals, zoneless
   core/       model client, SSE reader, error mapping, token estimates,
-              story formatting, the prompt builder
-  store/      signal stores (one per document type), and the persistence layer
-              they write through: the session's documents, and the server
+              story formatting, the prompt builder. Depends on nothing above
+              it, and on nothing of Angular's but DI and signals
+  store/      signal stores (one per document type), the four model requests
+              the chapters make, and the persistence layer they write through:
+              the session's documents, and the server
   features/   chapters (page, message list, composer, scene sheet, chapters
               list, close chapter, prompt preview), model (the connection and
               the parameters, as the two tabs of one sheet), preferences,
-              story, updates, world
-  shared/     top bar, save indicator, dialog openers, editor field, controls
+              story, updates, world. No feature imports another
+  chrome/     this app's own furniture: top bar, save indicator, the notices,
+              the reading voice, the character swatch — store-aware, and never
+              inside a feature
+  shared/     pieces with no story in them: editor field, controls, notice,
+              the phone-sheet gestures. Nothing here reaches a store
+  dialogs.ts  what can be opened over the page, and the flows that chain two
+              or three sheets. At the root because it knows every feature
 server/     Express 5 — JSON documents on disk, the built app in front of them,
             a dependency-free zip writer, and the build stamp (version.js: which
             build this is, and which one wrote this data folder last).
@@ -43,7 +51,10 @@ docs/       these pages, and — served by GitHub Pages — the website
 ```
 
 `eslint.config.mjs` at the root is the one lint configuration for all of it, and
-`.prettierrc` the one formatting configuration.
+`.prettierrc` the one formatting configuration. The layers above are rules in that
+config rather than a convention: `npm run lint` fails on a `core/` import that
+reaches into the app, a `store/` or `shared/` import that reaches a component, a
+`shared/` file that reaches a store, and one feature importing another.
 
 `PLAN.md` at the root is the plan of record: four steps, what each one had to do, and — more
 usefully — why each decision went the way it did.

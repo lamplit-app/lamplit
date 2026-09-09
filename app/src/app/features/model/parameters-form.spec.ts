@@ -3,25 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ParametersForm } from './parameters-form';
 import { SettingsStore } from '../../store/settings-store';
 import { KEYS } from '../../store/documents';
-import { STORAGE_BACKEND, StorageBackend } from '../../store/storage';
-
-/** The documents, in a Map. What Persistence is, minus the server behind it. */
-class InMemoryStorage implements StorageBackend {
-  readonly documents = new Map<string, unknown>();
-
-  read<T>(key: string): T | null {
-    return (this.documents.get(key) as T) ?? null;
-  }
-  write(key: string, value: unknown): void {
-    this.documents.set(key, value);
-  }
-  remove(key: string): void {
-    this.documents.delete(key);
-  }
-  keys(prefix: string): string[] {
-    return [...this.documents.keys()].filter((key) => key.startsWith(prefix));
-  }
-}
+import { STORAGE_BACKEND } from '../../store/storage';
+import { InMemoryStorage } from '../../store/testing/in-memory-storage';
 
 /**
  * Everything on this tab ends up in the JSON body of the next request, so the

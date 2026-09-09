@@ -4,7 +4,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { REPOSITORY } from '../core/project';
 import { BuildInfoStore } from '../store/build-info-store';
 import { SettingsStore } from '../store/settings-store';
-import { Dialogs } from './dialogs';
+import { Dialogs } from '../dialogs';
 
 /**
  * One sheet, and no settings on it: what this is, which build of it is running,

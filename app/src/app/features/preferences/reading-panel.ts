@@ -6,7 +6,7 @@ import { SPEECH_RATE } from '../../core/defaults';
 import { ReadingFont, ThemeMode } from '../../core/models';
 import { READING_FONTS } from '../../core/theming';
 import { Field, fieldValue } from '../../shared/field';
-import { ReadAloud } from '../../shared/read-aloud';
+import { ReadAloud } from '../../chrome/read-aloud';
 import { SettingsStore } from '../../store/settings-store';
 
 /**

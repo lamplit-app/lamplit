@@ -9,6 +9,7 @@ import { LoreEntry } from '../../core/models';
 import { tokenCost } from '../../core/tokens';
 import { newId } from '../../store/documents';
 import { ChapterStore } from '../../store/chapter-store';
+import { ChapterRequests } from '../../store/chapter-requests';
 import { StoryStore } from '../../store/story-store';
 import { EditorField } from '../../shared/editor-field';
 import { fieldValue } from '../../shared/field';
@@ -329,6 +330,7 @@ export interface ChapterClose {
 export class CloseChapterDialog {
   private readonly ref = inject(MatDialogRef<CloseChapterDialog, ChapterClose | undefined>);
   private readonly chapters = inject(ChapterStore);
+  private readonly requests = inject(ChapterRequests);
   protected readonly stories = inject(StoryStore);
   protected readonly story = this.stories.story;
   /**
@@ -410,7 +412,7 @@ export class CloseChapterDialog {
     this.busy.set(true);
     const controller = new AbortController();
     this.controller = controller;
-    const result = await this.chapters.summarise((delta) => {
+    const result = await this.requests.summarise((delta) => {
       if (this.controller === controller) this.summary.update((text) => text + delta);
     }, controller.signal);
     if (this.controller !== controller) return;
@@ -439,7 +441,7 @@ export class CloseChapterDialog {
     const controller = new AbortController();
     this.loreController = controller;
 
-    const result = await this.chapters.proposeLore(controller.signal);
+    const result = await this.requests.proposeLore(controller.signal);
     // The same rule as the summary above: an answer to a question that has
     // since been asked again belongs to nobody.
     if (this.loreController !== controller) return;

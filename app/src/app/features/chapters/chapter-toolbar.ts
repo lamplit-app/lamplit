@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChapterStore } from '../../store/chapter-store';
-import { Dialogs } from '../../shared/dialogs';
+import { Dialogs } from '../../dialogs';
 import { chapterHeading } from '../../core/prompt-builder';
 
 /**

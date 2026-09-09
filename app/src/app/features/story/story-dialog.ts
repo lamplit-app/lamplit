@@ -7,7 +7,7 @@ import { DEFAULT_NARRATOR_PROMPT } from '../../core/defaults';
 import { ReplyLength, RoleplayCasting, StoryMode } from '../../core/models';
 import { isDefaultInstruction, narratorInstruction, overriding } from '../../core/prompt-builder';
 import { StoryStore } from '../../store/story-store';
-import { CharacterSwatch } from '../../shared/character-swatch';
+import { CharacterSwatch } from '../../chrome/character-swatch';
 import { EditorField } from '../../shared/editor-field';
 import { Field, fieldValue } from '../../shared/field';
 

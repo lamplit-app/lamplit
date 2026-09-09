@@ -6,7 +6,7 @@ import { Chapter } from '../../core/models';
 import { chapterName, chapterTitle, firstLine, writtenIn } from '../../core/prompt-builder';
 import { ChapterStore } from '../../store/chapter-store';
 import { StoryStore } from '../../store/story-store';
-import { Dialogs } from '../../shared/dialogs';
+import { Dialogs } from '../../dialogs';
 import { countWords } from '../../shared/editor-field';
 
 interface Row {

@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Lexer } from 'marked';
 import { readSseData } from './sse';
-import { ModelClient, buildBody, normaliseBaseUrl, parseChunk } from './model-client';
+import {
+  ChatStreamRequest,
+  ModelClient,
+  buildBody,
+  normaliseBaseUrl,
+  parseChunk,
+} from './model-client';
 import {
   budgetThatFits,
   contextLimitOf,
@@ -9,6 +15,8 @@ import {
   errorFromResponse,
 } from './model-errors';
 import { formatTokens, heuristicEstimator } from './tokens';
+import { CUSTOM_PROVIDER_ID } from './providers';
+import { DEFAULT_GENERATION } from './defaults';
 import { renderMarkdown, renderStoryHtml } from './formatting';
 import { after } from './text';
 import { GenerationParams } from './models';
@@ -88,12 +96,13 @@ describe('readSseData', () => {
 });
 
 describe('streamChat', () => {
-  const request = {
+  const request: ChatStreamRequest = {
+    provider: CUSTOM_PROVIDER_ID,
     baseUrl: 'https://endpoint.invalid/v1',
     apiKey: '',
     model: 'm',
     messages: [{ role: 'user' as const, content: 'Say something.' }],
-    params: { maxResponseTokens: 100, stop: [] } as unknown as GenerationParams,
+    params: { ...DEFAULT_GENERATION, maxResponseTokens: 100 },
   };
 
   /** The endpoint answering with this body, and this content type. */
@@ -215,6 +224,7 @@ describe('parseChunk', () => {
 
 describe('buildBody', () => {
   const base = {
+    provider: CUSTOM_PROVIDER_ID,
     baseUrl: 'https://x/v1',
     apiKey: '',
     model: 'm',

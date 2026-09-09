@@ -1,7 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
 import { speakerLabels } from '../../core/speakers';
-import { ReadAloud } from '../../shared/read-aloud';
+import { ReadAloud } from '../../chrome/read-aloud';
 import { ChapterStore } from '../../store/chapter-store';
+import { ChapterRequests } from '../../store/chapter-requests';
 import { SettingsStore } from '../../store/settings-store';
 import { StoryStore } from '../../store/story-store';
 import { MessageItem } from './message-item';
@@ -32,8 +33,8 @@ import { MessageItem } from './message-item';
           [listening]="speech.speakingId() === message.id"
           (edited)="chapters.editMessage(message.id, $event.content, $event.direction)"
           (remove)="chapters.deleteMessage(message.id)"
-          (regenerate)="chapters.regenerate(message.id)"
-          (replay)="chapters.replayFrom(message.id)"
+          (regenerate)="requests.regenerate(message.id)"
+          (replay)="requests.replayFrom(message.id)"
           (listen)="speech.toggleMessage(message)"
           (setContext)="settings.patchGeneration({ maxContextTokens: $event })"
         />
@@ -59,6 +60,7 @@ import { MessageItem } from './message-item';
 })
 export class MessageList {
   protected readonly chapters = inject(ChapterStore);
+  protected readonly requests = inject(ChapterRequests);
   protected readonly settings = inject(SettingsStore);
   protected readonly speech = inject(ReadAloud);
   private readonly stories = inject(StoryStore);

@@ -3,6 +3,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { signal } from '@angular/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CloseChapterDialog } from './close-chapter-dialog';
+import { ChapterRequests } from '../../store/chapter-requests';
 import { ChapterStore } from '../../store/chapter-store';
 import { StoryStore } from '../../store/story-store';
 import { Chapter, Story } from '../../core/models';
@@ -20,9 +21,14 @@ interface Pending {
   finish: (result: { text: string; error?: string }) => void;
 }
 
+/** The chapter being closed, which is all the sheet asks the store for. */
 class FakeChapters {
-  readonly pending: Pending[] = [];
   readonly chapter = signal({ id: 'c1', number: 3, title: '', scene: 'A scene.' } as Chapter);
+}
+
+/** The two requests closing a chapter makes, neither of them finished yet. */
+class FakeRequests {
+  readonly pending: Pending[] = [];
 
   /**
    * Takes the deltas and hands back a promise the test finishes by hand. The
@@ -43,13 +49,14 @@ class FakeStories {
 }
 
 describe('CloseChapterDialog', () => {
-  let chapters: FakeChapters;
+  let requests: FakeRequests;
 
   beforeEach(() => {
-    chapters = new FakeChapters();
+    requests = new FakeRequests();
     TestBed.configureTestingModule({
       providers: [
-        { provide: ChapterStore, useValue: chapters },
+        { provide: ChapterStore, useValue: new FakeChapters() },
+        { provide: ChapterRequests, useValue: requests },
         { provide: StoryStore, useValue: new FakeStories() },
         { provide: MatDialogRef, useValue: { close: () => undefined } },
       ],
@@ -82,11 +89,11 @@ describe('CloseChapterDialog', () => {
 
   it('writes a summary as it arrives', async () => {
     const fixture = open();
-    expect(chapters.pending).toHaveLength(1);
+    expect(requests.pending).toHaveLength(1);
 
-    chapters.pending[0].deltas('The keeper went up ');
-    chapters.pending[0].deltas('the stairs.');
-    chapters.pending[0].finish({ text: 'The keeper went up the stairs.' });
+    requests.pending[0].deltas('The keeper went up ');
+    requests.pending[0].deltas('the stairs.');
+    requests.pending[0].finish({ text: 'The keeper went up the stairs.' });
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -95,19 +102,19 @@ describe('CloseChapterDialog', () => {
 
   it('ignores the request it was told to stop, however late it answers', async () => {
     const fixture = open();
-    chapters.pending[0].deltas('An abandoned ');
+    requests.pending[0].deltas('An abandoned ');
 
     click(fixture, 'Stop');
     click(fixture, 'Write it again');
-    expect(chapters.pending).toHaveLength(2);
+    expect(requests.pending).toHaveLength(2);
 
     // The second request is under way and says so.
-    chapters.pending[1].deltas('The one that counts.');
+    requests.pending[1].deltas('The one that counts.');
     await fixture.whenStable();
     fixture.detectChanges();
 
     // Only now does the stopped one come back, as an abort always does.
-    chapters.pending[0].finish({ text: 'An abandoned attempt.' });
+    requests.pending[0].finish({ text: 'An abandoned attempt.' });
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -124,8 +131,8 @@ describe('CloseChapterDialog', () => {
     click(fixture, 'Stop');
     click(fixture, 'Write it again');
 
-    chapters.pending[1].deltas('The one that counts.');
-    chapters.pending[0].deltas(' and some late words');
+    requests.pending[1].deltas('The one that counts.');
+    requests.pending[0].deltas(' and some late words');
     await fixture.whenStable();
     fixture.detectChanges();
 

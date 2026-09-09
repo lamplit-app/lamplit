@@ -3,7 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { desktop } from '../../core/desktop';
-import { Dialogs } from '../../shared/dialogs';
+import { Dialogs } from '../../dialogs';
 import { SettingsStore } from '../../store/settings-store';
 import { ShareStore } from '../../store/share-store';
 import { UpdatesStore } from '../../store/updates-store';

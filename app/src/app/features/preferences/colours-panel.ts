@@ -11,7 +11,7 @@ import {
   shippedColour,
   wantsContrast,
 } from '../../core/theming';
-import { Dialogs } from '../../shared/dialogs';
+import { Dialogs } from '../../dialogs';
 import { fieldValue } from '../../shared/field';
 import { ChapterStore } from '../../store/chapter-store';
 import { SettingsStore } from '../../store/settings-store';

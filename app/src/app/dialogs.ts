@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { ChapterStore } from '../store/chapter-store';
-import { StoryStore } from '../store/story-store';
-import type { ChapterClose } from '../features/chapters/close-chapter-dialog';
-import type { NewStoryData, StorySetup } from '../features/story/new-story-dialog';
-import { ConfirmData, TextPromptData } from './small-dialogs';
+import { ChapterStore } from './store/chapter-store';
+import { StoryStore } from './store/story-store';
+import type { ChapterClose } from './features/chapters/close-chapter-dialog';
+import type { NewStoryData, StorySetup } from './features/story/new-story-dialog';
+import { ConfirmData, TextPromptData } from './shared/small-dialogs';
 
 /**
  * How wide a sheet is, as four steps.
@@ -60,6 +60,20 @@ function sheet<D>(width: keyof typeof SHEET_WIDTHS, options: SheetOptions<D> = {
  * lists can all reach a modal without importing each other — and the two
  * flows that chain modals (new chapter, close chapter) live in one place.
  *
+ * **At the root, beside `workspace.ts`, and not in `shared/`.** This file
+ * knows every feature by name: it lazy-imports nine of their sheets and
+ * type-imports two of them. In `shared/` that made the folder of reusable
+ * widgets depend on `features/`, and a cycle with `chapters-dialog.ts`, which
+ * imports this — survivable only because the other half of it was a dynamic
+ * import. It is not a widget; it is the app's list of what can be opened, and
+ * that belongs where the app is.
+ *
+ * The four flows below stay here for the same reason. `newChapter`,
+ * `closeChapter`, `newStory` and `setUpFirstStory` each chain two or three
+ * sheets over two stores, and a store cannot open a sheet — the alternative
+ * was giving `ChapterStore` a `MatDialog`, which is the coupling this service
+ * exists to keep out of the stores.
+ *
  * **Two words, on purpose.** *Dialog* is Material's: `MatDialog`, the config
  * it takes, the `mat-dialog-*` parts the stylesheet reaches for, and so the
  * `*-dialog.ts` files and `li-*-dialog` selectors that are components of one.
@@ -109,7 +123,7 @@ export class Dialogs {
   }
 
   private async showModel(insisting: boolean): Promise<void> {
-    const { ModelDialog } = await import('../features/model/model-dialog');
+    const { ModelDialog } = await import('./features/model/model-dialog');
     const ref = this.dialog.open(
       ModelDialog,
       sheet(insisting ? 'md' : 'lg', { disableClose: insisting, data: { insisting } }),
@@ -122,7 +136,7 @@ export class Dialogs {
    * then the panel for people who want to look under the hood.
    */
   async openPreferences(): Promise<void> {
-    const { PreferencesDialog } = await import('../features/preferences/preferences-dialog');
+    const { PreferencesDialog } = await import('./features/preferences/preferences-dialog');
     this.dialog.open(PreferencesDialog, sheet('lg'));
   }
 
@@ -132,12 +146,12 @@ export class Dialogs {
    * do, since a name and a paragraph are more than a row can hold.
    */
   async openStory(characterId?: string): Promise<void> {
-    const { StoryDialog } = await import('../features/story/story-dialog');
+    const { StoryDialog } = await import('./features/story/story-dialog');
     this.dialog.open(StoryDialog, sheet('lg', { data: { characterId } }));
   }
 
   async openWorld(): Promise<void> {
-    const { WorldDialog } = await import('../features/world/world-dialog');
+    const { WorldDialog } = await import('./features/world/world-dialog');
     this.dialog.open(WorldDialog, sheet('xl'));
   }
 
@@ -147,23 +161,23 @@ export class Dialogs {
    * pending.
    */
   async openWhatsNew(all = false): Promise<void> {
-    const { WhatsNewDialog } = await import('../features/updates/whats-new-dialog');
+    const { WhatsNewDialog } = await import('./features/updates/whats-new-dialog');
     this.dialog.open(WhatsNewDialog, sheet('lg', { data: { all } }));
   }
 
   /** No settings on it: what this is, which build of it, and where to go next. */
   async openAbout(): Promise<void> {
-    const { AboutDialog } = await import('./about-dialog');
+    const { AboutDialog } = await import('./chrome/about-dialog');
     this.dialog.open(AboutDialog, sheet('sm'));
   }
 
   async openChapters(): Promise<void> {
-    const { ChaptersDialog } = await import('../features/chapters/chapters-dialog');
+    const { ChaptersDialog } = await import('./features/chapters/chapters-dialog');
     this.dialog.open(ChaptersDialog, sheet('lg'));
   }
 
   async openPromptPreview(draft = '', direction = ''): Promise<void> {
-    const { PromptPreviewDialog } = await import('../features/chapters/prompt-preview-dialog');
+    const { PromptPreviewDialog } = await import('./features/chapters/prompt-preview-dialog');
     this.dialog.open(PromptPreviewDialog, sheet('xl', { data: { draft, direction } }));
   }
 
@@ -172,7 +186,7 @@ export class Dialogs {
    * backdrop still save the text, they just do not open the chapter.
    */
   async openScene(chapterId: string, opening = false): Promise<boolean> {
-    const { SceneDialog } = await import('../features/chapters/scene-dialog');
+    const { SceneDialog } = await import('./features/chapters/scene-dialog');
     const ref = this.dialog.open(
       SceneDialog,
       sheet('lg', { data: { chapterId, opening }, autoFocus: 'first-tabbable' }),
@@ -202,7 +216,7 @@ export class Dialogs {
    */
   async closeChapter(): Promise<void> {
     const chapter = this.chapters.chapter();
-    const { CloseChapterDialog } = await import('../features/chapters/close-chapter-dialog');
+    const { CloseChapterDialog } = await import('./features/chapters/close-chapter-dialog');
     const ref = this.dialog.open<InstanceType<typeof CloseChapterDialog>, undefined, ChapterClose>(
       CloseChapterDialog,
       sheet('lg'),
@@ -224,7 +238,7 @@ export class Dialogs {
   }
 
   async askText(data: TextPromptData): Promise<string | undefined> {
-    const { TextPromptDialog } = await import('./small-dialogs');
+    const { TextPromptDialog } = await import('./shared/small-dialogs');
     const ref = this.dialog.open<InstanceType<typeof TextPromptDialog>, TextPromptData, string>(
       TextPromptDialog,
       { data, autoFocus: 'first-tabbable' },
@@ -233,7 +247,7 @@ export class Dialogs {
   }
 
   async confirm(data: ConfirmData): Promise<boolean> {
-    const { ConfirmDialog } = await import('./small-dialogs');
+    const { ConfirmDialog } = await import('./shared/small-dialogs');
     const ref = this.dialog.open(ConfirmDialog, { data, autoFocus: 'dialog' });
     return (await firstValueFrom(ref.afterClosed())) === true;
   }
@@ -243,7 +257,7 @@ export class Dialogs {
    * what the writer chose, or undefined if they backed out.
    */
   private async askSetup(data: NewStoryData): Promise<StorySetup | undefined> {
-    const { NewStoryDialog } = await import('../features/story/new-story-dialog');
+    const { NewStoryDialog } = await import('./features/story/new-story-dialog');
     const ref = this.dialog.open<InstanceType<typeof NewStoryDialog>, NewStoryData, StorySetup>(
       NewStoryDialog,
       sheet('md', { data, autoFocus: 'first-tabbable' }),

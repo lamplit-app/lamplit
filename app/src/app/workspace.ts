@@ -3,16 +3,17 @@ import { desktop } from './core/desktop';
 import { MORE_CONTRAST, applyUi } from './core/theming';
 import { ChapterPanel } from './features/chapters/chapter-panel';
 import { ChaptersPage } from './features/chapters/chapters-page';
-import { ReloadNotice } from './shared/reload-notice';
-import { TopBar } from './shared/top-bar';
-import { UpgradeNotice } from './shared/upgrade-notice';
+import { ReadAloud } from './chrome/read-aloud';
+import { ReloadNotice } from './chrome/reload-notice';
+import { TopBar } from './chrome/top-bar';
+import { UpgradeNotice } from './chrome/upgrade-notice';
 import { SettingsStore } from './store/settings-store';
 import { UpdatesStore } from './store/updates-store';
 import { ChapterStore } from './store/chapter-store';
+import { ChapterRequests } from './store/chapter-requests';
 import { StoryStore } from './store/story-store';
 import { Persistence } from './store/persistence';
-import { Dialogs } from './shared/dialogs';
-import { ReadAloud } from './shared/read-aloud';
+import { Dialogs } from './dialogs';
 
 /**
  * The app itself, once there are documents to show.
@@ -65,6 +66,7 @@ import { ReadAloud } from './shared/read-aloud';
 export class Workspace {
   private readonly settings = inject(SettingsStore);
   private readonly chapters = inject(ChapterStore);
+  private readonly requests = inject(ChapterRequests);
   private readonly stories = inject(StoryStore);
   private readonly dialogs = inject(Dialogs);
   private readonly persistence = inject(Persistence);
@@ -210,7 +212,7 @@ export class Workspace {
     if (event.repeat || event.defaultPrevented || this.dialogs.anyOpen()) return;
     if (event.key === 'Enter') {
       event.preventDefault();
-      void this.chapters.retryLast();
+      void this.requests.retryLast();
     } else if (event.key.toLowerCase() === 'k') {
       event.preventDefault();
       void this.dialogs.openModel();

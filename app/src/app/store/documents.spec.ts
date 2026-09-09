@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { Chapter } from '../core/models';
 import { normaliseChapter } from './documents';
 
 /**
@@ -23,12 +22,21 @@ describe('normaliseChapter', () => {
       storyId: 's1',
       number: 1,
       messages: [
-        { id: 'm1', role: 'user', content: '', direction: 'The storm arrives tonight.' },
-        { id: 'm2', role: 'user', content: '' },
+        {
+          id: 'm1',
+          role: 'user' as const,
+          content: '',
+          direction: 'The storm arrives tonight.',
+          createdAt: '',
+        },
+        { id: 'm2', role: 'user' as const, content: '', createdAt: '' },
       ],
     };
 
-    const messages = normaliseChapter(stored as unknown as Chapter).messages;
+    // A document as it comes off disk, which is what the signature says it
+    // takes: everything the chapter has not got yet is filled in from
+    // `newChapter`, so the fixture is only the fields the case is about.
+    const messages = normaliseChapter(stored).messages;
     expect(messages.map((m) => m.id)).toEqual(['m1']);
   });
 });

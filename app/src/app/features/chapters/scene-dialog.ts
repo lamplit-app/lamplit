@@ -2,6 +2,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { ChapterStore } from '../../store/chapter-store';
+import { ChapterRequests } from '../../store/chapter-requests';
 import { StoryStore } from '../../store/story-store';
 import { TOKEN_ESTIMATOR, formatTokens } from '../../core/tokens';
 import { countWords } from '../../shared/editor-field';
@@ -92,6 +93,7 @@ export class SceneDialog {
   protected readonly data = inject<SceneDialogData>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<SceneDialog, boolean>);
   private readonly chapters = inject(ChapterStore);
+  private readonly requests = inject(ChapterRequests);
   private readonly stories = inject(StoryStore);
   private readonly estimator = inject(TOKEN_ESTIMATOR);
 
@@ -161,7 +163,7 @@ export class SceneDialog {
   protected confirm(): void {
     if (!this.valid()) return;
     this.commit();
-    void this.chapters.choosePalette(this.chapter().id, this.openedOn);
+    void this.requests.choosePalette(this.chapter().id, this.openedOn);
     this.ref.close(true);
   }
 

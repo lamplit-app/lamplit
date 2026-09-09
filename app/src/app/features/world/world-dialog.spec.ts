@@ -6,25 +6,8 @@ import { LoreEntry } from '../../core/models';
 import { ModelClient } from '../../core/model-client';
 import { StoryStore } from '../../store/story-store';
 import { KEYS } from '../../store/documents';
-import { STORAGE_BACKEND, StorageBackend } from '../../store/storage';
-
-/** The documents, in a Map. What Persistence is, minus the server behind it. */
-class InMemoryStorage implements StorageBackend {
-  readonly documents = new Map<string, unknown>();
-
-  read<T>(key: string): T | null {
-    return (this.documents.get(key) as T) ?? null;
-  }
-  write(key: string, value: unknown): void {
-    this.documents.set(key, value);
-  }
-  remove(key: string): void {
-    this.documents.delete(key);
-  }
-  keys(prefix: string): string[] {
-    return [...this.documents.keys()].filter((key) => key.startsWith(prefix));
-  }
-}
+import { STORAGE_BACKEND } from '../../store/storage';
+import { InMemoryStorage } from '../../store/testing/in-memory-storage';
 
 const STORY_ID = 'story-1';
 
@@ -198,7 +181,10 @@ describe('WorldDialog', () => {
     )!;
     add.click();
     fixture.detectChanges();
-    const place = [...document.querySelectorAll<HTMLButtonElement>('.mat-mdc-menu-item')].find(
+    // By role rather than by the menu item's own class name, which is private
+    // to Material and two renames deep; `menuitem` is what the menu promises
+    // anyone reading it, this spec included.
+    const place = [...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(
       (item) => item.textContent.trim() === 'Place',
     )!;
     place.click();

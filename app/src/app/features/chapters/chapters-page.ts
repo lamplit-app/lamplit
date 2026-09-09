@@ -14,7 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChapterStore } from '../../store/chapter-store';
 import { SettingsStore } from '../../store/settings-store';
 import { StoryStore } from '../../store/story-store';
-import { Dialogs } from '../../shared/dialogs';
+import { Dialogs } from '../../dialogs';
 import { chapterName, chapterTitle } from '../../core/prompt-builder';
 import { ChapterToolbar } from './chapter-toolbar';
 import { Composer } from './composer';

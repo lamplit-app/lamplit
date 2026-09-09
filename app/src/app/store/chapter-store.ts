@@ -1,34 +1,12 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { CastChange, Chapter, ChapterMessage, LoreEntry, Story, TokenUsage } from '../core/models';
-import { LORE_SCHEMA, LoreProposal, buildLorePrompt, readProposals } from '../core/lore-extraction';
-import { ModelClient } from '../core/model-client';
-import {
-  PagePalette,
-  buildPalettePrompt,
-  pagePalette,
-  paletteSchema,
-  readPaletteName,
-} from '../core/page-palettes';
-import {
-  ModelError,
-  contextLimitOf,
-  describeContextLimit,
-  errorFromThrown,
-} from '../core/model-errors';
-import {
-  BuiltPrompt,
-  activeCharacter,
-  buildPrompt,
-  buildSummaryPrompt,
-  chapterName,
-  isOneAtATime,
-  writtenIn,
-} from '../core/prompt-builder';
-import { TOKEN_ESTIMATOR } from '../core/tokens';
+import { Chapter, ChapterMessage, LoreEntry } from '../core/models';
+import { PagePalette, pagePalette } from '../core/page-palettes';
+import { activeCharacter, chapterName, isOneAtATime, writtenIn } from '../core/prompt-builder';
+import { CastState, castState, withCastRecord } from './cast-records';
 import { SettingsStore } from './settings-store';
 import { NewStory, StoryStore } from './story-store';
 import { STORAGE_BACKEND } from './storage';
-import { KEYS, newChapter, newId, now, readChapters } from './documents';
+import { KEYS, newChapter, now, readChapters } from './documents';
 
 /** Why the composer is closed, and the one button that opens it again. */
 export interface WriteBlock {
@@ -37,34 +15,38 @@ export interface WriteBlock {
 }
 
 /**
- * The chapters of the open story, and the streaming turn.
+ * The chapters of the open story: the documents, the cast records filed in
+ * them, and the one rule about writing into them.
  *
- * Every request is rebuilt by the prompt builder from the story, the chapter
- * and the message list — nothing about a turn is remembered between requests,
- * so edit / regenerate / replay all go through the same path as a fresh send.
+ * Nothing here talks to a model. What a request carries, and what arrives back
+ * of it, is `ChapterRequests` — built on this store, and writing into a
+ * chapter through `update` like anything else does, or, while a reply is
+ * arriving, through the five methods under *what a turn writes*. That split is
+ * why a spec about chapters needs neither an endpoint nor a paint frame: this
+ * file has never heard of either.
  */
 @Injectable({ providedIn: 'root' })
 export class ChapterStore {
   private readonly storage = inject(STORAGE_BACKEND);
   private readonly settings = inject(SettingsStore);
   private readonly stories = inject(StoryStore);
-  private readonly client = inject(ModelClient);
-  private readonly estimator = inject(TOKEN_ESTIMATOR);
 
   private readonly state = signal<Chapter[]>([]);
   private readonly streamingIdState = signal<string | null>(null);
   private readonly saved = new Map<string, Chapter>();
   private loadedStoryId = '';
-  /** The chapter a running turn belongs to, in case the reader moves away. */
-  private streamingChapterId = '';
-  private controller: AbortController | null = null;
-
-  /** Deltas land here and are flushed to the signal once per frame. */
-  private pendingContent = '';
-  private pendingReasoning = '';
-  private frame: number | null = null;
 
   readonly chapters = this.state.asReadonly();
+
+  /**
+   * Which message a reply is arriving into, or none.
+   *
+   * Turn state, and yet here, because everything that reads it is asking about
+   * the chapter in front of it: the composer's Stop, the caret on the message,
+   * the toolbar, the reading voice waiting for a paragraph to finish, and the
+   * catching-up that will not run mid-reply. `ChapterRequests` sets it at both
+   * ends of a turn; nothing else may.
+   */
   readonly streamingId = this.streamingIdState.asReadonly();
   readonly isStreaming = computed(() => this.streamingIdState() !== null);
 
@@ -162,40 +144,6 @@ export class ChapterStore {
     this.loadFor(this.stories.story().id);
   }
 
-  /** Everything the next request will carry, for the pill and the preview. */
-  preview(draft = '', draftDirection = ''): BuiltPrompt {
-    return buildPrompt({
-      story: this.stories.story(),
-      chapter: this.chapter(),
-      draft,
-      draftDirection,
-      params: this.settings.generation(),
-      estimator: this.estimator,
-    });
-  }
-
-  /**
-   * A turn from the writer: what their persona did, what the author wants, or
-   * both. Either half on its own is a message worth sending.
-   */
-  async send(text: string, direction = ''): Promise<void> {
-    const content = text.trim();
-    const said = direction.trim();
-    if ((!content && !said) || this.isStreaming() || !this.canWrite()) return;
-    this.appendMessage({
-      id: newId(),
-      role: 'user',
-      content,
-      direction: said || undefined,
-      createdAt: now(),
-    });
-    await this.runTurn();
-  }
-
-  stop(): void {
-    this.controller?.abort();
-  }
-
   /** Both halves of a message at once: an edit can remove either of them. */
   editMessage(id: string, content: string, direction = ''): void {
     this.patchChapter(this.chapter().id, (chapter) => ({
@@ -208,40 +156,14 @@ export class ChapterStore {
   }
 
   deleteMessage(id: string): void {
-    if (this.streamingIdState() === id) this.stop();
+    if (this.streamingIdState() === id) this.endTurn();
     this.patchChapter(this.chapter().id, (chapter) => ({
       messages: chapter.messages.filter((m) => m.id !== id),
     }));
   }
 
-  /** Drops this assistant answer (and anything after it) and asks again. */
-  async regenerate(id: string): Promise<void> {
-    if (this.isStreaming() || !this.canWrite()) return;
-    const index = this.indexOf(id);
-    if (index < 0) return;
-    this.truncateTo(index);
-    await this.runTurn();
-  }
-
-  /** Keeps this user message, drops every later message, sends it again. */
-  async replayFrom(id: string): Promise<void> {
-    if (this.isStreaming() || !this.canWrite()) return;
-    const index = this.indexOf(id);
-    if (index < 0) return;
-    this.truncateTo(index + 1);
-    await this.runTurn();
-  }
-
-  /** Retry for the inline error bubble, and for Ctrl+Enter. */
-  async retryLast(): Promise<void> {
-    const messages = this.written();
-    const last = messages[messages.length - 1];
-    if (!last) return;
-    await (last.role === 'assistant' ? this.regenerate(last.id) : this.replayFrom(last.id));
-  }
-
   clearMessages(): void {
-    this.stop();
+    this.endTurn();
     this.patchChapter(this.chapter().id, () => ({ messages: [] }));
   }
 
@@ -271,40 +193,18 @@ export class ChapterStore {
   }
 
   /**
-   * A change to the cast, filed where in the chapter it happened.
-   *
-   * The record carries the cast as it now stands *and* as it stood, so it says
-   * what changed without being read next to its neighbours — a message
-   * deleted or replayed between two of them must not change what either means.
+   * A change to the cast, filed where in the chapter it happened. What a
+   * record means, and when there is one worth filing, is `cast-records.ts`.
    */
-  private recordCast(was: CastChange['was']): void {
+  private recordCast(was: CastState): void {
     const chapter = this.chapter();
     // Before the first word there is nothing for a record to sit between: the
     // mode block already opens by saying who is on stage.
     if (!chapter.messages.length) return;
 
-    this.patchChapter(chapter.id, (current) => {
-      const messages = [...current.messages];
-      const last = messages[messages.length - 1];
-      // Two changes with nothing written between them are one change, and it
-      // is the older record that knows what the cast was before both.
-      const from = last?.kind === 'cast' ? (last.cast?.was ?? was) : was;
-      if (last?.kind === 'cast') messages.pop();
-
-      const cast = castState(this.stories.story());
-      // Clicked away and back again: there is no change left to tell anyone.
-      if (sameCast(from, cast)) return { messages };
-
-      messages.push({
-        id: newId(),
-        kind: 'cast',
-        role: 'system',
-        content: '',
-        createdAt: now(),
-        cast: { ...cast, was: from },
-      });
-      return { messages };
-    });
+    this.patchChapter(chapter.id, (current) => ({
+      messages: withCastRecord(current.messages, this.stories.story(), was),
+    }));
   }
 
   // -- the chapters themselves ----------------------------------------------
@@ -387,266 +287,84 @@ export class ChapterStore {
     this.patchChapter(id, () => ({ palette: name || undefined }));
   }
 
-  /**
-   * Which page this chapter's scene wants, asked of the model.
-   *
-   * One short request, made when the scene sheet is confirmed and only when the
-   * story asked for it. Nothing waits for it: the answer lands a moment later
-   * and the page changes under the chapter that is already open.
-   *
-   * A scene that has not changed is not asked about twice — re-opening the
-   * sheet to fix a typo in the title is not a new chapter — and a failure of
-   * any kind changes nothing and is one line in the console. There is no
-   * message to put an error in, and a page that stayed as it was is not a fault
-   * worth a dialog.
-   */
-  async choosePalette(id: string, previousScene?: string): Promise<string> {
-    const story = this.stories.story();
-    const chapter = this.state().find((c) => c.id === id);
-    const scene = chapter?.scene.trim() ?? '';
-    if (!story.autoTheme || !chapter || !scene) return '';
-    if (chapter.palette && scene === previousScene?.trim()) return '';
-    if (!this.settings.isConnected()) return '';
+  // -- what a turn writes ----------------------------------------------------
+  //
+  // `ChapterRequests` owns the request, the abort and the deltas; the chapter
+  // it is filling in is still this store's. These five are all it is given for
+  // that, on purpose — a service that could reach `state` for itself would be a
+  // second place chapters are edited, and the effect that saves them would have
+  // two authors to keep up with.
 
-    const connection = this.settings.connection();
-    const messages = buildPalettePrompt(scene);
-    try {
-      const answer = await this.client.chatJson<unknown>({
-        provider: connection.provider,
-        baseUrl: connection.baseUrl,
-        apiKey: connection.apiKey,
-        model: connection.model,
-        messages,
-        params: this.settings.generation(),
-        schema: paletteSchema(),
-      });
-      const name = readPaletteName(answer.value, answer.raw);
-      if (!name) {
-        console.warn('The page palette answer named no palette:', answer.raw.slice(0, 200));
-        return '';
-      }
-      this.patchChapter(id, () => ({
-        palette: name,
-        // What it cost, for the scene sheet's footer. Estimated when the
-        // endpoint says nothing, which is the same fallback a turn makes.
-        paletteTokens:
-          answer.usage?.totalTokens ??
-          this.estimator.countMessages(messages) + this.estimator.count(answer.raw),
-      }));
-      return name;
-    } catch (e) {
-      console.warn('The page palette could not be chosen:', errorFromThrown(e).message);
-      return '';
-    }
+  /** Both ends of a turn, and the caret in between. */
+  markStreaming(id: string | null): void {
+    this.streamingIdState.set(id);
   }
 
-  /** Streams the close-chapter summary; the review modal owns the result. */
-  async summarise(
-    onDelta: (text: string) => void,
-    signal: AbortSignal,
-  ): Promise<{ text: string; usage?: TokenUsage; error?: string }> {
-    const connection = this.settings.connection();
-    if (!this.settings.isConnected()) {
-      return { text: '', error: this.settings.connectionHint() };
-    }
-    try {
-      const result = await this.client.streamChat(
-        {
-          provider: connection.provider,
-          baseUrl: connection.baseUrl,
-          apiKey: connection.apiKey,
-          model: connection.model,
-          messages: buildSummaryPrompt(this.stories.story(), this.chapter()),
-          params: this.settings.generation(),
-        },
-        (delta) => {
-          if (delta.content) onDelta(delta.content);
-        },
-        signal,
-      );
-      return { text: result.content, usage: result.usage, error: result.interrupted?.message };
-    } catch (e) {
-      return { text: '', error: errorFromThrown(e).message };
-    }
-  }
-
-  /**
-   * Asks what this chapter established, as entries rather than as prose.
-   *
-   * A second request and a second bill, so it is made only when the story asked
-   * for it or the writer pressed the button. Nothing it returns is written
-   * anywhere: the review sheet ticks them, and the close applies the ticks.
-   */
-  async proposeLore(
-    signal: AbortSignal,
-  ): Promise<{ proposals: LoreProposal[]; usage?: TokenUsage; error?: string }> {
-    const connection = this.settings.connection();
-    if (!this.settings.isConnected()) {
-      return { proposals: [], error: this.settings.connectionHint() };
-    }
-    const story = this.stories.story();
-    try {
-      const answer = await this.client.chatJson<unknown>(
-        {
-          provider: connection.provider,
-          baseUrl: connection.baseUrl,
-          apiKey: connection.apiKey,
-          model: connection.model,
-          messages: buildLorePrompt(story, this.chapter()),
-          params: this.settings.generation(),
-          schema: { name: LORE_SCHEMA.name, schema: LORE_SCHEMA.schema },
-        },
-        signal,
-      );
-      if (!answer.value) {
-        // It answered, and not with anything that could be read as entries.
-        return { proposals: [], usage: answer.usage, error: 'The answer was not JSON.' };
-      }
-      return { proposals: readProposals(answer.value, story.world.entries), usage: answer.usage };
-    } catch (e) {
-      return { proposals: [], error: errorFromThrown(e).message };
-    }
-  }
-
-  // -- the streaming turn ----------------------------------------------------
-
-  private async runTurn(): Promise<void> {
-    const connection = this.settings.connection();
-    if (!this.settings.isConnected()) return;
-    const chapterId = this.chapter().id;
-
-    const playing = this.playing();
-    const placeholder: ChapterMessage = {
-      id: newId(),
-      role: 'assistant',
-      content: '',
-      createdAt: now(),
-      // Who is answering, when somebody in particular is. An ensemble reply is
-      // the room talking and belongs to nobody.
-      speakerId: playing?.id,
-      // And what they were called at the time, so a rename later does not go
-      // back and change who said what.
-      speakerName: playing?.name.trim() || undefined,
-      meta: { model: connection.model },
-    };
-    this.appendMessage(placeholder);
-    this.streamingChapterId = chapterId;
-    this.streamingIdState.set(placeholder.id);
-
-    const { messages } = buildPrompt({
-      story: this.stories.story(),
-      chapter: this.chapter(),
-      messages: this.messages().filter((m) => m.id !== placeholder.id),
-      params: this.settings.generation(),
-      estimator: this.estimator,
-    });
-    this.controller = new AbortController();
-
-    try {
-      const result = await this.client.streamChat(
-        {
-          provider: connection.provider,
-          baseUrl: connection.baseUrl,
-          apiKey: connection.apiKey,
-          model: connection.model,
-          messages,
-          params: this.settings.generation(),
-        },
-        (delta) => {
-          if (delta.content) this.pendingContent += delta.content;
-          if (delta.reasoning) this.pendingReasoning += delta.reasoning;
-          this.queueFlush();
-        },
-        this.controller.signal,
-      );
-      this.flush();
-      this.patchMessage(chapterId, placeholder.id, {
-        content: result.content,
-        reasoning: result.reasoning || undefined,
-        meta: {
-          model: connection.model,
-          promptTokens: result.usage?.promptTokens ?? this.estimator.countMessages(messages),
-          completionTokens: result.usage?.completionTokens ?? this.estimator.count(result.content),
-          finishReason: result.finishReason,
-          aborted: result.aborted || undefined,
-          interrupted: result.interrupted?.message,
-        },
-      });
-    } catch (e) {
-      this.flush();
-      const error: ModelError = errorFromThrown(e);
-      // A refusal for length is the one failure the endpoint has told us how
-      // to fix, so it is said in those terms and the numbers are kept for the
-      // button that offers the change. Sending again is still a press.
-      const limit = contextLimitOf(error);
-      const budget = this.settings.generation().maxContextTokens;
-      this.patchMessage(chapterId, placeholder.id, {
-        meta: {
-          model: connection.model,
-          error: limit ? describeContextLimit(limit, budget, error.detail ?? '') : error.message,
-          contextLimit: limit ? { ...limit, budget } : undefined,
-        },
-      });
-    } finally {
-      this.cancelFlush();
-      this.controller = null;
-      this.streamingIdState.set(null);
-      this.streamingChapterId = '';
-      this.patchChapter(chapterId, () => ({}));
-    }
-  }
-
-  private queueFlush(): void {
-    if (this.frame !== null) return;
-    this.frame = requestAnimationFrame(() => {
-      this.frame = null;
-      this.flush();
-    });
-  }
-
-  private flush(): void {
-    const id = this.streamingIdState();
-    if (!id || (!this.pendingContent && !this.pendingReasoning)) return;
-    const content = this.pendingContent;
-    const reasoning = this.pendingReasoning;
-    this.pendingContent = '';
-    this.pendingReasoning = '';
-    this.patchChapter(this.streamingChapterId, (chapter) => ({
-      messages: chapter.messages.map((m) =>
-        m.id === id
-          ? {
-              ...m,
-              content: m.content + content,
-              reasoning: reasoning ? (m.reasoning ?? '') + reasoning : m.reasoning,
-            }
-          : m,
-      ),
-    }));
-  }
-
-  private cancelFlush(): void {
-    if (this.frame !== null) cancelAnimationFrame(this.frame);
-    this.frame = null;
-    this.pendingContent = '';
-    this.pendingReasoning = '';
-  }
-
-  private appendMessage(message: ChapterMessage): void {
+  /** The writer's message, and the empty reply the deltas land in. */
+  appendMessage(message: ChapterMessage): void {
     this.patchChapter(this.chapter().id, (chapter) => ({
       messages: [...chapter.messages, message],
     }));
   }
 
-  private patchMessage(chapterId: string, id: string, patch: Partial<ChapterMessage>): void {
+  /**
+   * One message of one chapter, from what it is now.
+   *
+   * A function rather than a patch, because a delta is the text so far and a
+   * little more. And the chapter is named rather than taken from `chapter()`,
+   * because a reply can still be arriving into a chapter the reader has left.
+   */
+  patchMessage(
+    chapterId: string,
+    id: string,
+    patch: (message: ChapterMessage) => Partial<ChapterMessage>,
+  ): void {
     this.patchChapter(chapterId, (chapter) => ({
-      messages: chapter.messages.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+      messages: chapter.messages.map((m) => (m.id === id ? { ...m, ...patch(m) } : m)),
     }));
   }
 
-  private truncateTo(length: number): void {
+  /** Regenerate and replay: everything from a point on is asked again. */
+  truncateTo(length: number): void {
     this.patchChapter(this.chapter().id, (chapter) => ({
       messages: chapter.messages.slice(0, length),
     }));
+  }
+
+  /**
+   * A chapter written to disk now rather than at the end of the frame.
+   *
+   * The effect in the constructor is how a chapter is normally saved, and it
+   * is enough for every edit made to the chapter in front of the reader. It is
+   * not enough for a reply that ended as the reader moved to another story: by
+   * the time the effect runs, this store holds a different story's chapters
+   * and the one with the words in it is not among them. So it goes straight
+   * through, and `saved` is told, so the effect does not write it again.
+   */
+  keepChapter(chapterId: string): void {
+    this.patchChapter(chapterId, () => ({}));
+    const chapter = this.state().find((c) => c.id === chapterId);
+    if (!chapter) return;
+    this.saved.set(chapter.id, chapter);
+    this.storage.write(KEYS.chapter(chapter.id), chapter);
+  }
+
+  /**
+   * A turn that cannot go on, because what it is writing into is going away:
+   * the story switched under it, the message it was filling was deleted, the
+   * chapter was cleared.
+   *
+   * A hook rather than a call. `ChapterRequests` is the only thing that can
+   * abort a request, and it is built on this store, so this store cannot be
+   * built on it — while the moment to abort is visible only from in here,
+   * inside `loadFor`, between reading the new story's chapters and putting
+   * them in the signal. A store with nothing sending has nothing to run.
+   */
+  private endTurn: () => void = () => undefined;
+
+  /** Registered once, by the service that owns the turn. */
+  whenTurnsMustEnd(end: () => void): void {
+    this.endTurn = end;
   }
 
   private patchChapter(id: string, patch: (chapter: Chapter) => Partial<Chapter>): void {
@@ -655,43 +373,10 @@ export class ChapterStore {
     );
   }
 
-  private indexOf(id: string): number {
-    return this.messages().findIndex((m) => m.id === id);
-  }
-
-  /**
-   * A turn still arriving when the reader leaves for another story.
-   *
-   * Aborting resolves rather than throws, so `runTurn` carries on — but by
-   * then this store holds another story's chapters, and everything it does
-   * next is aimed at a chapter that is no longer here: the last deltas, and
-   * the mark that says the reply stopped early. Both are done here instead,
-   * while the chapter is still in hand, and the chapter is written straight to
-   * storage because the effect that writes chapters will only ever see the
-   * story that replaced it.
-   */
-  private stopAndKeep(): void {
-    const id = this.streamingIdState();
-    const chapterId = this.streamingChapterId;
-    this.stop();
-    if (!id) return;
-
-    this.flush();
-    this.patchChapter(chapterId, (chapter) => ({
-      messages: chapter.messages.map((message) =>
-        message.id === id ? { ...message, meta: { ...message.meta, aborted: true } } : message,
-      ),
-    }));
-    const chapter = this.state().find((c) => c.id === chapterId);
-    if (!chapter) return;
-    this.saved.set(chapter.id, chapter);
-    this.storage.write(KEYS.chapter(chapter.id), chapter);
-  }
-
   /** Switching stories swaps the whole set; every story keeps one chapter. */
   private loadFor(storyId: string): void {
     this.loadedStoryId = storyId;
-    this.stopAndKeep();
+    this.endTurn();
     this.saved.clear();
     const chapters = readChapters(this.storage, storyId);
     for (const chapter of chapters) this.saved.set(chapter.id, chapter);
@@ -701,24 +386,4 @@ export class ChapterStore {
       this.stories.setActiveChapter(chapters[chapters.length - 1]!.id);
     }
   }
-}
-
-/** Who is on stage, as a record of a change stores it. */
-function castState(story: Story): { activeCharacterId: string; enabled: string[] } {
-  return {
-    activeCharacterId: activeCharacter(story)?.id ?? '',
-    enabled: story.characters.filter((c) => c.enabled).map((c) => c.id),
-  };
-}
-
-function sameCast(
-  a: { activeCharacterId: string; enabled: string[] } | undefined,
-  b: { activeCharacterId: string; enabled: string[] },
-): boolean {
-  return (
-    !!a &&
-    a.activeCharacterId === b.activeCharacterId &&
-    a.enabled.length === b.enabled.length &&
-    a.enabled.every((id, i) => id === b.enabled[i])
-  );
 }

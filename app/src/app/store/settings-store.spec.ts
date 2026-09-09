@@ -3,25 +3,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS } from '../core/defaults';
 import { KEYS } from './documents';
 import { SettingsStore } from './settings-store';
-import { STORAGE_BACKEND, StorageBackend } from './storage';
-
-/** The documents, in a Map. What Persistence is, minus the server behind it. */
-class InMemoryStorage implements StorageBackend {
-  readonly documents = new Map<string, unknown>();
-
-  read<T>(key: string): T | null {
-    return (this.documents.get(key) as T) ?? null;
-  }
-  write(key: string, value: unknown): void {
-    this.documents.set(key, value);
-  }
-  remove(key: string): void {
-    this.documents.delete(key);
-  }
-  keys(prefix: string): string[] {
-    return [...this.documents.keys()].filter((key) => key.startsWith(prefix));
-  }
-}
+import { STORAGE_BACKEND } from './storage';
+import { InMemoryStorage } from './testing/in-memory-storage';
+import { MACHINE_IS_DARK, stubMatchMedia } from '../core/testing/media-queries';
 
 /**
  * A `settings.json` as 0.1.0 wrote one: four reading fields, and no idea that
@@ -59,11 +43,7 @@ describe('SettingsStore', () => {
    * setting being read as the answer.
    */
   function machineIsDark(): void {
-    window.matchMedia = ((query: string) => ({
-      matches: query.includes('dark'),
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    })) as unknown as typeof window.matchMedia;
+    stubMatchMedia(MACHINE_IS_DARK);
   }
 
   it('opens a 0.1.0 settings file with no colours customised', () => {

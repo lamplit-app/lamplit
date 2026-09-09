@@ -114,6 +114,19 @@ export class CharacterSwatch {
       `${this.character().name || 'This character'} is ${characterColourLabel(this.character())}. Change it.`,
   );
 
+  /**
+   * Whether the ten colours are open over whatever the dot sits in.
+   *
+   * Asked by the chapter panel, which has to know whether Escape means a menu
+   * closing or the panel closing. The alternative was that panel reaching into
+   * the CDK's overlay container for the menu panel's own class name — private
+   * to Material, and Material's to rename. A component that owns a menu can
+   * simply be asked.
+   */
+  menuOpen(): boolean {
+    return this.trigger().menuOpen;
+  }
+
   protected choose(name: string): void {
     this.pick.emit(name);
     this.trigger().closeMenu();

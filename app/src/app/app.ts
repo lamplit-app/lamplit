@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { NoServer } from './shared/no-server';
+import { NoServer } from './chrome/no-server';
 import { Persistence } from './store/persistence';
 import { Workspace } from './workspace';
 

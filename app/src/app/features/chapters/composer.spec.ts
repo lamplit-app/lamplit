@@ -6,26 +6,10 @@ import { ChapterMessage } from '../../core/models';
 import { ChatStreamResult, ModelClient } from '../../core/model-client';
 import { ChapterStore } from '../../store/chapter-store';
 import { KEYS } from '../../store/documents';
-import { STORAGE_BACKEND, StorageBackend } from '../../store/storage';
+import { STORAGE_BACKEND } from '../../store/storage';
+import { InMemoryStorage } from '../../store/testing/in-memory-storage';
 import { ProseEditor } from '../../shared/prose-editor';
-
-/** The documents, in a Map. What Persistence is, minus the server behind it. */
-class InMemoryStorage implements StorageBackend {
-  readonly documents = new Map<string, unknown>();
-
-  read<T>(key: string): T | null {
-    return (this.documents.get(key) as T) ?? null;
-  }
-  write(key: string, value: unknown): void {
-    this.documents.set(key, value);
-  }
-  remove(key: string): void {
-    this.documents.delete(key);
-  }
-  keys(prefix: string): string[] {
-    return [...this.documents.keys()].filter((key) => key.startsWith(prefix));
-  }
-}
+import { NOTHING_MATCHES, stubMatchMedia } from '../../core/testing/media-queries';
 
 /** An endpoint that answers at once, so a send finishes inside the test. */
 const CLIENT = {
@@ -130,32 +114,17 @@ describe('Composer', () => {
    * nothing here depends on the answer.
    */
   beforeAll(() => {
-    const range = Range.prototype as unknown as {
-      getClientRects?: () => DOMRect[];
-      getBoundingClientRect?: () => DOMRect;
-    };
-    range.getClientRects ??= () => [];
+    // Filled in only where they really are missing, and named as the two the
+    // DOM says are always there: `Partial<Pick<Range, ...>>` is what jsdom's
+    // Range actually is, and a real one satisfies it too, so nothing is cast.
+    const range: Partial<Pick<Range, 'getClientRects' | 'getBoundingClientRect'>> = Range.prototype;
+    const rects: DOMRect[] = [];
+    range.getClientRects ??= () => Object.assign(rects, { item: () => null });
     range.getBoundingClientRect ??= () => new DOMRect();
 
     // And no media-query engine either, which `Layout` asks the width and the
-    // pointer with. Nothing matches: these specs are the composer with a
-    // keyboard in front of it, which is what a query matching nothing means.
-    // Anything asserting the phone layout belongs in the phone project under
-    // e2e/specs/phone, where there is a real viewport to be narrow.
-    //
-    // Assigned rather than filled in only if missing, because the DOM types say
-    // it is always there and jsdom says otherwise. Both spellings of the
-    // listener: the CDK, which every Material overlay in here goes through,
-    // still uses the deprecated pair, and a half-written stand-in is worse than
-    // none — without `matchMedia` at all the CDK has a fallback of its own, and
-    // defining it takes that away.
-    window.matchMedia = (() => ({
-      matches: false,
-      addListener: () => undefined,
-      removeListener: () => undefined,
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    })) as unknown as typeof window.matchMedia;
+    // pointer with.
+    stubMatchMedia(NOTHING_MATCHES);
   });
 
   beforeEach(() => {

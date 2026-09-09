@@ -13,11 +13,12 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChapterStore } from '../../store/chapter-store';
+import { ChapterRequests } from '../../store/chapter-requests';
 import { SettingsStore } from '../../store/settings-store';
 import { Layout } from '../../core/layout';
 import { splitDirection, withDirection } from '../../core/prompt-builder';
 import { TOKEN_ESTIMATOR, formatTokens } from '../../core/tokens';
-import { Dialogs } from '../../shared/dialogs';
+import { Dialogs } from '../../dialogs';
 import { fieldValue } from '../../shared/field';
 import { ProseEditor } from '../../shared/prose-editor';
 import { TextValue } from '../../shared/text-value';
@@ -127,7 +128,7 @@ import { TextValue } from '../../shared/text-value';
 
                 <div class="buttons">
                   @if (chapters.isStreaming()) {
-                    <button matButton="filled" class="stop" (click)="chapters.stop()">Stop</button>
+                    <button matButton="filled" class="stop" (click)="requests.stop()">Stop</button>
                   } @else {
                     <button
                       class="quiet author li-pill"
@@ -361,6 +362,7 @@ import { TextValue } from '../../shared/text-value';
 })
 export class Composer {
   protected readonly chapters = inject(ChapterStore);
+  protected readonly requests = inject(ChapterRequests);
   protected readonly settings = inject(SettingsStore);
   protected readonly dialogs = inject(Dialogs);
   protected readonly layout = inject(Layout);
@@ -389,7 +391,7 @@ export class Composer {
    * chapter, not on what is being typed, so a keystroke costs one string
    * measurement rather than a rebuild of the whole request.
    */
-  protected readonly prompt = computed(() => this.chapters.preview());
+  protected readonly prompt = computed(() => this.requests.preview());
 
   protected readonly contextLabel = computed(() => {
     const { total, budget } = this.prompt().tokens;
@@ -538,7 +540,7 @@ export class Composer {
     this.draft.set('');
     this.direction.set('');
     this.authoring.set(false);
-    void this.chapters.send(text, said);
+    void this.requests.send(text, said);
   }
 
   /**

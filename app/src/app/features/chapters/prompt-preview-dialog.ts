@@ -3,7 +3,7 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { ChapterStore } from '../../store/chapter-store';
+import { ChapterRequests } from '../../store/chapter-requests';
 import { StoryStore } from '../../store/story-store';
 import { BlockId } from '../../core/models';
 import {
@@ -316,11 +316,11 @@ export interface PromptPreviewData {
 })
 export class PromptPreviewDialog {
   protected readonly data = inject<PromptPreviewData>(MAT_DIALOG_DATA);
-  private readonly chapters = inject(ChapterStore);
+  private readonly requests = inject(ChapterRequests);
   private readonly stories = inject(StoryStore);
 
   protected readonly prompt = computed(() =>
-    this.chapters.preview(this.data.draft, this.data.direction),
+    this.requests.preview(this.data.draft, this.data.direction),
   );
 
   protected readonly reasons = PIN_REASONS;

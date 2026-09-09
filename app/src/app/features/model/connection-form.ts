@@ -337,10 +337,9 @@ export class ConnectionForm {
   }
 
   protected async test(): Promise<void> {
-    const { baseUrl, apiKey, model, provider } = this.connection();
     this.testStatus.set({ kind: 'busy', message: 'Sending one short request…' });
     try {
-      const reply = await this.client.testConnection(baseUrl, apiKey, model, provider);
+      const reply = await this.client.testConnection(this.connection());
       this.testStatus.set({
         kind: 'ok',
         message: reply ? `The model answered: “${reply}”` : 'The model answered.',
