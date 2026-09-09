@@ -129,12 +129,12 @@ upgrade is noticed), the command line (a port that is not one is a line, not a s
 the start-up sequence itself, on port 0 with the backup and the update check off. `node --test`
 again for the scripts in `tools/` and the desktop shell's own modules, which have no other way of
 being caught: reading the changelog's top section and the page the website is made from, the
-arguments and the flags of the desktop build, where the profile is on a stick, what a saved window
-size may say, what the menu bar says, the order a quit closes things in, how the shell reports a
-failure to start, whether it may ask GitHub about an update, which packages the runnable zip has to
-carry, what the staged folder is made of (the generated `package.json`, the two start scripts, the
-README, the line endings each of them wants), and each trap a docs page can fall into on the way to
-becoming a website.
+arguments and the flags of the desktop build, which of the shell's modules the installers actually
+package, where the profile is on a stick, what a saved window size may say, what the menu bar says,
+the order a quit closes things in, how the shell reports a failure to start, whether it may ask
+GitHub about an update, which packages the runnable zip has to carry, what the staged folder is
+made of (the generated `package.json`, the two start scripts, the README, the line endings each of
+them wants), and each trap a docs page can fall into on the way to becoming a website.
 
 A script cannot be imported to be asked what it would do — it has its effects at the top of the
 file — so the part of one worth a test lives in `tools/lib/` and the script reads and writes the

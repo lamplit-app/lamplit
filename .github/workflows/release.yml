@@ -6,9 +6,10 @@ name: Release
 #   git push --follow-tags
 #
 # Everything below then happens on its own, and stops one click short of done:
-# the installers and the zip are uploaded to a *draft* release, which a person
-# publishes after looking at what arrived. Nothing is signed (see PLAN.md §5.5),
-# so what is worth looking at is that both platforms produced what they should.
+# one job makes a *draft* release and puts the changelog's top section on it,
+# both platforms build and upload into that one draft, and a person publishes
+# after looking at what arrived. Nothing is signed (see PLAN.md §5.5), so what
+# is worth looking at is that both platforms produced what they should.
 #
 # `workflow_dispatch` runs the same build without publishing anything, and
 # leaves the installers and the zip as workflow artifacts. That is how to prove
@@ -28,8 +29,55 @@ env:
   ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
 
 jobs:
+  # The draft, made once, before anything can upload to it.
+  #
+  # Both installer legs run `electron-builder --publish always`, and that
+  # creates the release for the tag when it cannot find one. Run at the same
+  # moment, neither can: each listed the releases before the other had made
+  # anything, so v0.2.0 got *two* drafts with half the release in each — the
+  # Windows installers and the notes on one, the AppImage and the .deb on the
+  # other. Both jobs were green. electron-builder does find a draft that
+  # already exists, which is why the first release, where the two platforms
+  # never published from the same run, looked fine.
+  #
+  # The notes are taken here rather than in a job at the end for the same
+  # reason: `gh release edit <tag>` cannot say which of two drafts it means.
+  draft:
+    name: Draft release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # The section at the top is about to become this release's notes, so it
+      # had better be this release's section. Between releases it is
+      # `## Unreleased`, which is when tags get pushed — and the website drops
+      # that section on purpose, so the release would have gone out under a
+      # heading saying it had not, with no notes page to link to.
+      - name: Check the changelog names this version
+        run: npm run check:notes -- --version "${GITHUB_REF_NAME}"
+
+      # The changelog is written by hand and is the release notes; this only
+      # takes the top section of it, so there is one place to write them.
+      - name: Take the top section of CHANGELOG.md
+        run: |
+          awk '/^## /{ if (seen++) exit } seen' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "CHANGELOG.md has no section to publish"; exit 1; }
+          cat notes.md
+
+      - name: Create the draft
+        run: gh release create "${GITHUB_REF_NAME}" --draft --title "${GITHUB_REF_NAME#v}" --notes-file notes.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   installers:
     name: ${{ matrix.os }}
+    # Off a tag, the draft is waiting before either platform builds. A
+    # dispatched run has no draft job to wait for and skips this: `always()`
+    # keeps the matrix running when `draft` was skipped, and the `result`
+    # check still fails the build if it ran and failed.
+    needs: draft
+    if: always() && (needs.draft.result == 'success' || needs.draft.result == 'skipped')
     runs-on: ${{ matrix.os }}
     strategy:
       # One platform failing should not hide what the other would have said.
@@ -102,32 +150,3 @@ jobs:
           name: zip
           path: build/Lamplit.zip
           if-no-files-found: error
-
-  notes:
-    name: Release notes
-    needs: installers
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      # The section at the top is about to become this release's notes, so it
-      # had better be this release's section. Between releases it is
-      # `## Unreleased`, which is when tags get pushed — and the website drops
-      # that section on purpose, so the release would have gone out under a
-      # heading saying it had not, with no notes page to link to.
-      - name: Check the changelog names this version
-        run: npm run check:notes -- --version "${GITHUB_REF_NAME}"
-
-      # The changelog is written by hand and is the release notes; this only
-      # takes the top section of it, so there is one place to write them.
-      - name: Take the top section of CHANGELOG.md
-        run: |
-          awk '/^## /{ if (seen++) exit } seen' CHANGELOG.md > notes.md
-          test -s notes.md || { echo "CHANGELOG.md has no section to publish"; exit 1; }
-          cat notes.md
-
-      - name: Put them on the draft release
-        run: gh release edit "${GITHUB_REF_NAME}" --notes-file notes.md
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

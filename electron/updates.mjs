@@ -57,7 +57,16 @@ export function shouldCheck({ isPackaged, portable, env = {}, setting }) {
 export async function checkForUpdates(conditions, log = (message) => console.warn(message)) {
   if (!shouldCheck(conditions)) return false;
   try {
-    const { autoUpdater } = await import('electron-updater');
+    // Through the default export, not a named one. `electron-updater` is
+    // CommonJS and hangs `autoUpdater` off `exports` with a
+    // `Object.defineProperty` getter (out/main.js), which is exactly the shape
+    // cjs-module-lexer cannot see — so `import('electron-updater')` publishes
+    // no such named export and destructuring one gives `undefined`. It threw
+    // on the next line, was caught below, and every launch of an installed
+    // copy logged "Cannot set properties of undefined" instead of checking.
+    // `default` is the whole `module.exports`, where the getter still works.
+    const { default: updater } = await import('electron-updater');
+    const autoUpdater = updater.autoUpdater;
     autoUpdater.autoDownload = true;
     autoUpdater.on('error', (error) => log(`update check failed: ${error.message}`));
     await autoUpdater.checkForUpdatesAndNotify();

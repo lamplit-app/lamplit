@@ -9,8 +9,13 @@ directories:
 # The shell only. It is a few kilobytes, so it goes in the asar; everything
 # that has to be read by Node at runtime stays outside one, below.
 files:
-  - main.mjs
-  - updates.mjs
+  # Every module the shell is made of, as a glob rather than a list of names.
+  # It was a list, and the list did not follow the code: `main.mjs` was one
+  # file when it was written and is eight now, so 0.2.0's installers shipped
+  # without seven of them and died on the first import of the run. A glob
+  # cannot fall behind a split that has not happened yet. Nothing else at the
+  # top of `electron/` is a module, and `icons/` is build resources.
+  - '*.mjs'
   - preload.cjs
   # What the window shows while the server behind it is still starting.
   - splash.html
