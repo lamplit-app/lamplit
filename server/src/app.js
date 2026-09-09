@@ -1,18 +1,10 @@
 import express from 'express';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { CONFLICT, REV_HEADER, ROUTES } from '../../wire/contract.mjs';
+import { HttpError, answerErrors } from './errors.js';
 import { COLLECTIONS, DocumentStore, isCollection, isId } from './store.js';
 import { createUpdateChecker } from './updates.js';
-
-/**
- * The revision a write says it was based on. Absent means "unconditionally",
- * which is a command line or a test fixture; the app always sends one. See
- * DocumentStore for what the server does with it.
- */
-const REV_HEADER = 'x-doc-rev';
-
-/** What a 409 says. In one place: the client shows it and a test asserts on it. */
-const CONFLICT = 'changed on another device';
 
 /**
  * What the page is allowed to load, and from where. Nothing here is load-bearing
@@ -86,16 +78,16 @@ export function createApp({
     next();
   });
   app.use(corsFor(devCors));
-  app.use('/api', sameMachineOnly(hosts));
+  app.use(ROUTES.api, sameMachineOnly(hosts));
   // An empty body parses as `{}`, which would then be written over a document
-  // as if somebody had meant it; nobody sends nothing on purpose.
+  // as if somebody had meant it; nobody sends nothing on purpose. The same
+  // refusal, in the same words, as the one the PUT route makes below.
   app.use(
-    '/api',
+    ROUTES.api,
     express.json({
       limit: '16mb',
       verify: (request, response, body) => {
-        if (!body.length)
-          throw Object.assign(new Error('body must be a JSON document'), { status: 400 });
+        if (!body.length) throw new HttpError(400, NOT_A_DOCUMENT);
       },
     }),
   );
@@ -105,8 +97,9 @@ export function createApp({
    * About sheet and for the notice it shows after an upgrade, so every field
    * the build was stamped with is here rather than in a second endpoint.
    */
-  app.get('/api/health', (request, response) => {
-    response.json({
+  app.get(ROUTES.health, (request, response) => {
+    /** @type {import('../../wire/contract.mjs').Health} */
+    const health = {
       ok: true,
       name: 'lamplit',
       version: build.version ?? '0.0.0',
@@ -120,7 +113,8 @@ export function createApp({
       // and to a command line, not to another page that happened to ask, and
       // not to a phone: the folder is on the computer and is no use over there.
       ...(sameOrigin(request) && !request.lamplitShared ? { dataDir } : {}),
-    });
+    };
+    response.json(health);
   });
 
   /**
@@ -129,67 +123,48 @@ export function createApp({
    * so switching it off in Preferences means the request does not happen,
    * rather than happening and being ignored.
    */
-  app.get('/api/updates', async (request, response, next) => {
-    try {
-      response.json(await updates.check());
-    } catch (error) {
-      next(error);
-    }
+  app.get(ROUTES.updates, async (request, response) => {
+    response.json(await updates.check());
   });
 
-  app.get('/api/docs/:collection', async (request, response, next) => {
+  app.get(`${ROUTES.docs}/:collection`, async (request, response) => {
     const { collection } = request.params;
-    if (!isCollection(collection)) return notFound(response, 'unknown collection');
-    try {
-      const light = request.query['index'] !== undefined;
-      response.json(light ? await store.index(collection) : await store.list(collection));
-    } catch (error) {
-      next(error);
-    }
+    if (!isCollection(collection)) throw new HttpError(404, 'unknown collection');
+    const light = request.query['index'] !== undefined;
+    response.json(light ? await store.index(collection) : await store.list(collection));
   });
 
-  app.get('/api/docs/:collection/:id', async (request, response, next) => {
-    const { collection, id } = request.params;
-    if (!isCollection(collection) || !isId(collection, id)) return notFound(response);
-    try {
-      const document = await store.read(collection, id);
-      if (document === null) return notFound(response);
-      response.json(document);
-    } catch (error) {
-      next(error);
-    }
+  app.get(`${ROUTES.docs}/:collection/:id`, async (request, response) => {
+    const { collection, id } = named(request);
+    const document = await store.read(collection, id);
+    if (document === null) throw new HttpError(404, NOT_FOUND);
+    response.json(document);
   });
 
-  app.put('/api/docs/:collection/:id', async (request, response, next) => {
-    const { collection, id } = request.params;
-    if (!isCollection(collection) || !isId(collection, id)) return notFound(response);
-    if (!isDocument(request.body)) {
-      return response.status(400).json({ ok: false, error: 'body must be a JSON document' });
+  app.put(`${ROUTES.docs}/:collection/:id`, async (request, response) => {
+    const { collection, id } = named(request);
+    if (!isDocument(request.body)) throw new HttpError(400, NOT_A_DOCUMENT);
+    // The URL says where this document goes and the body may not disagree.
+    // Without this, `PUT stories/A` carrying `{id: 'B'}` wrote a document to
+    // `A.json` that every listing then called B — read as B, written back to
+    // `B.json`, and `A.json` left behind to be listed again at every start.
+    // Absent is allowed: the settings document has no id of its own.
+    if (request.body.id !== undefined && request.body.id !== id) {
+      throw new HttpError(400, 'the document’s id is not the one in the URL');
     }
-    try {
-      const result = await store.write(collection, id, request.body, revOf(request));
-      // Not an error the client did anything wrong to deserve: the document
-      // moved on somewhere else. It comes back with the answer, so reloading
-      // it is not a second request.
-      if (result.conflict) {
-        return response
-          .status(409)
-          .json({ ok: false, error: CONFLICT, rev: result.rev, document: result.document });
-      }
-      response.json(result);
-    } catch (error) {
-      next(error);
+    const result = await store.write(collection, id, request.body, revOf(request));
+    // Not an error the client did anything wrong to deserve: the document
+    // moved on somewhere else. It comes back with the refusal, so reloading
+    // it is not a second request.
+    if (result.conflict) {
+      throw new HttpError(409, CONFLICT, { rev: result.rev, document: result.document });
     }
+    response.json(result);
   });
 
-  app.delete('/api/docs/:collection/:id', async (request, response, next) => {
-    const { collection, id } = request.params;
-    if (!isCollection(collection) || !isId(collection, id)) return notFound(response);
-    try {
-      response.json(await store.remove(collection, id));
-    } catch (error) {
-      next(error);
-    }
+  app.delete(`${ROUTES.docs}/:collection/:id`, async (request, response) => {
+    const { collection, id } = named(request);
+    response.json(await store.remove(collection, id));
   });
 
   /**
@@ -202,45 +177,37 @@ export function createApp({
    * the QR code would be a phone that could pass the lock on to another one.
    */
   if (sharing) {
-    app.get('/api/server/share', computerOnly, (request, response) => {
+    app.get(ROUTES.share, computerOnly, (request, response) => {
       response.json(sharing.status());
     });
 
-    app.put('/api/server/share', computerOnly, async (request, response, next) => {
+    app.put(ROUTES.share, computerOnly, async (request, response) => {
       const body = request.body ?? {};
-      try {
-        // Rotating first, so "off, and a new code" leaves nothing listening
-        // that is still answering to the old one for the moment in between.
-        if (body.rotate === true) await sharing.rotate();
-        if (typeof body.share === 'boolean') await sharing.set(body.share);
-        response.json(sharing.status());
-      } catch (error) {
-        next(error);
-      }
+      // Rotating first, so "off, and a new code" leaves nothing listening
+      // that is still answering to the old one for the moment in between.
+      if (body.rotate === true) await sharing.rotate();
+      if (typeof body.share === 'boolean') await sharing.set(body.share);
+      response.json(sharing.status());
     });
 
-    app.get('/api/server/share/qr', computerOnly, async (request, response, next) => {
-      if (!sharing.on) return response.status(409).json({ ok: false, error: 'sharing is off' });
+    app.get(ROUTES.shareQr, computerOnly, async (request, response) => {
+      if (!sharing.on) throw new HttpError(409, 'sharing is off');
       const { addresses } = sharing.status();
       const asked = request.query['address'];
       // Only an address this machine actually has: the token is about to be
       // drawn into a picture, and a query string must not choose whose.
       const address = addresses.includes(asked) ? asked : addresses[0];
-      if (!address) {
-        return response.status(409).json({ ok: false, error: 'no network address to share on' });
-      }
-      try {
-        const svg = await sharing.qr(address);
-        // The pairing URL is the secret, so the picture of it is too: nothing
-        // between here and the screen may keep a copy.
-        response.type('image/svg+xml').set('Cache-Control', 'no-store').send(svg);
-      } catch (error) {
-        next(error);
-      }
+      if (!address) throw new HttpError(409, 'no network address to share on');
+      const svg = await sharing.qr(address);
+      // The pairing URL is the secret, so the picture of it is too: nothing
+      // between here and the screen may keep a copy.
+      response.type('image/svg+xml').set('Cache-Control', 'no-store').send(svg);
     });
   }
 
-  app.use('/api', (request, response) => notFound(response, 'no such endpoint'));
+  app.use(ROUTES.api, () => {
+    throw new HttpError(404, 'no such endpoint');
+  });
 
   if (publicDir && existsSync(join(publicDir, 'index.html'))) {
     // The bundles carry a hash in their names and can be cached for as long as
@@ -278,18 +245,25 @@ export function createApp({
     });
   }
 
-  app.use((error, request, response, next) => {
-    if (response.headersSent) return next(error);
-    const status = error.status ?? error.statusCode ?? 500;
-    if (status >= 500) console.error('[lamplit]', error);
-    response.status(status).json({ ok: false, error: error.message ?? 'server error' });
-  });
+  app.use(answerErrors());
 
   app.locals['store'] = store;
   return app;
 }
 
 export { COLLECTIONS };
+
+/**
+ * The collection and id in the path, refused if either is not one this server
+ * will have. Three routes ask the same question and used to answer it in the
+ * same two lines each; a 404 rather than a 400 on purpose — an id this server
+ * will not have names nothing that exists.
+ */
+function named(request) {
+  const { collection, id } = request.params;
+  if (!isCollection(collection) || !isId(collection, id)) throw new HttpError(404, NOT_FOUND);
+  return { collection, id };
+}
 
 /** What the client says it read. The empty string is a document it is creating. */
 function revOf(request) {
@@ -304,16 +278,15 @@ function revOf(request) {
  */
 function computerOnly(request, response, next) {
   if (!request.lamplitShared) return next();
-  response.status(403).json({ ok: false, error: 'that is the computer’s own setting' });
+  throw new HttpError(403, 'that is the computer’s own setting');
 }
+
+const NOT_FOUND = 'not found';
+const NOT_A_DOCUMENT = 'body must be a JSON document';
 
 /** One JSON object: not a string, not a number, not a list, not nothing. */
 function isDocument(body) {
   return body !== null && typeof body === 'object' && !Array.isArray(body);
-}
-
-function notFound(response, error = 'not found') {
-  response.status(404).json({ ok: false, error });
 }
 
 /**

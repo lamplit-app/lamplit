@@ -1,4 +1,7 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { ROUTES } from '@wire';
+import type { ShareState } from '@wire';
+import { ApiClient } from './api-client';
 
 /**
  * The switch in Preferences → Advanced, and the three requests behind it.
@@ -18,15 +21,11 @@ import { Injectable, computed, signal } from '@angular/core';
  * request rather than something this could work out for itself.
  */
 
-export interface ShareState {
-  share: boolean;
-  port: number;
-  /** Every non-internal IPv4 the machine has; a phone reaches one of them. */
-  addresses: string[];
-}
+export type { ShareState };
 
 @Injectable({ providedIn: 'root' })
 export class ShareStore {
+  private readonly api = inject(ApiClient);
   private readonly stateOf = signal<ShareState | null>(null);
   private readonly busyOf = signal(false);
   private readonly errorOf = signal('');
@@ -70,7 +69,7 @@ export class ShareStore {
   }
 
   qrUrl(address: string): string {
-    return `/api/server/share/qr?address=${encodeURIComponent(address)}&c=${this.code()}`;
+    return `${ROUTES.shareQr}?address=${encodeURIComponent(address)}&c=${this.code()}`;
   }
 
   private async change(body: Record<string, unknown>): Promise<void> {
@@ -88,24 +87,18 @@ export class ShareStore {
     }
   }
 
-  private async ask(method: 'GET' | 'PUT', body?: Record<string, unknown>): Promise<ShareState> {
-    const response = await fetch('/api/server/share', {
+  /**
+   * Through the one client, which is where the timeout and the reading of a
+   * refusal live. This used to be a bare `fetch` with no timeout on it at all
+   * — the one request in the app a reader waits on with their finger still on
+   * the switch — and a copy of the error-message extraction beside it.
+   */
+  private ask(method: 'GET' | 'PUT', body?: Record<string, unknown>): Promise<ShareState> {
+    return this.api.json<ShareState>(ROUTES.share, {
       method,
       ...(body === undefined
         ? {}
         : { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }),
     });
-    if (!response.ok) {
-      const said: unknown = await response.json().catch(() => undefined);
-      const detail =
-        typeof said === 'object' &&
-        said !== null &&
-        'error' in said &&
-        typeof said.error === 'string'
-          ? said.error
-          : `${response.status} ${response.statusText}`;
-      throw new Error(detail);
-    }
-    return (await response.json()) as ShareState;
   }
 }

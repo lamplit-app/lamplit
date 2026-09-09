@@ -1,4 +1,7 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { ROUTES } from '@wire';
+import type { Release, ReleaseAsset, UpdateReport } from '@wire';
+import { ApiClient } from './api-client';
 
 /**
  * Whether a newer Lamplit has been published, as the server found out.
@@ -12,37 +15,18 @@ import { Injectable, computed, signal } from '@angular/core';
  * and nothing else, so it is never on the path to writing anything.
  */
 
-export interface ReleaseAsset {
-  name: string;
-  url: string;
-  size: number;
-}
+/**
+ * The three shapes are the wire's: the server builds them and this store
+ * reads them, off one description of what they are.
+ */
+export type { Release, ReleaseAsset, UpdateReport };
 
-export interface Release {
-  /** `v0.2.0`, as published. */
-  tag: string;
-  /** The tag without its `v`, which is what the app compares and shows. */
-  version: string;
-  name: string;
-  publishedAt: string;
-  /** The release notes, as markdown. */
-  body: string;
-  url: string;
-  assets: ReleaseAsset[];
-}
-
-export interface UpdateReport {
-  enabled: boolean;
-  checked: boolean;
-  version: string;
-  latest: Release | null;
-  newer: Release[];
-  releases: Release[];
-}
-
-const REQUEST_TIMEOUT = 8000;
-
+/**
+ * Answered, and with nothing in it. `checked: false` is what tells the sheet
+ * "still asking" from "asked, and there is nothing there".
+ */
 const EMPTY: UpdateReport = {
+  ok: false,
   enabled: false,
   checked: false,
   version: '',
@@ -53,6 +37,7 @@ const EMPTY: UpdateReport = {
 
 @Injectable({ providedIn: 'root' })
 export class UpdatesStore {
+  private readonly api = inject(ApiClient);
   private readonly state = signal<UpdateReport | null>(null);
   private readonly askingState = signal(false);
   private asked: Promise<void> | null = null;
@@ -83,11 +68,9 @@ export class UpdatesStore {
   private async ask(): Promise<void> {
     this.askingState.set(true);
     try {
-      const response = await fetch('/api/updates', {
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT),
-      });
-      const body = response.ok ? ((await response.json()) as Partial<UpdateReport>) : {};
+      const body = await this.api.json<Partial<UpdateReport>>(ROUTES.updates);
       this.state.set({
+        ok: body.ok ?? true,
         enabled: body.enabled ?? false,
         checked: body.checked ?? false,
         version: body.version ?? '',
@@ -96,8 +79,7 @@ export class UpdatesStore {
         releases: Array.isArray(body.releases) ? body.releases : [],
       });
     } catch {
-      // An answer of "nothing" rather than no answer at all: the sheet has to
-      // be able to tell "still asking" from "asked, and there is nothing".
+      // An answer of "nothing" rather than no answer at all.
       this.state.set(EMPTY);
     } finally {
       this.askingState.set(false);

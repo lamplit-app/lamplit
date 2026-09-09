@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { networkInterfaces } from 'node:os';
 import { join } from 'node:path';
 import QRCode from 'qrcode';
+import { HttpError } from './errors.js';
 import { DEFAULT_PORT, listenWalking } from './ports.js';
 import { writeAtomic } from './store.js';
 
@@ -103,7 +104,11 @@ class Sharing {
     }
   }
 
-  /** What the dialog shows, and what it never shows: the token is not in here. */
+  /**
+   * What the dialog shows, and what it never shows: the token is not in here.
+   *
+   * @returns {import('../../wire/contract.mjs').ShareState}
+   */
   status() {
     return {
       share: this.#server !== null,
@@ -120,9 +125,24 @@ class Sharing {
     return this.#port;
   }
 
-  /** Opens or closes the second listener, and writes the choice down. */
+  /**
+   * Opens or closes the second listener, and writes the choice down.
+   *
+   * A busy range is the one failure this can have that is nobody's mistake:
+   * ten ports tried and every one of them taken. It used to escape as a raw
+   * 500 carrying `listen EADDRINUSE 0.0.0.0:8788`, so a reader who pressed the
+   * switch was told "500 Internal Server Error" and a phone was told a port
+   * number — while the identical failure at start-up is `init`'s return value
+   * and a sentence. It is a 503 with a sentence now: the switch is refused,
+   * not broken, and asking again later is the right thing to do.
+   */
   async set(on) {
-    if (on && !this.#server) await this.#open();
+    try {
+      if (on && !this.#server) await this.#open();
+    } catch (error) {
+      if (error.code !== 'EADDRINUSE') throw error;
+      throw new HttpError(503, 'no free port to share on — something else is using them');
+    }
     if (!on && this.#server) await this.#close();
     await this.#persist(on);
     return this.status();

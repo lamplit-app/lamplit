@@ -4,6 +4,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
+    "rootDir": "..",
     "types": ["vitest/globals"],
     /* A spec indexes into a fixture it has just built, and asserts on what is there; a `!`
        on every line would say nothing the assertion does not. */

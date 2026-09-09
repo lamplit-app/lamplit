@@ -246,6 +246,26 @@ export default defineConfig([
     },
   },
 
+  {
+    // -- The wire ----------------------------------------------------------------
+    //
+    // The one file the app and the server both read, and so the one file that
+    // has to be true in a browser bundle and in Node at once. Neither set of
+    // globals, because it uses nothing from either — and nothing imported,
+    // which the rule below says out loud: an import here would have to resolve
+    // on both sides, and a dependency of the contract is a dependency of
+    // everything that reads it.
+    files: ['wire/**/*.mjs'],
+    extends: [js.configs.recommended],
+    languageOptions: { sourceType: 'module' },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['**'], message: 'The wire imports nothing. See contract.mjs.' }] },
+      ],
+    },
+  },
+
   // -- Node, in plain JavaScript ------------------------------------------------
   {
     files: ['server/**/*.js', 'electron/**/*.mjs', 'tools/**/*.mjs', 'e2e/*.mjs'],

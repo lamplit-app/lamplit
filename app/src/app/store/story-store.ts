@@ -126,8 +126,15 @@ export class StoryStore {
   duplicate(id: string): Story | null {
     const source = this.state().find((s) => s.id === id);
     if (!source) return null;
+    // Without the revision the server stamped on the original: that number
+    // belongs to the document it was stamped on, and a copy has never been
+    // written anywhere. `Persistence` keys revisions by storage key rather
+    // than reading them off the document, so nothing was broken by carrying
+    // one — but a new document claiming to be a revision of something is a
+    // sentence that is simply not true.
+    const { rev: _rev, ...original } = structuredClone(source);
     const copy: Story = {
-      ...structuredClone(source),
+      ...original,
       id: newId(),
       title: `${source.title} (copy)`,
       createdAt: now(),

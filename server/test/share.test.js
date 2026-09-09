@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile } from 'node:fs/promises';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
+import { SERVER_ERROR } from '../../wire/contract.mjs';
 import { createApp } from '../src/app.js';
+import { PORT_ATTEMPTS } from '../src/ports.js';
 import { SHARE_FILE, createSharing, localAddresses, newToken } from '../src/share.js';
 
 /**
@@ -315,3 +318,97 @@ function put(body) {
     body: JSON.stringify(body),
   };
 }
+
+/**
+ * The switch pressed when there is nowhere for the listener to go.
+ *
+ * The walk tries `PORT_ATTEMPTS` ports past the one it wanted and then gives
+ * up with an `EADDRINUSE`, and that used to escape the route as a raw 500
+ * carrying `listen EADDRINUSE 0.0.0.0:4177` — so the reader who pressed the
+ * switch was told "500 Internal Server Error" and a paired phone was told a
+ * port number. The identical failure at start-up has always been a sentence
+ * (`init` returns one), and that is the whole of the inconsistency.
+ */
+describe('sharing, with no free port to open on', () => {
+  const close = (servers) =>
+    Promise.all(servers.map((server) => new Promise((fulfil) => server.close(fulfil))));
+
+  /**
+   * A run of `PORT_ATTEMPTS + 1` ports, every one of them held by this test.
+   *
+   * Held by *this* test and not merely observed to be busy: the rest of the
+   * suite is opening and closing listeners the whole time, so a port that
+   * refused a bind a moment ago may be free by the time the walk reaches it —
+   * which is what this test saw, passing alone and failing in the run. The base
+   * comes from a port the operating system has just said is free; if the run
+   * above it is not free too, the whole range is dropped and another is tried.
+   */
+  async function occupyARange() {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const first = createServer();
+      await new Promise((fulfil) => first.listen(0, '127.0.0.1', fulfil));
+      const from = first.address().port;
+      const held = [first];
+      let whole = true;
+      for (let port = from + 1; whole && port <= from + PORT_ATTEMPTS; port++) {
+        const server = createServer();
+        whole = await new Promise((fulfil) => {
+          server.once('listening', () => fulfil(true));
+          server.once('error', () => fulfil(false));
+          server.listen(port, '127.0.0.1');
+        });
+        if (whole) held.push(server);
+      }
+      if (whole) return { from, release: () => close(held) };
+      await close(held);
+    }
+    throw new Error(`no run of ${PORT_ATTEMPTS + 1} free ports to take`);
+  }
+
+  it('answers a sentence and a 503, and says nothing about ports', async () => {
+    const range = await occupyARange();
+    const dataDir = await mkdtemp(join(tmpdir(), 'lamplit-busy-'));
+    const sharing = createSharing({ dataDir, port: range.from, host: '127.0.0.1' });
+    const app = createApp({ dataDir, sharing });
+    sharing.serve(app);
+    await app.locals.store.init();
+    const own = await new Promise((fulfil) => {
+      const instance = app.listen(0, '127.0.0.1', () => fulfil(instance));
+    });
+    const base = `http://127.0.0.1:${own.address().port}`;
+
+    // The walk warns once per busy port on its way up, and the refusal is
+    // logged: both are wanted in a real run and neither is wanted in this one.
+    const { warn, error: logged } = console;
+    console.warn = () => {};
+    const said = [];
+    console.error = (...parts) => said.push(parts);
+    try {
+      const refused = await fetch(`${base}/api/server/share`, put({ share: true }));
+
+      assert.equal(refused.status, 503);
+      const body = await refused.json();
+      assert.equal(body.ok, false);
+      assert.match(body.error, /no free port to share on/);
+      // A sentence, not the operating system's: the error middleware only
+      // hides a 5xx's message, and this one is meant to be read.
+      assert.notEqual(body.error, SERVER_ERROR);
+      assert.ok(!/EADDRINUSE|\d{4}/.test(body.error), body.error);
+      // And the switch is off rather than half on.
+      assert.equal(sharing.on, false);
+      assert.equal((await (await fetch(`${base}/api/server/share`)).json()).share, false);
+      // The reason is in the log as well, where somebody can act on it.
+      assert.equal(said.length, 1);
+    } finally {
+      console.warn = warn;
+      console.error = logged;
+      await sharing.close();
+      await new Promise((fulfil) => {
+        own.close(fulfil);
+        own.closeIdleConnections();
+        own.closeAllConnections();
+      });
+      await range.release();
+    }
+  });
+});

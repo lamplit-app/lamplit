@@ -23,6 +23,10 @@ files:
 extraResources:
   - from: ../build/desktop-stage/server
     to: app/server
+  # Beside the server, because the server imports it as `../../wire/…`. Two
+  # files' worth, and without it nothing starts.
+  - from: ../build/desktop-stage/wire
+    to: app/wire
   - from: ../build/desktop-stage/public
     to: app/public
   - from: ../build/desktop-stage/node_modules

@@ -5,6 +5,7 @@ import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { REV_HEADER } from '../../wire/contract.mjs';
 
 /**
  * The real persistence server, started per test on its own port with its own
@@ -109,7 +110,7 @@ export class PersistenceServer {
     const current = (await (await fetch(url)).json()) as Record<string, unknown>;
     const response = await fetch(url, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json', 'x-doc-rev': String(current['rev'] ?? '') },
+      headers: { 'content-type': 'application/json', [REV_HEADER]: String(current['rev'] ?? '') },
       body: JSON.stringify(change(current)),
     });
     if (!response.ok) throw new Error(`the other device's write failed: ${response.status}`);

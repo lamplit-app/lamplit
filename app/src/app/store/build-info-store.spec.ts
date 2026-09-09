@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { BuildInfoStore, isNewer } from './build-info-store';
+import { isNewer } from '@wire';
+import { BuildInfoStore } from './build-info-store';
 
 /** What `/api/health` answers, so the store can be asked what it made of it. */
 function health(body: unknown, status = 200): void {
@@ -28,6 +29,16 @@ const STAMPED = {
   previousVersion: null,
 };
 
+/**
+ * The rule the server also asks, held from this side of it.
+ *
+ * `isNewer` is `wire/contract.mjs`'s — one implementation, read by the server
+ * for GitHub's releases and by this store for the version whose data folder
+ * this is. These cases used to sit beside a second copy of the function; they
+ * are worth keeping here rather than only in the server's suite, because they
+ * are also the one test that the wire module resolves and runs inside the app's
+ * own bundle.
+ */
 describe('isNewer', () => {
   it('compares segment by segment, as numbers', () => {
     expect(isNewer('0.2.0', '0.1.0')).toBe(true);

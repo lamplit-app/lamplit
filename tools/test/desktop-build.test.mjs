@@ -41,3 +41,53 @@ describe('the desktop build’s arguments', () => {
     assert.equal(rootVersion(ROOT), root.version);
   });
 });
+
+/**
+ * The `from → to` pairs under `extraResources`, in the order they are listed.
+ * Two lines each, which is how the file is written and how electron-builder
+ * reads it; a YAML parser for six paths would be a dependency for nothing.
+ */
+function extraResources(yml) {
+  const lines = yml.split(/\r?\n/);
+  const pairs = [];
+  for (let i = 0; i < lines.length; i++) {
+    const from = /^\s*-\s*from:\s*(\S+)\s*$/.exec(lines[i]);
+    const to = from && /^\s*to:\s*(\S+)\s*$/.exec(lines[i + 1] ?? '');
+    if (from && to) pairs.push([from[1], to[1]]);
+  }
+  return pairs;
+}
+
+/**
+ * What the installers lay down beside the shell, and the one thing about it
+ * that is a path rather than a file list.
+ *
+ * `electron/main.mjs` imports the server out of `resources/app/server/src`, and
+ * `server/src` imports the wire as `../../wire/contract.mjs` — so the wire has
+ * to land at `app/wire`, beside `app/server` and not inside it. Get that wrong
+ * and every installer builds, ships, and fails on the first import of the run;
+ * nothing else in this repository would notice, because the zip resolves the
+ * same import through a differently-shaped folder.
+ */
+describe('what the desktop build lays down beside the shell', () => {
+  const pairs = extraResources(
+    readFileSync(join(ROOT, 'electron', 'electron-builder.yml'), 'utf8'),
+  );
+
+  it('puts the wire beside the server, where the server’s import expects it', () => {
+    assert.deepEqual(
+      pairs.find(([, to]) => to === 'app/wire'),
+      ['../build/desktop-stage/wire', 'app/wire'],
+    );
+  });
+
+  it('still puts the server, the built app and the dependencies where it did', () => {
+    assert.deepEqual(pairs, [
+      ['../build/desktop-stage/server', 'app/server'],
+      ['../build/desktop-stage/wire', 'app/wire'],
+      ['../build/desktop-stage/public', 'app/public'],
+      ['../build/desktop-stage/node_modules', 'app/node_modules'],
+      ['../build/desktop-stage/package.json', 'app/package.json'],
+    ]);
+  });
+});

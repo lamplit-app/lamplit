@@ -12,8 +12,9 @@ app/        Angular 22 workspace — standalone components, signals, zoneless
               story formatting, the prompt builder. Depends on nothing above
               it, and on nothing of Angular's but DI and signals
   store/      signal stores (one per document type), the four model requests
-              the chapters make, and the persistence layer they write through:
-              the session's documents, and the server
+              the chapters make, one API client for every call to our own
+              server, and the persistence layer they write through: the
+              session's documents, and the server
   features/   chapters (page, message list, composer, scene sheet, chapters
               list, close chapter, prompt preview), model (the connection and
               the parameters, as the two tabs of one sheet), preferences,
@@ -25,6 +26,11 @@ app/        Angular 22 workspace — standalone components, signals, zoneless
               the phone-sheet gestures. Nothing here reaches a store
   dialogs.ts  what can be opened over the page, and the flows that chain two
               or three sheets. At the root because it knows every feature
+wire/       the one file the app and the server both read: the revision header,
+            the words of a refusal, the collections, the routes, the shapes of
+            the three answers that are not documents, and the version
+            comparison both sides make. Plain JavaScript with JSDoc types,
+            because the server runs from source; the app reaches it as `@wire`
 server/     Express 5 — JSON documents on disk, the built app in front of them,
             a dependency-free zip writer, and the build stamp (version.js: which
             build this is, and which one wrote this data folder last).

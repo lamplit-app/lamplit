@@ -356,6 +356,12 @@ export function stagedFiles({ version, description, server, stamp, stampFile, po
 export function stagedCopies({ root, builtApp, licencesFile }) {
   return [
     { from: join(root, 'server', 'src'), to: 'server/src' },
+    // The one file the server and the app both read: the header name, the
+    // collections, the paths and the words of a refusal. `server/src` imports
+    // it as `../../wire/contract.mjs`, so it has to sit beside `server/` in
+    // the stage exactly as it sits beside it in the repository — the app's own
+    // copy is already inside the bundle below.
+    { from: join(root, 'wire'), to: 'wire' },
     { from: builtApp, to: 'public' },
     // The licences of everything bundled into that JavaScript. Angular writes
     // them beside the build rather than inside it, so they have to be asked for

@@ -1,13 +1,18 @@
 import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { SETTINGS_ID, revisionOf } from '../../wire/contract.mjs';
 
 /**
- * The three document kinds the app persists, and where each one lives.
- * `settings` is one file rather than a folder because there is exactly one.
+ * Where each collection lives on disk. `settings` is one file rather than a
+ * folder because there is exactly one of it.
+ *
+ * The names are the wire's — `wire/contract.mjs` — and only the layout is
+ * here, so a fourth collection is a name over there and an entry here. A test
+ * holds the two lists against each other.
  */
 export const COLLECTIONS = {
-  settings: { single: 'settings', file: 'settings.json' },
+  [SETTINGS_ID]: { single: SETTINGS_ID, file: `${SETTINGS_ID}.json` },
   stories: { dir: 'stories' },
   chapters: { dir: 'chapters' },
 };
@@ -15,12 +20,20 @@ export const COLLECTIONS = {
 /** Ids come from `crypto.randomUUID()`; this also keeps `..` out of paths. */
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
 
+/**
+ * The names Windows will not give a file, whatever extension follows them.
+ * `CON.json` is the console, and opening it succeeds and reads nothing — so a
+ * document filed under that id would silently never exist. A curl-only
+ * foot-gun, since every id the app makes is a UUID, and one line to close.
+ */
+const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+
 export function isCollection(name) {
   return Object.hasOwn(COLLECTIONS, name);
 }
 
 export function isId(collection, id) {
-  if (!ID.test(id)) return false;
+  if (!ID.test(id) || RESERVED.test(id)) return false;
   const config = COLLECTIONS[collection];
   return config.single ? id === config.single : true;
 }
@@ -114,9 +127,28 @@ export class DocumentStore {
     }));
   }
 
+  /**
+   * The document filed under this id, with `id` set to the id it was filed
+   * under.
+   *
+   * The filename wins, and that is the whole of it. A folder collection keys
+   * everything — the listing, the client's snapshot, the write it sends back —
+   * off the id *inside* the document, so `stories/A.json` carrying `{id: 'B'}`
+   * was loaded as story B, written back to `stories/B.json`, and `A.json` was
+   * left behind to be listed again at every start and duplicated once `B.json`
+   * existed. Only a hand-edited file or a curl could do it, and the API now
+   * refuses the write that would (see the id check in `app.js`) — but a file on
+   * disk is not something the API was ever asked about, so disk truth wins here
+   * too and the next write puts the document straight.
+   *
+   * The settings document is left alone: there is one file, its id is its
+   * collection's name, and the client's settings document has no `id` field
+   * for this to invent one on.
+   */
   async read(collection, id) {
     try {
-      return JSON.parse(await readFile(this.pathOf(collection, id), 'utf8'));
+      const document = JSON.parse(await readFile(this.pathOf(collection, id), 'utf8'));
+      return this.#named(collection, id, document);
     } catch (error) {
       if (error.code === 'ENOENT') return null;
       // A truncated or hand-edited file reads as missing rather than as a 500:
@@ -124,6 +156,15 @@ export class DocumentStore {
       if (error instanceof SyntaxError) return null;
       throw error;
     }
+  }
+
+  /** A folder collection's document, filed under the name it is filed under. */
+  #named(collection, id, document) {
+    if (COLLECTIONS[collection].single) return document;
+    if (document === null || typeof document !== 'object' || Array.isArray(document)) {
+      return document;
+    }
+    return { ...document, id };
   }
 
   /**
@@ -143,7 +184,11 @@ export class DocumentStore {
       if (basedOn !== undefined) {
         const current = await this.#current(path);
         if (current.rev !== basedOn) {
-          return { ok: false, conflict: true, rev: current.rev, document: current.document };
+          // Through `#named` as well, because the client files whatever comes
+          // back with the refusal and must file it where it actually lives.
+          const document =
+            current.document === null ? null : this.#named(collection, id, current.document);
+          return { ok: false, conflict: true, rev: current.rev, document };
         }
       }
       const rev = newRevision();
@@ -208,12 +253,6 @@ export class DocumentStore {
  */
 function newRevision() {
   return randomBytes(8).toString('hex');
-}
-
-/** The `rev` a document carries, or `''` for one written before there were any. */
-function revisionOf(document) {
-  const rev = document?.['rev'];
-  return typeof rev === 'string' ? rev : '';
 }
 
 /**

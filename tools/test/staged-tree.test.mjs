@@ -226,7 +226,7 @@ describe('the README beside them', () => {
 });
 
 describe('what is copied in whole', () => {
-  it('is the server, the built app, and the licences of what is in it', () => {
+  it('is the server, the wire, the built app, and the licences of what is in it', () => {
     const copies = stagedCopies({
       root: '/repo',
       builtApp: join('/repo', 'app', 'dist', 'app', 'browser'),
@@ -234,8 +234,12 @@ describe('what is copied in whole', () => {
     });
     assert.deepEqual(
       copies.map((copy) => copy.to),
-      ['server/src', 'public', '3rdpartylicenses.txt'],
+      ['server/src', 'wire', 'public', '3rdpartylicenses.txt'],
     );
+    // `server/src/app.js` imports `../../wire/contract.mjs`, so the wire has
+    // to land beside the server and not inside it. A stage without it is a
+    // server that cannot start, which no other check here would catch.
+    assert.equal(copies[1].from, join('/repo', 'wire'));
     // Angular writes the licences beside the build rather than inside it, and
     // Apache-2.0 and BSD-3 require the notice to travel with what it covers.
     assert.equal(
@@ -249,7 +253,8 @@ describe('what is copied in whole', () => {
     const builtApp = join(ROOT, 'app', 'dist', 'app', 'browser');
     const copies = stagedCopies({ root: ROOT, builtApp, licencesFile: '3rdpartylicenses.txt' });
     assert.equal(copies[0].from, join(ROOT, 'server', 'src'));
-    assert.equal(copies[1].from, builtApp);
+    assert.equal(copies[1].from, join(ROOT, 'wire'));
+    assert.equal(copies[2].from, builtApp);
   });
 
   it('leaves nothing to be copied over something already written', () => {

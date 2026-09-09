@@ -211,6 +211,17 @@ export interface Settings {
    * dismissed, so the same one never appears twice.
    */
   acknowledgedVersion: string | null;
+  /**
+   * The revision the server stamped on this document when it last wrote it.
+   *
+   * The server's, not the app's: it is the only field in any of these shapes
+   * that the app neither chooses nor means anything by, and the only reason it
+   * is typed here at all is that it arrives inside the document and is written
+   * back inside it. `Persistence` reads it off with `revisionOf` and sends it as
+   * header; nothing else in the app looks at it. Absent on a document that has
+   * never been written, and on one written before there were revisions.
+   */
+  rev?: string;
 }
 
 export interface TokenUsage {
@@ -430,6 +441,17 @@ export interface Story {
    * small, on a step that used to make none.
    */
   autoTheme: boolean;
+  /**
+   * The revision the server stamped on this document when it last wrote it.
+   *
+   * The server's, not the app's: it is the only field in any of these shapes
+   * that the app neither chooses nor means anything by, and the only reason it
+   * is typed here at all is that it arrives inside the document and is written
+   * back inside it. `Persistence` reads it off with `revisionOf` and sends it as
+   * header; nothing else in the app looks at it. Absent on a document that has
+   * never been written, and on one written before there were revisions.
+   */
+  rev?: string;
 }
 
 /**
@@ -456,6 +478,17 @@ export interface Chapter {
   palette?: string;
   /** What the request that chose it cost, for the scene sheet's footer. */
   paletteTokens?: number;
+  /**
+   * The revision the server stamped on this document when it last wrote it.
+   *
+   * The server's, not the app's: it is the only field in any of these shapes
+   * that the app neither chooses nor means anything by, and the only reason it
+   * is typed here at all is that it arrives inside the document and is written
+   * back inside it. `Persistence` reads it off with `revisionOf` and sends it as
+   * header; nothing else in the app looks at it. Absent on a document that has
+   * never been written, and on one written before there were revisions.
+   */
+  rev?: string;
 }
 
 /** What actually goes over the wire to the endpoint. */

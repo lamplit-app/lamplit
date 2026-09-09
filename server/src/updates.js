@@ -13,38 +13,19 @@
  * the app, and the next start tries again.
  */
 
+import { isNewer } from '../../wire/contract.mjs';
+
 const RELEASES_URL = 'https://api.github.com/repos/lamplit-app/lamplit/releases';
 const TIMEOUT = 5000;
 /** GitHub refuses a request without one, and this says who is asking. */
 const USER_AGENT = 'lamplit-update-check';
 
 /**
- * @typedef {object} ReleaseAsset
- * @property {string} name
- * @property {string} url
- * @property {number} size
- */
-
-/**
- * @typedef {object} Release
- * @property {string} tag          `v0.2.0`, as published
- * @property {string} version      the tag without its `v`
- * @property {string} name         the release's title, or the tag
- * @property {string} publishedAt  ISO date
- * @property {string} body         the release notes, as markdown
- * @property {string} url          the release page
- * @property {ReleaseAsset[]} assets
- */
-
-/**
- * @typedef {object} UpdateReport
- * @property {boolean} ok
- * @property {boolean} enabled   false when this run was told not to ask
- * @property {boolean} checked   true once an answer came back, good or bad
- * @property {string} version    the version doing the asking
- * @property {Release | null} latest
- * @property {Release[]} newer   newer than `version`, newest first
- * @property {Release[]} releases  every published release, newest first
+ * The three shapes this file builds are `wire/contract.mjs`'s: the app reads
+ * them off the same file, so a field added to a release is added once.
+ *
+ * @typedef {import('../../wire/contract.mjs').Release} Release
+ * @typedef {import('../../wire/contract.mjs').UpdateReport} UpdateReport
  */
 
 /**
@@ -145,32 +126,4 @@ function toRelease(raw) {
   };
 }
 
-/**
- * Numeric, segment by segment: 0.10.0 is newer than 0.9.9, and 0.1.0 is not.
- * A pre-release is filtered out of the list before this sees it, but the
- * *running* version can be one, and then `0.2.0-beta.1` has to read as a beta
- * of 0.2.0 — below the release, not a fourth segment above it.
- */
-export function isNewer(candidate, than) {
-  const left = parse(candidate);
-  const right = parse(than);
-  for (let i = 0; i < Math.max(left.numbers.length, right.numbers.length); i++) {
-    const a = left.numbers[i] ?? 0;
-    const b = right.numbers[i] ?? 0;
-    if (a !== b) return a > b;
-  }
-  // The same numbers: the release outranks its own pre-release, and two
-  // pre-releases are left alone rather than guessed at.
-  return !left.pre && right.pre;
-}
-
-/** The dotted numbers at the front, and whether anything hyphenated follows. */
-function parse(version) {
-  const match = /^v?(\d+(?:\.\d+)*)(-\S+)?/.exec(String(version).trim());
-  return {
-    numbers: match ? match[1].split('.').map((part) => Number.parseInt(part, 10)) : [],
-    pre: Boolean(match?.[2]),
-  };
-}
-
-export { RELEASES_URL };
+export { RELEASES_URL, isNewer };

@@ -102,7 +102,10 @@ export function copyStoryChapters(
 ): string {
   let active = '';
   for (const chapter of readChapters(storage, from)) {
-    const copy = { ...structuredClone(chapter), id: newId(), storyId: to };
+    // The server's revision stays with the chapter it was stamped on; see
+    // `StoryStore.duplicate`.
+    const { rev: _rev, ...original } = structuredClone(chapter);
+    const copy = { ...original, id: newId(), storyId: to };
     if (chapter.id === activeChapterId) active = copy.id;
     storage.write(KEYS.chapter(copy.id), copy);
   }

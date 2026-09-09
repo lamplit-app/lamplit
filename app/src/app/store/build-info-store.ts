@@ -1,4 +1,7 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { ROUTES, isNewer } from '@wire';
+import type { Health } from '@wire';
+import { ApiClient } from './api-client';
 
 /**
  * Which build is answering, straight from `/api/health`.
@@ -13,25 +16,20 @@ import { Injectable, computed, signal } from '@angular/core';
  * answer costs a line in the About sheet and nothing else.
  */
 
-export interface BuildInfo {
-  version: string;
-  /** Short SHA, `+` when it was built from a dirty tree. Empty if unknown. */
-  commit: string;
-  /** ISO date, empty for a build nothing stamped. */
-  builtAt: string;
-  /** The CI run number, or `local`. */
-  build: string;
-  channel: 'desktop' | 'zip' | 'dev' | (string & {});
-  /** The version whose data folder this is, when it is not this one. */
-  previousVersion: string | null;
-  /** Where the documents are, as the server sees it. Empty if unknown. */
-  dataDir: string;
-}
-
-const REQUEST_TIMEOUT = 5000;
+/**
+ * The build stamp as this store holds it: the health answer, minus the two
+ * fields that are about the answer rather than the build, and with `dataDir`
+ * always a string — the server leaves it out for anyone but the app on this
+ * machine, and "unknown" reads better as empty than as absent.
+ *
+ * Derived from `Health` rather than declared beside it, so a field the server
+ * starts stamping arrives here without being typed a second time.
+ */
+export type BuildInfo = Omit<Health, 'ok' | 'name' | 'dataDir'> & { dataDir: string };
 
 @Injectable({ providedIn: 'root' })
 export class BuildInfoStore {
+  private readonly api = inject(ApiClient);
   private readonly state = signal<BuildInfo | null>(null);
 
   readonly info = this.state.asReadonly();
@@ -63,11 +61,9 @@ export class BuildInfoStore {
 
   async load(): Promise<void> {
     try {
-      const response = await fetch('/api/health', {
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT),
-      });
-      if (!response.ok) return;
-      const body = (await response.json()) as Partial<BuildInfo> & { name?: string };
+      const body = await this.api.json<Partial<Health>>(ROUTES.health);
+      // A static host that happens to answer on that path is not this server,
+      // and its answer is not a build stamp.
       if (body.name !== 'lamplit') return;
       this.state.set({
         version: body.version ?? '0.0.0',
@@ -82,29 +78,4 @@ export class BuildInfoStore {
       /* The About sheet says "unknown"; nothing else depends on this. */
     }
   }
-}
-
-/**
- * Numeric, segment by segment: 0.10.0 is newer than 0.9.9, and 0.1.0 is not.
- * `0.2.0-beta.1` reads as a beta of 0.2.0 — below the release, not a fourth
- * segment above it. The same rule as `server/src/updates.js`.
- */
-export function isNewer(candidate: string, than: string): boolean {
-  const left = parse(candidate);
-  const right = parse(than);
-  for (let i = 0; i < Math.max(left.numbers.length, right.numbers.length); i++) {
-    const a = left.numbers[i] ?? 0;
-    const b = right.numbers[i] ?? 0;
-    if (a !== b) return a > b;
-  }
-  return !left.pre && right.pre;
-}
-
-/** The dotted numbers at the front, and whether anything hyphenated follows. */
-function parse(version: string): { numbers: number[]; pre: boolean } {
-  const match = /^v?(\d+(?:\.\d+)*)(-\S+)?/.exec(version.trim());
-  return {
-    numbers: match?.[1] ? match[1].split('.').map((part) => Number.parseInt(part, 10)) : [],
-    pre: Boolean(match?.[2]),
-  };
 }

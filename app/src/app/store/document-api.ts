@@ -1,84 +1,31 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { COLLECTIONS, REV_HEADER, ROUTES, SETTINGS_ID, revisionOf } from '@wire';
+import type { Collection, IndexEntry } from '@wire';
+import { ApiClient, conflictFrom, failure } from './api-client';
 import { KEYS } from './documents';
 
 /**
  * The wire side of persistence: where a storage key lives on the server, and
  * the calls that move a document across. Nothing here knows what is in a
  * document — the server does not either, beyond the `rev` it stamps on one.
+ *
+ * The header name, the collections, the paths and the shape of an index entry
+ * are `wire/contract.mjs`'s, which is the file the server reads them from too.
+ * What is left here is the half only a client has: which storage key a
+ * document is filed under, and which of them lives where.
  */
 
-export type Collection = 'settings' | 'stories' | 'chapters';
+export type { Collection, IndexEntry };
+export { COLLECTIONS };
 
 export interface DocRef {
   collection: Collection;
   id: string;
 }
 
-const REQUEST_TIMEOUT = 10_000;
-
-/** The revision a write says it was based on. See the server's DocumentStore. */
-const REV_HEADER = 'x-doc-rev';
-
-/** Every collection there is, in the order the bootstrap read asks for them. */
-export const COLLECTIONS: Collection[] = ['settings', 'stories', 'chapters'];
-
-/**
- * The server's considered no, as opposed to its silence.
- *
- * A 4xx is a document this server will never take: a body it cannot parse, an
- * id it will not have, a document past the body limit, a Host it does not
- * answer to. Sending it again changes nothing, so whatever is holding it has
- * to stop and say so rather than retry for ever.
- *
- * `status` is the code the server answered with.
- */
-export class Refused extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
-    this.name = 'Refused';
-  }
-}
-
-/**
- * The document was written somewhere else between this session reading it and
- * writing it back — the phone, or a second tab.
- *
- * Carries the document as the server actually holds it, because the server
- * sends it with the refusal: reloading is therefore something the client can
- * simply do, rather than a second request that could itself be overtaken.
- * `document` is null when the answer is that there is no document any more,
- * which is what a stale write on top of a delete gets.
- */
-export class Conflict extends Error {
-  constructor(
-    readonly rev: string,
-    readonly document: unknown,
-  ) {
-    super('changed on another device');
-    this.name = 'Conflict';
-  }
-}
-
-/** One line of a collection's index: what is there, and whether it moved. */
-export interface IndexEntry {
-  id: string;
-  updatedAt: string | null;
-  rev: string;
-}
-
-/** The `rev` the server stamped a document with, or '' for one it has not. */
-export function revIn(document: unknown): string {
-  if (typeof document !== 'object' || document === null) return '';
-  const rev = (document as Record<string, unknown>)['rev'];
-  return typeof rev === 'string' ? rev : '';
-}
-
 /** Where a storage key lives on the server, or null if it lives nowhere. */
 export function refOf(key: string): DocRef | null {
-  if (key === KEYS.settings) return { collection: 'settings', id: KEYS.settings };
+  if (key === KEYS.settings) return { collection: 'settings', id: SETTINGS_ID };
   if (key.startsWith(KEYS.storyPrefix)) {
     return { collection: 'stories', id: key.slice(KEYS.storyPrefix.length) };
   }
@@ -100,8 +47,7 @@ export interface Snapshot {
 
 @Injectable({ providedIn: 'root' })
 export class DocumentApi {
-  /** Same origin: the packaged server serves the app, and `ng serve` proxies. */
-  readonly base = '/api';
+  private readonly api = inject(ApiClient);
 
   /** Every document the server holds, keyed the way the client files them. */
   async snapshot(): Promise<Snapshot> {
@@ -109,6 +55,9 @@ export class DocumentApi {
     const lists = await Promise.all(COLLECTIONS.map((collection) => this.list(collection)));
     COLLECTIONS.forEach((collection, index) => {
       for (const document of lists[index] ?? []) {
+        // The server files a folder collection's document under the name on
+        // disk and answers with that as its `id`, so this is the filename
+        // rather than whatever the document claims about itself.
         const id = collection === 'settings' ? KEYS.settings : idOf(document);
         if (id) documents.set(keyOf({ collection, id }), document);
       }
@@ -116,21 +65,17 @@ export class DocumentApi {
     return { documents };
   }
 
-  async list(collection: Collection): Promise<Record<string, unknown>[]> {
-    const response = await this.request(`${this.base}/docs/${collection}`);
-    return (await response.json()) as Record<string, unknown>[];
+  list(collection: Collection): Promise<Record<string, unknown>[]> {
+    return this.api.json(`${ROUTES.docs}/${collection}`);
   }
 
   /** What is there now and whether it has moved, without fetching any of it. */
-  async index(collection: Collection): Promise<IndexEntry[]> {
-    const response = await this.request(`${this.base}/docs/${collection}?index`);
-    return (await response.json()) as IndexEntry[];
+  index(collection: Collection): Promise<IndexEntry[]> {
+    return this.api.json(`${ROUTES.docs}/${collection}?index`);
   }
 
   async get(ref: DocRef): Promise<unknown> {
-    const response = await fetch(this.urlOf(ref), {
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT),
-    });
+    const response = await this.api.send(this.urlOf(ref));
     // Not an error: something else deleted it, and that is an answer.
     if (response.status === 404) return null;
     if (!response.ok) throw await failure(response);
@@ -144,15 +89,14 @@ export class DocumentApi {
    * never seen one.
    */
   async put(ref: DocRef, document: unknown, basedOn: string): Promise<string> {
-    const response = await fetch(this.urlOf(ref), {
+    const response = await this.api.send(this.urlOf(ref), {
       method: 'PUT',
       headers: { 'content-type': 'application/json', [REV_HEADER]: basedOn },
       body: JSON.stringify(document),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT),
     });
-    if (response.status === 409) throw await conflict(response);
+    if (response.status === 409) throw await conflictFrom(response);
     if (!response.ok) throw await failure(response);
-    return revIn(await response.json().catch(() => null));
+    return revisionOf(await response.json().catch(() => null));
   }
 
   /**
@@ -161,10 +105,7 @@ export class DocumentApi {
    * on `DocumentStore.remove`.
    */
   async remove(ref: DocRef): Promise<void> {
-    const response = await fetch(this.urlOf(ref), {
-      method: 'DELETE',
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT),
-    });
+    const response = await this.api.send(this.urlOf(ref), { method: 'DELETE' });
     // A document that is already gone is the outcome we wanted.
     if (response.status === 404) return;
     if (!response.ok) throw await failure(response);
@@ -183,6 +124,11 @@ export class DocumentApi {
     this.beacon(ref, 'DELETE');
   }
 
+  /**
+   * Not through `ApiClient`: a beacon must outlive the page, which is what
+   * `keepalive` is for, and it must not carry an abort signal that the page
+   * going away would fire.
+   */
   private beacon(ref: DocRef, method: 'PUT' | 'DELETE', basedOn?: string, body?: string): void {
     try {
       void fetch(this.urlOf(ref), {
@@ -202,38 +148,10 @@ export class DocumentApi {
   }
 
   private urlOf(ref: DocRef): string {
-    return `${this.base}/docs/${ref.collection}/${encodeURIComponent(ref.id)}`;
-  }
-
-  private async request(url: string, init: RequestInit = {}): Promise<Response> {
-    const response = await fetch(url, {
-      ...init,
-      signal: init.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT),
-    });
-    if (!response.ok) throw await failure(response);
-    return response;
+    return `${ROUTES.docs}/${ref.collection}/${encodeURIComponent(ref.id)}`;
   }
 }
 
 function idOf(document: Record<string, unknown>): string {
   return typeof document['id'] === 'string' ? document['id'] : '';
-}
-
-async function failure(response: Response): Promise<Error> {
-  const body: unknown = await response.json().catch(() => undefined);
-  const detail =
-    typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string'
-      ? body.error
-      : '';
-  const text = detail || `${response.status} ${response.statusText}`;
-  // A 5xx is a server having a bad moment and worth asking again; a 4xx is an
-  // answer about the document itself and will be the same answer next time.
-  return response.status < 500 ? new Refused(text, response.status) : new Error(text);
-}
-
-/** A 409 and the document it came with, which is the whole of the recovery. */
-async function conflict(response: Response): Promise<Conflict> {
-  const body: unknown = await response.json().catch(() => undefined);
-  const answer = (body ?? {}) as { rev?: unknown; document?: unknown };
-  return new Conflict(typeof answer.rev === 'string' ? answer.rev : '', answer.document ?? null);
 }

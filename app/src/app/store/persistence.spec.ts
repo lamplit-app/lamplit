@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { CONFLICT, REV_HEADER } from '@wire';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { keyOf, refOf } from './document-api';
 import { Persistence } from './persistence';
@@ -27,7 +28,7 @@ class FakeServer {
     if (this.failWith) throw new TypeError(this.failWith);
     const method = init.method ?? 'GET';
     const [path, query = ''] = url.replace('/api', '').split('?');
-    const rev = (init.headers as Record<string, string> | undefined)?.['x-doc-rev'];
+    const rev = (init.headers as Record<string, string> | undefined)?.[REV_HEADER];
     const body: unknown = init.body ? JSON.parse(init.body as string) : null;
     this.requests.push({ method, url, rev: rev ?? '', body });
     if (this.hang) await new Promise(() => undefined);
@@ -54,7 +55,7 @@ class FakeServer {
     const current = this.revs.get(key) ?? '';
     if (rev !== undefined && rev !== current) {
       return this.json(
-        { ok: false, error: 'changed on another device', rev: current, document: this.served(key) },
+        { ok: false, error: CONFLICT, rev: current, document: this.served(key) },
         409,
       );
     }

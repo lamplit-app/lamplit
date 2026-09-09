@@ -1,14 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import {
-  COLLECTIONS,
-  Conflict,
-  DocRef,
-  DocumentApi,
-  Refused,
-  keyOf,
-  refOf,
-  revIn,
-} from './document-api';
+import { revisionOf } from '@wire';
+import { Conflict, Refused } from './api-client';
+import { COLLECTIONS, DocRef, DocumentApi, keyOf, refOf } from './document-api';
 import { StorageBackend } from './storage';
 
 /**
@@ -153,7 +146,7 @@ export class Persistence implements StorageBackend {
         this.revs.clear();
         for (const [key, document] of documents) {
           this.documents.set(key, document);
-          this.revs.set(key, revIn(document));
+          this.revs.set(key, revisionOf(document));
         }
         this.readyState.set(true);
         this.errorState.set('');
@@ -251,7 +244,7 @@ export class Persistence implements StorageBackend {
         if (document === null) this.forget(key);
         else {
           this.documents.set(key, document);
-          this.revs.set(key, revIn(document));
+          this.revs.set(key, revisionOf(document));
         }
       }
       // Whatever the index never mentioned was deleted somewhere else.

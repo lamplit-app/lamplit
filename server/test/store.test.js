@@ -3,7 +3,8 @@ import { mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, describe, it } from 'node:test';
-import { DocumentStore, isCollection, isId } from '../src/store.js';
+import { COLLECTIONS as WIRE_COLLECTIONS } from '../../wire/contract.mjs';
+import { COLLECTIONS, DocumentStore, isCollection, isId } from '../src/store.js';
 
 async function freshStore() {
   const dir = await mkdtemp(join(tmpdir(), 'lamplit-store-'));
@@ -13,18 +14,31 @@ async function freshStore() {
 }
 
 /**
- * A document as its writer wrote it, without the revision the store stamped on
- * it. Every read has one and none of them is predictable, so the assertions
- * that are about the writing say so by leaving it out.
+ * A document as its writer wrote it, without the two things the store puts on
+ * every read: the revision it stamped, which is never predictable, and the id
+ * the filename says it has. What that id is, and why the filename decides it,
+ * has a describe of its own at the end of this file; everywhere else it is
+ * noise in front of what the assertion is about.
  */
 function written(document) {
   if (document === null) return null;
   const copy = { ...document };
   delete copy.rev;
+  delete copy.id;
   return copy;
 }
 
 describe('paths', () => {
+  /**
+   * The names are the wire's and the layout is this file's, so the two lists
+   * have to be the same list. Adding a collection on one side and forgetting
+   * the other would be a client asking for something the server has no folder
+   * for, or a folder nothing ever asks about.
+   */
+  it('has a layout for every collection the wire names, and no others', () => {
+    assert.deepEqual(Object.keys(COLLECTIONS), [...WIRE_COLLECTIONS]);
+  });
+
   it('knows the three collections and nothing else', () => {
     assert.ok(isCollection('settings'));
     assert.ok(isCollection('stories'));
@@ -40,6 +54,23 @@ describe('paths', () => {
     assert.ok(!isId('stories', ''));
   });
 
+  /**
+   * `CON.json` on Windows is the console: opening it succeeds and reading it
+   * gives nothing, so a document filed under that id would appear to be
+   * written and then not be there. Nothing the app makes could hit it — every
+   * id is a UUID — but a curl could, and refusing the name costs one regexp.
+   */
+  it('rejects the names Windows keeps for its devices, whatever the case', () => {
+    for (const name of ['con', 'CON', 'NUL', 'aux', 'PRN', 'com1', 'LPT9']) {
+      assert.ok(!isId('stories', name), `${name} is not an id`);
+    }
+    // Only the name itself. A UUID that happens to start with one is fine, and
+    // so is a story somebody called `console`.
+    assert.ok(isId('stories', 'console'));
+    assert.ok(isId('stories', 'con-1'));
+    assert.ok(isId('stories', 'com10'));
+  });
+
   it('allows settings only under its own name', () => {
     assert.ok(isId('settings', 'settings'));
     assert.ok(!isId('settings', 'anything-else'));
@@ -51,8 +82,8 @@ describe('DocumentStore', () => {
     const store = await freshStore();
     const { rev } = await store.write('stories', 'one', { id: 'one', title: 'A' });
     assert.deepEqual(await store.read('stories', 'one'), { id: 'one', title: 'A', rev });
-    assert.deepEqual(written(await store.read('stories', 'one')), { id: 'one', title: 'A' });
-    assert.deepEqual((await store.list('stories')).map(written), [{ id: 'one', title: 'A' }]);
+    assert.deepEqual(written(await store.read('stories', 'one')), { title: 'A' });
+    assert.deepEqual((await store.list('stories')).map(written), [{ title: 'A' }]);
   });
 
   it('reads a missing document as null rather than throwing', async () => {
@@ -180,7 +211,10 @@ describe('DocumentStore', () => {
     await writeFile(store.pathOf('stories', 'one'), '{ "title": "by hand" }\n', 'utf8');
     const refused = await store.write('stories', 'one', { title: 'over the top' }, first.rev);
     assert.equal(refused.conflict, true);
-    assert.deepEqual(refused.document, { title: 'by hand' });
+    // With the id the filename gives it, because the client files whatever
+    // comes back with a refusal and has to file it where it actually lives.
+    assert.deepEqual(written(refused.document), { title: 'by hand' });
+    assert.equal(refused.document.id, 'one');
   });
 
   it('leaves no temporary files behind', async () => {
@@ -235,7 +269,7 @@ describe('DocumentStore', () => {
     const warn = console.warn;
     console.warn = () => {};
     try {
-      assert.deepEqual((await store.list('stories')).map(written), [{ id: 'good' }]);
+      assert.deepEqual((await store.list('stories')).map(written), [{}]);
     } finally {
       console.warn = warn;
     }
@@ -284,4 +318,53 @@ describe('DocumentStore', () => {
 
 after(() => {
   // The temporary folders are the OS's problem; nothing here holds handles.
+});
+
+/**
+ * Which id a document has, and why it is the filename's to decide.
+ *
+ * Everything downstream keys off the id *inside* the document: the listing
+ * reports it, the client's snapshot files by it, and the write the client sends
+ * back goes to a URL built from it. So `stories/A.json` carrying `{id: 'B'}`
+ * was read as story B and written back to `stories/B.json`, leaving `A.json` on
+ * disk to be listed again at every start — and duplicated as soon as `B.json`
+ * existed. The API refuses the write that would put a document in that state
+ * (see api.test.js), and a file that got there some other way is read straight.
+ */
+describe('the id a document is filed under', () => {
+  it('is the filename, whatever the document says', async () => {
+    const store = await freshStore();
+    // As a hand edit or a curl leaves it: filed as A, claiming to be B.
+    await writeFile(store.pathOf('stories', 'A'), JSON.stringify({ id: 'B', title: 'A' }), 'utf8');
+
+    assert.equal((await store.read('stories', 'A')).id, 'A');
+    assert.deepEqual(
+      (await store.list('stories')).map((document) => document.id),
+      ['A'],
+    );
+    assert.deepEqual(
+      (await store.index('stories')).map((entry) => entry.id),
+      ['A'],
+    );
+    // And nothing at all is filed under the name it claimed.
+    assert.equal(await store.read('stories', 'B'), null);
+  });
+
+  it('is given to a document that has no id of its own', async () => {
+    const store = await freshStore();
+    await store.write('chapters', 'c1', { title: 'One' });
+    assert.equal((await store.read('chapters', 'c1')).id, 'c1');
+  });
+
+  it('is left alone in settings, which has one file and no id field', async () => {
+    const store = await freshStore();
+    await store.write('settings', 'settings', { activeStoryId: 'x' });
+    const document = await store.read('settings', 'settings');
+    assert.ok(!Object.hasOwn(document, 'id'), 'the settings document is not given an id');
+    // The listing still names it, from the collection rather than the document.
+    assert.deepEqual(
+      (await store.index('settings')).map((entry) => entry.id),
+      ['settings'],
+    );
+  });
 });

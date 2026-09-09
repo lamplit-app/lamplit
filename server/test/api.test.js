@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request as httpRequest } from 'node:http';
 import { describe, it } from 'node:test';
+import { CONFLICT, REV_HEADER, SERVER_ERROR } from '../../wire/contract.mjs';
 import { createApp } from '../src/app.js';
 import { createUpdateChecker } from '../src/updates.js';
 
@@ -64,7 +65,7 @@ async function serve({ withApp = false, updates, devCors = false } = {}) {
         method: 'PUT',
         headers: {
           'content-type': 'application/json',
-          ...(rev === undefined ? {} : { 'x-doc-rev': String(rev) }),
+          ...(rev === undefined ? {} : { [REV_HEADER]: String(rev) }),
         },
         body: JSON.stringify(body),
       }),
@@ -262,7 +263,7 @@ describe('/api/docs', () => {
     assert.equal(stale.status, 409);
     const refusal = await stale.json();
     assert.equal(refusal.ok, false);
-    assert.equal(refusal.error, 'changed on another device');
+    assert.equal(refusal.error, CONFLICT);
     // Everything the laptop needs to reload, in the refusal itself.
     assert.equal(refusal.document.title, 'from the phone');
     assert.equal(refusal.document.rev, refusal.rev);
@@ -306,7 +307,7 @@ describe('/api/docs', () => {
 
     const empty = await api.call('/api/docs/stories/abc', {
       method: 'PUT',
-      headers: { 'content-type': 'application/json', 'x-doc-rev': first.rev },
+      headers: { 'content-type': 'application/json', [REV_HEADER]: first.rev },
       body: '',
     });
     assert.equal(empty.status, 400);
@@ -328,6 +329,122 @@ describe('/api/docs', () => {
     const response = await api.call('/api/nothing-here');
     assert.equal(response.status, 404);
     assert.match(response.headers.get('content-type'), /application\/json/);
+    await api.close();
+  });
+});
+
+/**
+ * The URL says where a document goes, and the body may not disagree.
+ *
+ * Everything downstream of a write keys off the id *inside* the document: the
+ * listing reports it, the app files its snapshot by it, and the next write goes
+ * to a URL built from it. So `PUT stories/A` carrying `{id: 'B'}` wrote a file
+ * called `A.json` that the very next listing called B — read as B, written back
+ * to `B.json`, and `A.json` left on disk to be listed again at every start and
+ * duplicated as soon as `B.json` existed. One story, two files, growing.
+ */
+describe('the id in the URL and the id in the body', () => {
+  it('refuses a write whose document claims a different id', async () => {
+    const api = await serve();
+    const refused = await api.put('/api/docs/stories/A', { id: 'B', title: 'A' }, '');
+
+    assert.equal(refused.status, 400);
+    const body = await refused.json();
+    assert.equal(body.ok, false);
+    assert.match(body.error, /id/);
+    // And nothing was written under either name.
+    assert.equal((await api.call('/api/docs/stories/A')).status, 404);
+    assert.equal((await api.call('/api/docs/stories/B')).status, 404);
+    await api.close();
+  });
+
+  it('takes a write that says nothing about its own id', async () => {
+    const api = await serve();
+    // The settings document has no id of its own, and a chapter written by a
+    // command line need not carry one either.
+    const written = await api.put('/api/docs/stories/A', { title: 'A' }, '');
+    assert.equal(written.status, 200);
+    assert.equal((await (await api.call('/api/docs/stories/A')).json()).id, 'A');
+    await api.close();
+  });
+
+  it('lists a hand-written file under the name it is filed under', async () => {
+    const api = await serve();
+    // As a hand edit or a curl against an older build leaves it.
+    await mkdir(join(api.dataDir, 'stories'), { recursive: true });
+    await writeFile(
+      join(api.dataDir, 'stories', 'A.json'),
+      JSON.stringify({ id: 'B', title: 'A' }),
+      'utf8',
+    );
+
+    const listed = await (await api.call('/api/docs/stories')).json();
+    assert.deepEqual(
+      listed.map((document) => document.id),
+      ['A'],
+    );
+    const index = await (await api.call('/api/docs/stories?index')).json();
+    assert.deepEqual(
+      index.map((entry) => entry.id),
+      ['A'],
+    );
+    assert.equal((await (await api.call('/api/docs/stories/A')).json()).id, 'A');
+    await api.close();
+  });
+
+  it('will not have an id Windows keeps for a device', async () => {
+    const api = await serve();
+    // `CON.json` on Windows is the console: it would be written and then not
+    // be there. Refused everywhere rather than on one platform.
+    assert.equal((await api.put('/api/docs/stories/CON', { id: 'CON' }, '')).status, 404);
+    assert.equal((await api.call('/api/docs/stories/nul')).status, 404);
+    await api.close();
+  });
+});
+
+/**
+ * What a refusal says, and what it does not say.
+ *
+ * A 4xx is an answer about the request and its sentence is the point of it. A
+ * 5xx is this server having gone wrong, and the message belongs in the log: an
+ * `EACCES` or a failed rename names a path on the computer's filesystem, and a
+ * paired phone on the network is not the right audience for one.
+ */
+describe('errors', () => {
+  it('says only that it went wrong, and keeps the reason in the log', async () => {
+    const api = await serve();
+    // A folder wearing the document's name: nothing can be renamed over it,
+    // so the write fails with a message carrying the path it failed at.
+    await mkdir(join(api.dataDir, 'stories', 'one.json'), { recursive: true });
+    const errors = [];
+    const console_error = console.error;
+    console.error = (...parts) => errors.push(parts);
+    let body;
+    try {
+      const failed = await api.put('/api/docs/stories/one', { id: 'one' }, '');
+      assert.equal(failed.status, 500);
+      body = await failed.json();
+    } finally {
+      console.error = console_error;
+    }
+    assert.deepEqual(body, { ok: false, error: SERVER_ERROR });
+    assert.ok(!JSON.stringify(body).includes(api.dataDir), 'no path in the body');
+    // And the reason went somewhere a person can find it.
+    assert.equal(errors.length, 1);
+    await api.close();
+  });
+
+  it('refuses an empty body and a body that is not a document in the same words', async () => {
+    const api = await serve();
+    const empty = await fetch(`${api.base}/api/docs/stories/one`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: '',
+    });
+    const list = await api.put('/api/docs/stories/one', [1, 2, 3], '');
+    assert.equal(empty.status, 400);
+    assert.equal(list.status, 400);
+    assert.equal((await empty.json()).error, (await list.json()).error);
     await api.close();
   });
 });
@@ -379,7 +496,7 @@ function callAs(base, host, path, { method = 'GET', body, rev } = {}) {
   const headers = {
     host,
     ...(body === undefined ? {} : { 'content-type': 'application/json' }),
-    ...(rev === undefined ? {} : { 'x-doc-rev': String(rev) }),
+    ...(rev === undefined ? {} : { [REV_HEADER]: String(rev) }),
   };
   return new Promise((fulfil, reject) => {
     const request = httpRequest({ hostname, port, path, method, headers }, (response) => {
