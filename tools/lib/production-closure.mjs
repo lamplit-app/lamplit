@@ -1,5 +1,6 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, sep } from 'node:path';
+import { readJson } from './script.mjs';
 
 /**
  * Every package the server needs at runtime, resolved the way Node resolves
@@ -85,8 +86,4 @@ function placeUnder(root, dir, name) {
     return `node_modules/${name}`;
   }
   return within.split(sep).join('/');
-}
-
-function readJson(path) {
-  return JSON.parse(readFileSync(path, 'utf8'));
 }

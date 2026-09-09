@@ -6,6 +6,7 @@ import { request as httpRequest } from 'node:http';
 import { describe, it } from 'node:test';
 import { CONFLICT, REV_HEADER, SERVER_ERROR } from '../../wire/contract.mjs';
 import { createApp } from '../src/app.js';
+import { DocumentStore } from '../src/store.js';
 import { createUpdateChecker } from '../src/updates.js';
 
 /**
@@ -27,7 +28,7 @@ function stop(server) {
 }
 
 /** Starts the real app on a free port and hands back a `fetch` bound to it. */
-async function serve({ withApp = false, updates, devCors = false } = {}) {
+async function serve({ withApp = false, updates, devCors = false, store, log } = {}) {
   const dataDir = await mkdtemp(join(tmpdir(), 'lamplit-api-'));
   let publicDir;
   if (withApp) {
@@ -36,9 +37,12 @@ async function serve({ withApp = false, updates, devCors = false } = {}) {
     await writeFile(join(publicDir, 'index.html'), '<!doctype html><title>app</title>', 'utf8');
     await writeFile(join(publicDir, 'main.js'), 'console.log(1)', 'utf8');
   }
+  const documents = store ?? new DocumentStore(dataDir);
   const app = createApp({
     dataDir,
     publicDir,
+    store: documents,
+    ...(log ? { log } : {}),
     build: {
       version: '9.9.9',
       commit: 'abc1234',
@@ -50,7 +54,7 @@ async function serve({ withApp = false, updates, devCors = false } = {}) {
     devCors,
     ...(updates ? { updates } : {}),
   });
-  await app.locals.store.init();
+  await documents.init?.();
   const server = await new Promise((fulfil) => {
     const instance = app.listen(0, '127.0.0.1', () => fulfil(instance));
   });
@@ -412,26 +416,47 @@ describe('the id in the URL and the id in the body', () => {
  */
 describe('errors', () => {
   it('says only that it went wrong, and keeps the reason in the log', async () => {
-    const api = await serve();
+    // Handed in rather than patched onto the console: the app takes a log, so
+    // a test that wants to read what it said asks for it.
+    const said = [];
+    const api = await serve({ log: (message) => said.push(message) });
     // A folder wearing the document's name: nothing can be renamed over it,
     // so the write fails with a message carrying the path it failed at.
     await mkdir(join(api.dataDir, 'stories', 'one.json'), { recursive: true });
-    const errors = [];
-    const console_error = console.error;
-    console.error = (...parts) => errors.push(parts);
-    let body;
-    try {
-      const failed = await api.put('/api/docs/stories/one', { id: 'one' }, '');
-      assert.equal(failed.status, 500);
-      body = await failed.json();
-    } finally {
-      console.error = console_error;
-    }
+    const failed = await api.put('/api/docs/stories/one', { id: 'one' }, '');
+    assert.equal(failed.status, 500);
+    const body = await failed.json();
     assert.deepEqual(body, { ok: false, error: SERVER_ERROR });
     assert.ok(!JSON.stringify(body).includes(api.dataDir), 'no path in the body');
     // And the reason went somewhere a person can find it.
-    assert.equal(errors.length, 1);
+    assert.equal(said.length, 1);
+    assert.match(said[0], /server error/);
+    assert.ok(said[0].includes(api.dataDir), 'the path is in the log, where it belongs');
     await api.close();
+  });
+
+  it('answers a store that cannot read with a 500, with nothing else to set up', async () => {
+    // The point of `store` being an argument. No temporary folder, no disk to
+    // arrange into a failure, no `init` — one object that refuses, and the
+    // question is what the API says about it.
+    const said = [];
+    const store = {
+      dataDir: '/somebody/profile/data',
+      read: () => Promise.reject(new Error('EIO: the disk gave up')),
+    };
+    const app = createApp({ store, log: (message) => said.push(message) });
+    const server = await new Promise((fulfil) => {
+      const instance = app.listen(0, '127.0.0.1', () => fulfil(instance));
+    });
+    const base = `http://127.0.0.1:${server.address().port}`;
+    const failed = await fetch(`${base}/api/docs/stories/one`);
+    assert.equal(failed.status, 500);
+    assert.deepEqual(await failed.json(), { ok: false, error: SERVER_ERROR });
+    assert.equal(said.length, 1);
+    // And the store is where the health answer's dataDir comes from now, so a
+    // stub proves that too without a folder having to exist.
+    assert.equal((await (await fetch(`${base}/api/health`)).json()).dataDir, store.dataDir);
+    await stop(server);
   });
 
   it('refuses an empty body and a body that is not a document in the same words', async () => {

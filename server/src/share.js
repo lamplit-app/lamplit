@@ -6,7 +6,8 @@ import { join } from 'node:path';
 import QRCode from 'qrcode';
 import { HttpError } from './errors.js';
 import { DEFAULT_PORT, listenWalking } from './ports.js';
-import { writeAtomic } from './store.js';
+import { writeAtomic } from './fs-atomic.js';
+import { defaultLog } from './log.js';
 
 /**
  * The second front door, and the lock on it.
@@ -59,8 +60,13 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
  * adapter, and this project's own tests, where binding every interface on a
  * developer's Windows laptop raises the firewall prompt on `npm test`.
  */
-export function createSharing({ dataDir, port = DEFAULT_PORT, host = '0.0.0.0' }) {
-  return new Sharing(dataDir, port, host);
+export function createSharing({
+  dataDir,
+  port = DEFAULT_PORT,
+  host = '0.0.0.0',
+  log = defaultLog,
+}) {
+  return new Sharing(dataDir, port, host, log);
 }
 
 class Sharing {
@@ -73,11 +79,13 @@ class Sharing {
   #server = null;
   #port = 0;
   #token = '';
+  #log;
 
-  constructor(dataDir, wantedPort, host) {
+  constructor(dataDir, wantedPort, host, log) {
     this.#dataDir = dataDir;
     this.#wantedPort = wantedPort;
     this.#host = host;
+    this.#log = log;
   }
 
   /** The Express app to put behind the pairing check. */
@@ -191,7 +199,7 @@ class Sharing {
       if (this.#refuseUnpaired(request, response)) return;
       this.#handler(request, response);
     });
-    const listening = await listenWalking(server, this.#wantedPort, this.#host);
+    const listening = await listenWalking(server, this.#wantedPort, this.#host, this.#log);
     // What it actually got, not what it asked for: port 0 is how a test takes
     // whatever is free, and the answer only the socket knows.
     this.#port = listening.address().port;

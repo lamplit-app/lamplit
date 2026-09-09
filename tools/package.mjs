@@ -1,12 +1,13 @@
-import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { builtApp } from '../server/src/cli.js';
 import { DEFAULT_PORT } from '../server/src/ports.js';
 import { collectEntries, writeZip } from '../server/src/zip.js';
 import { STAMP_FILE, buildStamp } from '../server/src/version.js';
 import { productionClosure } from './lib/production-closure.mjs';
+import { readJson, script } from './lib/script.mjs';
 import { modeOf, parseArguments, stagedCopies, stagedFiles } from './lib/staged-tree.mjs';
 
 /**
@@ -43,8 +44,10 @@ import { modeOf, parseArguments, stagedCopies, stagedFiles } from './lib/staged-
  * installers were built from, so the two channels cannot drift.
  */
 
+const { step, fail, run } = script('package');
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const BUILT_APP = join(ROOT, 'app', 'dist', 'app', 'browser');
+const BUILT_APP = builtApp(ROOT);
 /** Written by `ng build`, one entry per package bundled into the app. */
 const LICENCES_FILE = '3rdpartylicenses.txt';
 
@@ -69,7 +72,7 @@ if (options.zipOnly) {
     step('skipping the Angular build (--no-build)');
   } else {
     step('building the app');
-    run('npm', ['run', 'build', '-w', 'app']);
+    run('npm', ['run', 'build', '-w', 'app'], { cwd: ROOT });
   }
   if (!existsSync(join(BUILT_APP, 'index.html'))) {
     fail(`no built app at ${BUILT_APP}. Run without --no-build.`);
@@ -136,17 +139,6 @@ function closure() {
   }
 }
 
-/** `shell` on Windows: npm is a .cmd there, and Node will not spawn one directly. */
-function run(command, args) {
-  const result = spawnSync(command, args, {
-    cwd: ROOT,
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-  });
-  if (result.error) fail(`${command}: ${result.error.message}`);
-  if (result.status !== 0) fail(`${command} ${args.join(' ')} failed`);
-}
-
 /** A throw from the option reader is one line here, not a stack. */
 function readOptions(argv) {
   try {
@@ -156,19 +148,6 @@ function readOptions(argv) {
   }
 }
 
-function readJson(path) {
-  return JSON.parse(readFileSync(path, 'utf8'));
-}
-
 function megabytes(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function step(message) {
-  console.log(`\n• ${message}`);
-}
-
-function fail(message) {
-  console.error(`\npackage: ${message}`);
-  process.exit(1);
 }

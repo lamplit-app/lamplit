@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it } from 'node:test';
+import { builtApp } from '../../server/src/cli.js';
 import {
   modeOf,
   parseArguments,
@@ -61,7 +62,21 @@ describe('reading the command line', () => {
   });
 
   it('says which option it did not recognise', () => {
-    assert.throws(() => parseArguments(['--zipp']), /unknown option --zipp/);
+    assert.throws(() => parseArguments(['--zipp']), /Unknown option '--zipp'/);
+  });
+
+  it('refuses a --stage with nothing after it, which used to stage anywhere', () => {
+    // `--stage` at the end of the line read as `{stage: undefined}` in the
+    // loop this replaced, and the script quietly staged into its default.
+    assert.throws(() => parseArguments(['--stage']), /--stage/);
+    assert.throws(() => parseArguments(['--out']), /--out/);
+  });
+
+  it('takes a flag with its value attached, which people type', () => {
+    assert.deepEqual(parseArguments(['--stage=/tmp/x', '--no-zip']), {
+      zip: false,
+      stage: '/tmp/x',
+    });
   });
 });
 
@@ -229,7 +244,7 @@ describe('what is copied in whole', () => {
   it('is the server, the wire, the built app, and the licences of what is in it', () => {
     const copies = stagedCopies({
       root: '/repo',
-      builtApp: join('/repo', 'app', 'dist', 'app', 'browser'),
+      builtApp: builtApp('/repo'),
       licencesFile: '3rdpartylicenses.txt',
     });
     assert.deepEqual(
@@ -250,11 +265,17 @@ describe('what is copied in whole', () => {
   });
 
   it('copies from where this repository’s build actually puts things', () => {
-    const builtApp = join(ROOT, 'app', 'dist', 'app', 'browser');
-    const copies = stagedCopies({ root: ROOT, builtApp, licencesFile: '3rdpartylicenses.txt' });
+    // Asked of the server's own `builtApp`, which is the one place that path
+    // is spelt now — so this stays true if the Angular output ever moves.
+    const built = builtApp(ROOT);
+    const copies = stagedCopies({
+      root: ROOT,
+      builtApp: built,
+      licencesFile: '3rdpartylicenses.txt',
+    });
     assert.equal(copies[0].from, join(ROOT, 'server', 'src'));
     assert.equal(copies[1].from, join(ROOT, 'wire'));
-    assert.equal(copies[2].from, builtApp);
+    assert.equal(copies[2].from, built);
   });
 
   it('leaves nothing to be copied over something already written', () => {

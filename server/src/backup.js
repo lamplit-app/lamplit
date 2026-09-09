@@ -1,5 +1,6 @@
-import { mkdir, open, readdir, rename, rm } from 'node:fs/promises';
+import { mkdir, open, readdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { onto } from './fs-atomic.js';
 import { END_OF_CENTRAL, collectEntries, writeZip } from './zip.js';
 
 /** How many daily archives to keep before the oldest is dropped. */
@@ -22,17 +23,12 @@ export async function backupOnStartup(dataDir, backupsDir, today = new Date()) {
   if (!entries.some((entry) => entry.data?.length)) return null;
 
   await mkdir(backupsDir, { recursive: true });
-  // Written beside its name and moved onto it, the way the store writes a
-  // document: a run that dies half way leaves a `.tmp` the prune ignores, not
-  // a zip that is not one wearing today's name.
-  const temporary = `${target}.tmp`;
-  try {
-    await writeZip(temporary, entries);
-    await rename(temporary, target);
-  } catch (error) {
-    await rm(temporary, { force: true }).catch(() => {});
-    throw error;
-  }
+  // Written beside its name and moved onto it, through the same helper the
+  // store writes a document with: a run that dies half way leaves a `.tmp`
+  // the prune ignores, not a zip that is not one wearing today's name. The
+  // random middle name matters here too — two copies started at once would
+  // otherwise write the one `.tmp` and rename each other's half of it.
+  await onto(target, (temporary) => writeZip(temporary, entries));
   await prune(backupsDir);
   return target;
 }

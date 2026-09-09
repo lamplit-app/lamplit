@@ -1,15 +1,48 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { parseArgs } from 'node:util';
 
 /**
- * The arguments the desktop build hands to electron-builder, worked out in one
- * place so that a `node:test` can read them. `tools/desktop.mjs` is a script
- * with effects at the top of it and cannot be imported to be asked.
+ * What the desktop build decides, worked out in one place so that a
+ * `node:test` can read it. `tools/desktop.mjs` is a script with effects at the
+ * top of it and cannot be imported to be asked.
  */
 
-/** The version the whole repository is at: `npm version` writes only this one. */
-export function rootVersion(root) {
-  return readJson(join(root, 'package.json')).version;
+/**
+ * The three flags, through `node:util`'s reader rather than a loop of `if`s —
+ * which is what every parser in this repository now uses, so that `--dist=1`,
+ * `--` and a misspelt flag all behave the same wherever they are typed.
+ *
+ * Throws rather than exiting, so the script says it in its own voice and a
+ * test can ask what a pair of contradictory flags does.
+ *
+ * @param {string[]} argv
+ * @returns {{mode: 'run' | 'stage' | 'dist', publish: boolean}}
+ */
+export function parseArguments(argv) {
+  let flags;
+  try {
+    ({ values: flags } = parseArgs({
+      args: argv,
+      allowPositionals: false,
+      options: {
+        dist: { type: 'boolean', default: false },
+        'stage-only': { type: 'boolean', default: false },
+        publish: { type: 'boolean', default: false },
+      },
+    }));
+  } catch (error) {
+    throw new Error(
+      `${String(error.message).split('. ')[0]}. Expected --dist, --stage-only or --publish.`,
+      { cause: error },
+    );
+  }
+  if (flags.dist && flags['stage-only']) {
+    throw new Error('--dist and --stage-only ask for opposite things');
+  }
+  const mode = flags.dist ? 'dist' : flags['stage-only'] ? 'stage' : 'run';
+  if (flags.publish && mode !== 'dist') {
+    throw new Error('--publish only means something with --dist');
+  }
+  return { mode, publish: flags.publish };
 }
 
 /**
@@ -32,8 +65,4 @@ export function builderArgs({ version, publish }) {
     '--publish',
     publish ? 'always' : 'never',
   ];
-}
-
-function readJson(path) {
-  return JSON.parse(readFileSync(path, 'utf8'));
 }

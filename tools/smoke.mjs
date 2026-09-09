@@ -1,9 +1,11 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
+import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_PORT } from '../server/src/ports.js';
+import { rootVersion, run, step, waitForHealth } from './lib/script.mjs';
 
 /**
  * `npm run smoke` — a completely fresh install, in one command.
@@ -40,14 +42,22 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WINDOWS = process.platform === 'win32';
 const BUILD = join(ROOT, 'build');
 
-const version = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
+const version = rootVersion(ROOT);
 const zip = join(BUILD, `lamplit-${version}.zip`);
 const fresh = join(BUILD, 'fresh-install');
 
-const argv = process.argv.slice(2);
-const skipBuild = argv.includes('--no-build');
-const check = argv.includes('--check');
-const port = argv.includes('--port') ? Number(argv[argv.indexOf('--port') + 1]) : DEFAULT_PORT;
+const { values: flags } = parseArgs({
+  args: process.argv.slice(2),
+  allowPositionals: false,
+  options: {
+    'no-build': { type: 'boolean', default: false },
+    check: { type: 'boolean', default: false },
+    port: { type: 'string' },
+  },
+});
+const skipBuild = flags['no-build'];
+const check = flags.check;
+const port = flags.port === undefined ? DEFAULT_PORT : Number(flags.port);
 const url = `http://127.0.0.1:${port}/`;
 
 let server = null;
@@ -63,7 +73,7 @@ async function main() {
     throw new Error(`no archive at ${zip}. Run without --no-build.`);
   if (!skipBuild) {
     step('packaging');
-    run(process.execPath, [join(ROOT, 'tools', 'package.mjs')]);
+    run(process.execPath, [join(ROOT, 'tools', 'package.mjs')], { cwd: ROOT });
   }
 
   step('unpacking into an empty folder');
@@ -102,7 +112,10 @@ async function main() {
   });
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => stop(0));
 
-  await waitForHealth(url);
+  // `stopped` because Ctrl+C during the wait is the common way out of this
+  // script, and it must not then go on to announce that the server is up.
+  const up = await waitForHealth(url, { stopped: () => stopping });
+  if (!up) process.exit(0);
 
   if (check) {
     step('it answered /api/health');
@@ -117,20 +130,6 @@ async function main() {
 }
 
 // -- the pieces --------------------------------------------------------------
-
-async function waitForHealth(url, timeout = 30_000) {
-  const deadline = Date.now() + timeout;
-  for (;;) {
-    if (stopping) process.exit(0);
-    const up = await fetch(`${url}api/health`).then(
-      (response) => response.ok,
-      () => false,
-    );
-    if (up) return;
-    if (Date.now() > deadline) throw new Error(`the server never came up on ${url}`);
-    await new Promise((fulfil) => setTimeout(fulfil, 200));
-  }
-}
 
 async function stop(code) {
   if (stopping) return;
@@ -162,14 +161,4 @@ function extract(archive, into) {
     : spawnSync('unzip', ['-q', archive, '-d', into], { stdio: 'inherit' });
   if (result.error) throw new Error(`could not unzip: ${result.error.message}`);
   if (result.status !== 0) throw new Error('unzip failed');
-}
-
-function run(command, args) {
-  const result = spawnSync(command, args, { cwd: ROOT, stdio: 'inherit' });
-  if (result.error) throw new Error(`${command}: ${result.error.message}`);
-  if (result.status !== 0) throw new Error(`${command} ${args.join(' ')} failed`);
-}
-
-function step(message) {
-  console.log(`\n• ${message}`);
 }

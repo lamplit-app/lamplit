@@ -2,30 +2,31 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DEFAULT_PORT, bootstrap, localAddresses, versionLine } from './bootstrap.js';
+import { bootstrap, localAddresses, versionLine } from './bootstrap.js';
+import { findBuiltApp, parseArguments, wantedPort } from './cli.js';
 
 /**
  * The one process a packaged Lamplit runs: documents on disk, the built
  * app in front of them, one URL to open. `start.bat` and `start.sh` do nothing
  * but call this file.
  *
- * What it is, beside `bootstrap.js`: the command line and the console. Where
- * the folders are, which port to ask for, and everything said out loud once it
- * is up — which is the whole of what a reader watching a terminal window gets,
- * and is why it is written here rather than where the desktop shell can see it.
+ * What it is, beside `bootstrap.js`: the console. Everything said out loud once
+ * the app is up — which is the whole of what a reader watching a terminal
+ * window gets, and is why it is written here rather than where the desktop
+ * shell can see it. What the command line means, and where the built app is,
+ * are in `cli.js`, where a test can ask.
  */
 
 /** `server/src/index.js` → the folder the app was unzipped (or cloned) into. */
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-const options = parseArguments(process.argv.slice(2));
+const { options, port } = read();
 const dataDir = resolve(options.data ?? process.env['LAMPLIT_DATA_DIR'] ?? join(ROOT, 'data'));
 const backupsDir = resolve(process.env['LAMPLIT_BACKUP_DIR'] ?? join(ROOT, 'backups'));
-const publicDir = resolve(options.public ?? process.env['LAMPLIT_PUBLIC_DIR'] ?? findBuiltApp());
-const host = process.env['LAMPLIT_HOST'] ?? '127.0.0.1';
-const wanted = Number(
-  options.port ?? process.env['LAMPLIT_PORT'] ?? process.env['PORT'] ?? DEFAULT_PORT,
+const publicDir = resolve(
+  options.public ?? process.env['LAMPLIT_PUBLIC_DIR'] ?? findBuiltApp(ROOT),
 );
+const host = process.env['LAMPLIT_HOST'] ?? '127.0.0.1';
 // The start scripts pass --open, so LAMPLIT_OPEN=0 has to be able to override it.
 const shouldOpen =
   process.env['LAMPLIT_OPEN'] === '0' ? false : options.open || process.env['LAMPLIT_OPEN'] === '1';
@@ -37,9 +38,9 @@ const { build, previousVersion, upgraded, updates, sharing, shared, server, url,
     backupsDir,
     publicDir,
     host,
-    port: wanted,
+    port,
     // Off unless asked for: the app calls its own origin, and `npm start`
-    // proxies rather than calling across. See corsFor in app.js.
+    // proxies rather than calling across. See corsFor in security.js.
     devCors: process.env['LAMPLIT_DEV_CORS'] === '1',
   });
 
@@ -75,21 +76,22 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
   });
 }
 
-/** Packaged layout first, then the repository's Angular output. */
-function findBuiltApp() {
-  const packaged = join(ROOT, 'public');
-  if (existsSync(join(packaged, 'index.html'))) return packaged;
-  return join(ROOT, 'app', 'dist', 'app', 'browser');
-}
-
-function parseArguments(argv) {
-  const options = {};
-  for (let i = 0; i < argv.length; i++) {
-    const argument = argv[i];
-    if (argument === '--open') options.open = true;
-    else if (argument.startsWith('--')) options[argument.slice(2)] = argv[++i];
+/**
+ * The command line, or one line and a stop. A mistyped flag and a port that is
+ * not a number both used to get past here — the first ignored in silence, the
+ * second as far as a stack trace out of `net` — and neither is worth more than
+ * a sentence to somebody who is looking at a terminal window.
+ */
+function read() {
+  try {
+    const options = parseArguments(process.argv.slice(2));
+    // Read here too, because the environment can be as wrong as the flag and
+    // this is the one place that has somebody to tell.
+    return { options, port: wantedPort(options) };
+  } catch (error) {
+    console.error(`lamplit: ${error.message}`);
+    process.exit(1);
   }
-  return options;
 }
 
 function openBrowser(target) {

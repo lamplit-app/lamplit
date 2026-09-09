@@ -1,11 +1,13 @@
 import { ChildProcess, spawn } from 'node:child_process';
-import { createServer } from 'node:net';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { REV_HEADER } from '../../wire/contract.mjs';
+import { REV_HEADER, SETTINGS_ID } from '../../wire/contract.mjs';
+import { builtApp } from '../../server/src/cli.js';
+import { DocumentStore } from '../../server/src/store.js';
+import { freePort, waitForHealth } from '../../tools/lib/script.mjs';
 
 /**
  * The real persistence server, started per test on its own port with its own
@@ -20,7 +22,7 @@ import { REV_HEADER } from '../../wire/contract.mjs';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
 const ENTRY = join(ROOT, 'server', 'src', 'index.js');
-export const BUILT_APP = join(ROOT, 'app', 'dist', 'app', 'browser');
+export const BUILT_APP: string = builtApp(ROOT);
 
 /** The specs skip rather than fail when the app has not been built. */
 export const IS_BUILT = existsSync(join(BUILT_APP, 'index.html'));
@@ -135,34 +137,25 @@ export class PersistenceServer {
    * Puts documents on disk before the app is opened, keyed the way the client
    * keys them: `settings`, `story:<id>`, `chapter:<id>`. This is the only way
    * to seed anything now — there is nowhere else for a document to be.
+   *
+   * Through the server's own store, so that where a document lands is decided
+   * once, by the thing that will read it back. This file used to spell out
+   * `stories/`, `chapters/` and `settings.json` in four places, and a change
+   * to that layout would have left every spec seeding into folders nothing
+   * looks in — a suite that fails, but not where the mistake is.
    */
   async seed(documents: Record<string, unknown>): Promise<void> {
+    const store = this.store();
+    await store.init();
     for (const [key, document] of Object.entries(documents)) {
-      const path = this.pathOf(key);
-      await mkdir(dirname(path), { recursive: true });
-      await writeFile(
-        path,
-        `${JSON.stringify(document, null, 2)}
-`,
-        'utf8',
-      );
+      const { collection, id } = refOf(key);
+      await store.write(collection, id, document);
     }
-  }
-
-  private pathOf(key: string): string {
-    if (key === 'settings') return join(this.dataDir, 'settings.json');
-    if (key.startsWith('story:')) {
-      return join(this.dataDir, 'stories', `${key.slice('story:'.length)}.json`);
-    }
-    if (key.startsWith('chapter:')) {
-      return join(this.dataDir, 'chapters', `${key.slice('chapter:'.length)}.json`);
-    }
-    throw new Error(`not a document key: ${key}`);
   }
 
   /** Takes a document off disk behind the app's back. */
   async remove(collection: 'stories' | 'chapters', id: string): Promise<void> {
-    await rm(join(this.dataDir, collection, `${id}.json`), { force: true });
+    await rm(this.store().pathOf(collection, id), { force: true });
   }
 
   /** What is actually on disk, which is the whole point of these specs. */
@@ -170,11 +163,8 @@ export class PersistenceServer {
     collection: 'settings' | 'stories' | 'chapters',
     id?: string,
   ): Promise<T | null> {
-    const path =
-      collection === 'settings'
-        ? join(this.dataDir, 'settings.json')
-        : join(this.dataDir, collection, `${id}.json`);
     try {
+      const path = this.store().pathOf(collection, id ?? SETTINGS_ID);
       return JSON.parse(await readFile(path, 'utf8')) as T;
     } catch {
       return null;
@@ -182,36 +172,30 @@ export class PersistenceServer {
   }
 
   async ids(collection: 'stories' | 'chapters'): Promise<string[]> {
-    const files = await readdir(join(this.dataDir, collection)).catch(() => []);
-    return files
-      .filter((file) => file.endsWith('.json'))
-      .map((file) => file.slice(0, -5))
-      .sort();
+    const index = (await this.store().index(collection)) as { id: string }[];
+    return index.map((entry) => entry.id).sort();
+  }
+
+  /**
+   * A store over the same folder the server has. Not the server's own object —
+   * that one is in another process — but the same rules about where a document
+   * goes, which is the only thing asked of it here.
+   */
+  private store(): DocumentStore {
+    return new DocumentStore(this.dataDir, { log: () => {} });
   }
 
   private async waitFor(up: boolean, timeout = 20_000): Promise<void> {
-    const deadline = Date.now() + timeout;
-    for (;;) {
-      const alive = await fetch(`${this.url}/api/health`)
-        .then((response) => response.ok)
-        .catch(() => false);
-      if (alive === up) return;
-      if (Date.now() > deadline) {
-        throw new Error(`persistence server never came ${up ? 'up' : 'down'} on ${this.url}`);
-      }
-      await new Promise((fulfil) => setTimeout(fulfil, 100));
-    }
+    await waitForHealth(this.url, { up, timeout, every: 100 });
   }
 }
 
-/** Ask the OS for a port, then give it straight back. */
-function freePort(): Promise<number> {
-  return new Promise((fulfil, reject) => {
-    const probe = createServer();
-    probe.on('error', reject);
-    probe.listen(0, '127.0.0.1', () => {
-      const { port } = probe.address() as { port: number };
-      probe.close(() => fulfil(port));
-    });
-  });
+/** Where a client storage key lives on the server; the prefixes are the app's. */
+function refOf(key: string): { collection: 'settings' | 'stories' | 'chapters'; id: string } {
+  if (key.startsWith('story:')) return { collection: 'stories', id: key.slice('story:'.length) };
+  if (key.startsWith('chapter:')) {
+    return { collection: 'chapters', id: key.slice('chapter:'.length) };
+  }
+  if (key === SETTINGS_ID) return { collection: SETTINGS_ID, id: SETTINGS_ID };
+  throw new Error(`not a document key: ${key}`);
 }

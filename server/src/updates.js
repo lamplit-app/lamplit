@@ -14,6 +14,7 @@
  */
 
 import { isNewer } from '../../wire/contract.mjs';
+import { defaultLog } from './log.js';
 
 const RELEASES_URL = 'https://api.github.com/repos/lamplit-app/lamplit/releases';
 const TIMEOUT = 5000;
@@ -42,7 +43,7 @@ export function createUpdateChecker({
   enabled = true,
   url = RELEASES_URL,
   fetchImpl = fetch,
-  log = (message) => console.warn(`[lamplit] ${message}`),
+  log = defaultLog,
 } = {}) {
   /** @type {Promise<UpdateReport> | null} */
   let asked = null;

@@ -1,4 +1,5 @@
 import { SERVER_ERROR } from '../../wire/contract.mjs';
+import { defaultLog } from './log.js';
 
 /**
  * A refusal with a status on it, thrown where it is decided and answered in
@@ -49,14 +50,15 @@ export class HttpError extends Error {
  * Express refusing the request rather than failing at it, and `request entity
  * too large` is the answer the reader needs.
  *
+ * @param {{log?: import('./log.js').Log}} [said] where a 5xx is written down
  * @returns {import('express').ErrorRequestHandler}
  */
-export function answerErrors() {
+export function answerErrors({ log = defaultLog } = {}) {
   return (error, request, response, next) => {
     if (response.headersSent) return next(error);
     const status = Number(error.status ?? error.statusCode ?? 500);
     const ours = error instanceof HttpError;
-    if (status >= 500) console.error('[lamplit]', error);
+    if (status >= 500) log(`server error: ${error.stack ?? error.message}`);
     const said = status < 500 || ours ? error.message : '';
     response.status(status).json({
       ok: false,

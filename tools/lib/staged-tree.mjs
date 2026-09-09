@@ -1,4 +1,5 @@
 import { dirname, join } from 'node:path';
+import { parseArgs } from 'node:util';
 
 /**
  * What ships, and where each piece of it sits.
@@ -18,17 +19,36 @@ import { dirname, join } from 'node:path';
 /**
  * The command line, read. Throws rather than exiting, so the script says it in
  * its own voice and a test can ask what a pair of contradictory flags does.
+ *
+ * Through `node:util`'s reader, like every other parser in the repository, so
+ * that `--stage=<dir>`, a `--stage` with nothing after it, and `--` all mean
+ * the same thing here as they do on the server's own command line. The loop
+ * this replaced read `--stage` at the end of the line as `undefined` and
+ * staged into `build/lamplit-<version>` without a word.
  */
 export function parseArguments(argv) {
-  const parsed = {};
-  for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === '--no-build') parsed.build = false;
-    else if (argv[i] === '--no-zip') parsed.zip = false;
-    else if (argv[i] === '--zip-only') parsed.zipOnly = true;
-    else if (argv[i] === '--out') parsed.out = argv[++i];
-    else if (argv[i] === '--stage') parsed.stage = argv[++i];
-    else throw new Error(`unknown option ${argv[i]}`);
+  let flags;
+  try {
+    ({ values: flags } = parseArgs({
+      args: argv,
+      allowPositionals: false,
+      options: {
+        'no-build': { type: 'boolean', default: false },
+        'no-zip': { type: 'boolean', default: false },
+        'zip-only': { type: 'boolean', default: false },
+        out: { type: 'string' },
+        stage: { type: 'string' },
+      },
+    }));
+  } catch (error) {
+    throw new Error(String(error.message).split('. ')[0], { cause: error });
   }
+  const parsed = {};
+  if (flags['no-build']) parsed.build = false;
+  if (flags['no-zip']) parsed.zip = false;
+  if (flags['zip-only']) parsed.zipOnly = true;
+  if (flags.out !== undefined) parsed.out = flags.out;
+  if (flags.stage !== undefined) parsed.stage = flags.stage;
   if (parsed.zipOnly && !parsed.stage) throw new Error('--zip-only needs --stage <dir> to zip');
   if (parsed.zipOnly && parsed.zip === false) {
     throw new Error('--zip-only and --no-zip ask for opposite things');

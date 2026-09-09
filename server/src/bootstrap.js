@@ -2,7 +2,9 @@ import { createServer } from 'node:http';
 import { createApp } from './app.js';
 import { backupOnStartup } from './backup.js';
 import { DEFAULT_PORT, listenWalking } from './ports.js';
+import { defaultLog } from './log.js';
 import { createSharing, localAddresses } from './share.js';
+import { DocumentStore } from './store.js';
 import { createUpdateChecker } from './updates.js';
 import { readBuildInfo, recordRun, versionLine } from './version.js';
 
@@ -54,6 +56,7 @@ export { DEFAULT_PORT, localAddresses, versionLine };
  * @param {string} [options.host]      what to bind; '0.0.0.0' is every interface
  * @param {number} [options.port]      what to ask for; 0 takes whatever is free
  * @param {boolean} [options.devCors]  whether another page on this machine may call the API
+ * @param {import('./log.js').Log} [options.log] where everything below says things out loud
  * @returns {Promise<Started>}
  */
 export async function bootstrap({
@@ -65,6 +68,11 @@ export async function bootstrap({
   host = '127.0.0.1',
   port = DEFAULT_PORT,
   devCors = false,
+  // One log for the store, the port walk, the error middleware, sharing, the
+  // update check and the backup. Every one of them used to reach for
+  // `console.warn` where it stood, and every test that did not want the noise
+  // monkey-patched the console to cope.
+  log = defaultLog,
   // The three switches both doors read the same way, so they are read once.
   // Nothing is asked of GitHub until the app calls /api/updates, and the app
   // only calls it when the reader has left the check on; this is the same
@@ -84,7 +92,13 @@ export async function bootstrap({
   // signal that an upgrade happened, and the app shows one notice for it.
   const { previousVersion, upgraded } = await recordRun(dataDir, build.version);
 
-  const updates = createUpdateChecker({ version: build.version, enabled: updateCheck });
+  const updates = createUpdateChecker({ version: build.version, enabled: updateCheck, log });
+
+  // Ours, and opened before anything can be asked of it. The app used to make
+  // one and hand it back through `app.locals`, so every caller reached in and
+  // called `init()` on a thing it had not asked for — a two-phase start that
+  // no signature admitted to.
+  const store = new DocumentStore(dataDir, { log });
 
   // Made before the app because the app registers the routes that read it, and
   // handed the app straight after because it is the app it puts behind the
@@ -92,6 +106,7 @@ export async function bootstrap({
   const sharing = createSharing({
     dataDir,
     port: sharePort,
+    log,
     ...(shareHost ? { host: shareHost } : {}),
   });
 
@@ -105,14 +120,15 @@ export async function bootstrap({
     hosts: host === '0.0.0.0' ? [] : [host],
     devCors,
     sharing,
+    store,
+    log,
   });
-  const store = app.locals['store'];
   sharing.serve(app);
 
   await store.init();
   const shared = await sharing.init();
 
-  const server = await listenWalking(createServer(app), port, host);
+  const server = await listenWalking(createServer(app), port, host, log);
 
   return {
     build,
@@ -131,7 +147,7 @@ export async function bootstrap({
     // with the archive's name is the caller's, and it is handed one.
     backup: backup
       ? backupOnStartup(dataDir, backupsDir).catch((error) => {
-          console.warn(`backup failed: ${error.message}`);
+          log(`backup failed: ${error.message}`);
           return null;
         })
       : Promise.resolve(null),

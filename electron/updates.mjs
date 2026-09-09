@@ -37,3 +37,33 @@ export function shouldCheck({ isPackaged, portable, env = {}, setting }) {
   // words. Unsaid is the app's own default, which is on.
   return setting !== false;
 }
+
+/**
+ * Checked once, when the page says it may, against the same GitHub release the
+ * installer came from. Best effort by design: a machine that is offline, or a
+ * build that was never published, must not produce a dialog about it.
+ *
+ * The four conditions are `shouldCheck` above, which is where they are worth
+ * reading; this is the half that downloads a hundred megabytes, so it is
+ * behind them and does nothing at all when any one of them says not now.
+ *
+ * `import` rather than a top-level one: electron-updater is a dependency of
+ * the packaged shell only, and a repository checkout that never asks must not
+ * fail to start for want of it.
+ *
+ * @param {Parameters<typeof shouldCheck>[0]} conditions
+ * @param {(message: string) => void} [log]
+ */
+export async function checkForUpdates(conditions, log = (message) => console.warn(message)) {
+  if (!shouldCheck(conditions)) return false;
+  try {
+    const { autoUpdater } = await import('electron-updater');
+    autoUpdater.autoDownload = true;
+    autoUpdater.on('error', (error) => log(`update check failed: ${error.message}`));
+    await autoUpdater.checkForUpdatesAndNotify();
+    return true;
+  } catch (error) {
+    log(`update check failed: ${error.message}`);
+    return false;
+  }
+}

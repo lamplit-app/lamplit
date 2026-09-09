@@ -1,11 +1,14 @@
 import { chromium, devices } from '@playwright/test';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { createServer as createSocket } from 'node:net';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SETTINGS_ID } from '../wire/contract.mjs';
+import { builtApp } from '../server/src/cli.js';
+import { DocumentStore } from '../server/src/store.js';
+import { freePort, waitForHealth } from './lib/script.mjs';
 
 /**
  * `npm run screenshots` — every picture in docs/, taken from the real app.
@@ -21,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'docs', 'images');
-const BUILT_APP = join(ROOT, 'app', 'dist', 'app', 'browser');
+const BUILT_APP = builtApp(ROOT);
 
 /** Wide enough for the modals, short enough to read at a glance on GitHub. */
 const VIEWPORT = { width: 1240, height: 800 };
@@ -217,7 +220,7 @@ const LORE = [
 await mkdir(OUT, { recursive: true });
 const modelPort = await freePort();
 const appPort = await freePort();
-const health = `http://127.0.0.1:${appPort}/api/health`;
+const appUrl = `http://127.0.0.1:${appPort}/`;
 
 const model = startModel(modelPort);
 const browser = await chromium.launch();
@@ -707,20 +710,31 @@ async function escape(page) {
  * new machine.
  */
 async function seed(dataDir) {
+  const store = new DocumentStore(dataDir);
+  await store.init();
   for (const [key, document] of Object.entries(documents())) {
-    const path = key.startsWith('story:')
-      ? join(dataDir, 'stories', `${key.slice('story:'.length)}.json`)
-      : key.startsWith('chapter:')
-        ? join(dataDir, 'chapters', `${key.slice('chapter:'.length)}.json`)
-        : join(dataDir, 'settings.json');
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(
-      path,
-      `${JSON.stringify(document, null, 2)}
-`,
-      'utf8',
-    );
+    const { collection, id } = refOf(key);
+    await store.write(collection, id, document);
   }
+}
+
+/**
+ * Where a client storage key lives on the server.
+ *
+ * The prefixes are the client's — the same three
+ * `app/src/app/store/document-api.ts` files documents under — and everything
+ * below them is the store's. Which is why the write above goes through
+ * `DocumentStore` rather than joining a path: this used to spell out
+ * `stories/`, `chapters/` and `settings.json` for itself, and the day
+ * COLLECTIONS changed it would have gone on writing to the old places without
+ * a word, leaving every picture in docs/ taken of an empty app.
+ */
+function refOf(key) {
+  if (key.startsWith('story:')) return { collection: 'stories', id: key.slice('story:'.length) };
+  if (key.startsWith('chapter:')) {
+    return { collection: 'chapters', id: key.slice('chapter:'.length) };
+  }
+  return { collection: SETTINGS_ID, id: SETTINGS_ID };
 }
 
 function documents() {
@@ -940,7 +954,7 @@ function startModel(port) {
       );
     }
 
-    const body = await readJson(request);
+    const body = await readBody(request);
     const asked = [...(body.messages ?? [])].reverse().find((m) => m.role === 'user');
 
     // Not streamed: the request asking what the chapter established, which
@@ -994,7 +1008,7 @@ async function freshServer({ withStory = false } = {}) {
     const stopped = new Promise((fulfil) => persistence.once('exit', fulfil));
     persistence.kill();
     await stopped;
-    await waitForHealth(false);
+    await waitForHealth(appUrl, { up: false, timeout: 20_000, every: 150 });
   }
   const data = await mkdtemp(join(tmpdir(), 'lamplit-shots-'));
   dataDirs.push(data);
@@ -1010,23 +1024,11 @@ async function freshServer({ withStory = false } = {}) {
     },
     stdio: 'ignore',
   });
-  await waitForHealth(true);
+  await waitForHealth(appUrl, { timeout: 20_000, every: 150 });
 }
 
-async function waitForHealth(up, timeout = 20_000) {
-  const deadline = Date.now() + timeout;
-  for (;;) {
-    const alive = await fetch(health).then(
-      (response) => response.ok,
-      () => false,
-    );
-    if (alive === up) return;
-    if (Date.now() > deadline) throw new Error(`the server never came ${up ? 'up' : 'down'}`);
-    await delay(150);
-  }
-}
-
-function readJson(request) {
+/** The model stand-in's request body, which is a stream and not a file. */
+function readBody(request) {
   return new Promise((fulfil) => {
     let raw = '';
     request.on('data', (chunk) => (raw += chunk));
@@ -1036,17 +1038,6 @@ function readJson(request) {
       } catch {
         fulfil({});
       }
-    });
-  });
-}
-
-function freePort() {
-  return new Promise((fulfil, reject) => {
-    const probe = createSocket();
-    probe.on('error', reject);
-    probe.listen(0, '127.0.0.1', () => {
-      const { port } = probe.address();
-      probe.close(() => fulfil(port));
     });
   });
 }

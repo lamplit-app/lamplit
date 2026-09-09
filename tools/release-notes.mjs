@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
+import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { normalise, notesProblem, releasePage, versionCount } from './lib/changelog.mjs';
 
@@ -24,9 +25,18 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = join(ROOT, 'CHANGELOG.md');
 const PAGE = join(ROOT, 'docs', 'releases.md');
 
-const checking = process.argv.includes('--check');
-/** `--version 0.1.1`: the tag being built, which the top section has to name. */
-const tagged = argumentAfter('--version');
+const { values: flags } = parseArgs({
+  args: process.argv.slice(2),
+  allowPositionals: false,
+  options: {
+    check: { type: 'boolean', default: false },
+    /** `--version 0.1.1`: the tag being built, which the top section has to name. */
+    version: { type: 'string' },
+  },
+});
+const checking = flags.check;
+// The workflow passes the git tag, which carries a `v` the changelog does not.
+const tagged = (flags.version ?? '').replace(/^v/, '');
 
 const changelog = await readFile(SOURCE, 'utf8');
 const page = releasePage(changelog);
@@ -54,9 +64,4 @@ if (tagged) {
   console.log(
     `check:notes — docs/releases.md matches CHANGELOG.md (${versionCount(page)} version(s)).`,
   );
-}
-
-function argumentAfter(flag) {
-  const at = process.argv.indexOf(flag);
-  return at === -1 ? '' : (process.argv[at + 1] ?? '').replace(/^v/, '');
 }

@@ -8,6 +8,7 @@ import { SERVER_ERROR } from '../../wire/contract.mjs';
 import { createApp } from '../src/app.js';
 import { PORT_ATTEMPTS } from '../src/ports.js';
 import { SHARE_FILE, createSharing, localAddresses, newToken } from '../src/share.js';
+import { DocumentStore } from '../src/store.js';
 
 /**
  * Sharing, from both sides of the lock.
@@ -26,9 +27,10 @@ async function serve({ share = false, token = '' } = {}) {
 /** Starts the loopback listener, the sharing object, and the app behind both. */
 async function open(dataDir, { share = false, token = '' } = {}) {
   const sharing = createSharing({ dataDir, port: 0, host: '127.0.0.1' });
-  const app = createApp({ dataDir, sharing });
+  const store = new DocumentStore(dataDir);
+  const app = createApp({ dataDir, sharing, store });
   sharing.serve(app);
-  await app.locals.store.init();
+  await store.init();
   if (share || token) {
     await sharing.set(false);
     // `set` has written the file; putting the wanted state in it and reading
@@ -368,21 +370,21 @@ describe('sharing, with no free port to open on', () => {
   it('answers a sentence and a 503, and says nothing about ports', async () => {
     const range = await occupyARange();
     const dataDir = await mkdtemp(join(tmpdir(), 'lamplit-busy-'));
-    const sharing = createSharing({ dataDir, port: range.from, host: '127.0.0.1' });
-    const app = createApp({ dataDir, sharing });
+    // The walk warns once per busy port on its way up, and the refusal is
+    // logged: both are wanted in a real run and neither is wanted in this one,
+    // so the log is handed in and read rather than patched onto the console.
+    const said = [];
+    const log = (message) => said.push(message);
+    const sharing = createSharing({ dataDir, port: range.from, host: '127.0.0.1', log });
+    const store = new DocumentStore(dataDir);
+    const app = createApp({ dataDir, sharing, log, store });
     sharing.serve(app);
-    await app.locals.store.init();
+    await store.init();
     const own = await new Promise((fulfil) => {
       const instance = app.listen(0, '127.0.0.1', () => fulfil(instance));
     });
     const base = `http://127.0.0.1:${own.address().port}`;
 
-    // The walk warns once per busy port on its way up, and the refusal is
-    // logged: both are wanted in a real run and neither is wanted in this one.
-    const { warn, error: logged } = console;
-    console.warn = () => {};
-    const said = [];
-    console.error = (...parts) => said.push(parts);
     try {
       const refused = await fetch(`${base}/api/server/share`, put({ share: true }));
 
@@ -397,11 +399,10 @@ describe('sharing, with no free port to open on', () => {
       // And the switch is off rather than half on.
       assert.equal(sharing.on, false);
       assert.equal((await (await fetch(`${base}/api/server/share`)).json()).share, false);
-      // The reason is in the log as well, where somebody can act on it.
-      assert.equal(said.length, 1);
+      // The reason is in the log as well, where somebody can act on it —
+      // among the lines the port walk left on its way up.
+      assert.equal(said.filter((line) => /server error/.test(line)).length, 1);
     } finally {
-      console.warn = warn;
-      console.error = logged;
       await sharing.close();
       await new Promise((fulfil) => {
         own.close(fulfil);

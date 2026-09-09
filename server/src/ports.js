@@ -1,3 +1,5 @@
+import { defaultLog } from './log.js';
+
 /**
  * The number in the URL, and what to do when something else already has it.
  *
@@ -39,9 +41,10 @@ export const PORT_ATTEMPTS = 10;
  * @param {T} server
  * @param {number} from
  * @param {string} host
+ * @param {import('./log.js').Log} [log] where a port stepped over is reported
  * @returns {Promise<T>}
  */
-export function listenWalking(server, from, host) {
+export function listenWalking(server, from, host, log = defaultLog) {
   return new Promise((fulfil, reject) => {
     let port = from;
     const attempt = () => {
@@ -55,7 +58,7 @@ export function listenWalking(server, from, host) {
       const failed = (error) => {
         server.removeListener('listening', listening);
         if (error.code !== 'EADDRINUSE' || port >= from + PORT_ATTEMPTS) return reject(error);
-        console.warn(`port ${port} is busy, trying ${port + 1}`);
+        log(`port ${port} is busy, trying ${port + 1}`);
         port += 1;
         attempt();
       };

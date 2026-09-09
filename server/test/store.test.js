@@ -6,9 +6,9 @@ import { after, describe, it } from 'node:test';
 import { COLLECTIONS as WIRE_COLLECTIONS } from '../../wire/contract.mjs';
 import { COLLECTIONS, DocumentStore, isCollection, isId } from '../src/store.js';
 
-async function freshStore() {
+async function freshStore({ log } = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'lamplit-store-'));
-  const store = new DocumentStore(dir);
+  const store = new DocumentStore(dir, ...(log ? [{ log }] : []));
   await store.init();
   return store;
 }
@@ -263,16 +263,15 @@ describe('DocumentStore', () => {
   });
 
   it('lists the documents it can read and skips the one it cannot', async () => {
-    const store = await freshStore();
+    // The skipped one is worth a line, and the line goes where the store was
+    // told to put it rather than at whoever is watching the console.
+    const said = [];
+    const store = await freshStore({ log: (message) => said.push(message) });
     await store.write('stories', 'good', { id: 'good' });
     await mkdir(store.pathOf('stories', 'bad'));
-    const warn = console.warn;
-    console.warn = () => {};
-    try {
-      assert.deepEqual((await store.list('stories')).map(written), [{}]);
-    } finally {
-      console.warn = warn;
-    }
+    assert.deepEqual((await store.list('stories')).map(written), [{}]);
+    assert.equal(said.length, 1);
+    assert.match(said[0], /skipping stories\/bad\.json/);
   });
 
   it('writes readable JSON, which is the point of files on disk', async () => {

@@ -83,16 +83,14 @@ const allBusy = (from, count) =>
  * Whatever the walk said out loud while `work` ran. It warns on every port it
  * steps over, because a server that moved quietly would leave the reader
  * typing the number they were given yesterday.
+ *
+ * `work` is handed the log to pass in. It used to be read off `console.warn`,
+ * patched for the duration — which worked, and told every other test in the
+ * suite nothing about where the walk actually says things.
  */
 async function saidWhile(work) {
   const said = [];
-  const warn = console.warn;
-  console.warn = (line) => said.push(line);
-  try {
-    await work();
-  } finally {
-    console.warn = warn;
-  }
+  await work((line) => said.push(line));
   return said;
 }
 
@@ -115,14 +113,14 @@ describe('listenWalking', () => {
 
   it('takes the next one up when the wanted port is in use, and says so', async () => {
     const server = pretendServer(allBusy(DEFAULT_PORT, 1));
-    const said = await saidWhile(() => listenWalking(server, DEFAULT_PORT, HOST));
+    const said = await saidWhile((log) => listenWalking(server, DEFAULT_PORT, HOST, log));
     assert.deepEqual(server.tried, [DEFAULT_PORT, DEFAULT_PORT + 1]);
     assert.deepEqual(said, [`port ${DEFAULT_PORT} is busy, trying ${DEFAULT_PORT + 1}`]);
   });
 
   it('keeps walking, and lands on the first port nobody has', async () => {
     const server = pretendServer(allBusy(DEFAULT_PORT, 3));
-    const said = await saidWhile(() => listenWalking(server, DEFAULT_PORT, HOST));
+    const said = await saidWhile((log) => listenWalking(server, DEFAULT_PORT, HOST, log));
     assert.deepEqual(server.tried, [
       DEFAULT_PORT,
       DEFAULT_PORT + 1,
@@ -143,8 +141,8 @@ describe('listenWalking', () => {
     // PORT_ATTEMPTS above it, with nothing free anywhere in the range.
     const range = allBusy(DEFAULT_PORT, PORT_ATTEMPTS + 1);
     const server = pretendServer(range);
-    const said = await saidWhile(() =>
-      assert.rejects(listenWalking(server, DEFAULT_PORT, HOST), { code: 'EADDRINUSE' }),
+    const said = await saidWhile((log) =>
+      assert.rejects(listenWalking(server, DEFAULT_PORT, HOST, log), { code: 'EADDRINUSE' }),
     );
     assert.deepEqual(server.tried, Object.keys(range).map(Number));
     // It says something about every port it steps over and nothing about the
@@ -158,8 +156,8 @@ describe('listenWalking', () => {
     // The walk is for EADDRINUSE alone; every other fault is the caller's to
     // hear about, at once, unchanged, and on the port it happened to.
     const server = pretendServer({ [DEFAULT_PORT]: 'EACCES' });
-    const said = await saidWhile(() =>
-      assert.rejects(listenWalking(server, DEFAULT_PORT, HOST), { code: 'EACCES' }),
+    const said = await saidWhile((log) =>
+      assert.rejects(listenWalking(server, DEFAULT_PORT, HOST, log), { code: 'EACCES' }),
     );
     assert.deepEqual(server.tried, [DEFAULT_PORT]);
     assert.deepEqual(said, []);
@@ -168,12 +166,13 @@ describe('listenWalking', () => {
   it('reports a port the operating system will not even consider', async () => {
     // A real listener, and a fault that is not a busy port: `listen` refuses -1
     // where it stands, before there is an error event to read a code off.
-    const said = await saidWhile(() =>
+    const said = await saidWhile((log) =>
       assert.rejects(
         listenWalking(
           createServer(() => {}),
           -1,
           HOST,
+          log,
         ),
       ),
     );
@@ -186,12 +185,13 @@ describe('listenWalking', () => {
     // `listen` on the very server that has just heard one.
     const taken = await occupy();
     let walked;
-    const said = await saidWhile(async () => {
+    const said = await saidWhile(async (log) => {
       walked = keep(
         await listenWalking(
           createServer(() => {}),
           taken,
           HOST,
+          log,
         ),
       );
     });

@@ -31,16 +31,40 @@ wire/       the one file the app and the server both read: the revision header,
             the three answers that are not documents, and the version
             comparison both sides make. Plain JavaScript with JSDoc types,
             because the server runs from source; the app reaches it as `@wire`
-server/     Express 5 — JSON documents on disk, the built app in front of them,
-            a dependency-free zip writer, and the build stamp (version.js: which
-            build this is, and which one wrote this data folder last).
-            share.js is the second listener and the pairing lock in front of
-            it, which is how a phone on the same network reads the story.
-            bootstrap.js is the start-up sequence itself — the one thing both
-            index.js and the desktop shell call, so there is one order
-electron/   the desktop shell: main process, preload, electron-builder config.
-            It starts the same server in-process, through that one call, and
-            opens one window at it; it knows nothing else about the app
+server/     Express 5 — JSON documents on disk, and the built app in front of
+            them
+  app.js      composition and nothing else: the order the middleware and the
+              three routers go in. Takes its store, so a test can hand it one
+  security.js the rules every request passes: the content security policy, the
+              Host check that answers DNS rebinding, the CORS allowance that is
+              off, and what counts as a body
+  *-router.js the routes, one file per subject: documents (list, read, write,
+              delete), sharing (the switch and the QR code), status (which
+              build this is, and whether a newer one exists)
+  static-app.js  the built app, cached by name, with the single-page fallback
+  store.js    the documents: one FIFO chain per file, atomic writes, and the
+              revision guard two writers meet. The two disk shapes — one file,
+              or a folder of them — are two objects at the top of it
+  bootstrap.js the start-up sequence itself, and the owner of the store: the
+              one thing both index.js and the desktop shell call, so there is
+              one order. index.js is the console around it; cli.js is what the
+              command line means, and where the built app is
+  share.js    the second listener and the pairing lock in front of it, which is
+              how a phone on the same network reads the story
+  version.js  the build stamp: which build this is, and which one wrote this
+              data folder last. zip.js and backup.js are the daily archive;
+              fs-atomic.js is the write-and-rename all three share; log.js is
+              the one line every one of them says things out loud through
+electron/   the desktop shell. main.mjs is the wiring — the order things happen
+            in, and the state that outlives the function that made it — and it
+            starts the same server in-process, through that one call, and opens
+            one window at it. Everything decidable without a running Electron
+            is a module beside it with a test in tools/test/: profile.mjs
+            (where the writing is kept), window-state.mjs (what a saved size
+            may say), menu.mjs (the bar, as a template), shutdown.mjs (the
+            order a quit closes things in), fatal.mjs (how it says it could not
+            start), updates.mjs (whether it may ask GitHub). chromium.mjs and
+            window.mjs do need Electron and are not wiring either
 tools/      dev.mjs (both halves at once), package.mjs (the runnable zip),
             desktop.mjs (the window, and the installers), smoke.mjs (a fresh
             install to walk by hand, and --check to prove one in CI),
@@ -49,6 +73,10 @@ tools/      dev.mjs (both halves at once), package.mjs (the runnable zip),
             check-docs.mjs (the links in docs/ survive becoming a website),
             release-notes.mjs (docs/releases.md from CHANGELOG.md),
             fetch-electron.mjs (Electron's binary, which npm ci does not fetch)
+  lib/        the part of a script worth a test, and script.mjs: the step, the
+              one-line stop, the child process, the JSON reader, the health
+              wait and the free port that every one of them used to carry its
+              own copy of
 e2e/        Playwright specs + a fake OpenAI endpoint
 docs/       these pages, and — served by GitHub Pages — the website
 .github/    ci.yml: every check, on every push to main; release.yml: the same
@@ -96,17 +124,23 @@ token estimates, the story formatter, the prompt builder (block order, the scene
 scanning, budget trimming, chapter titles, the summary request), and the persistence layer (the
 startup load, coalescing, sequence numbers, offline queueing, and refusing to start without a
 server). `node --test` for the server: the document store's write ordering and atomic writes, the
-API, the zip writer, the daily backup, and the build stamp (reading it, the dev fallback, and how
-an upgrade is noticed). `node --test` again for the scripts in `tools/`, which have no other way of
+API, the zip writer, the daily backup, the build stamp (reading it, the dev fallback, and how an
+upgrade is noticed), the command line (a port that is not one is a line, not a stack trace), and
+the start-up sequence itself, on port 0 with the backup and the update check off. `node --test`
+again for the scripts in `tools/` and the desktop shell's own modules, which have no other way of
 being caught: reading the changelog's top section and the page the website is made from, the
-arguments the desktop build hands electron-builder, whether the desktop shell may ask GitHub about
-an update, which packages the runnable zip has to carry, what the staged folder is made of (the
-generated `package.json`, the two start scripts, the README, the line endings each of them wants),
-and each trap a docs page can fall into on the way to becoming a website.
+arguments and the flags of the desktop build, where the profile is on a stick, what a saved window
+size may say, what the menu bar says, the order a quit closes things in, how the shell reports a
+failure to start, whether it may ask GitHub about an update, which packages the runnable zip has to
+carry, what the staged folder is made of (the generated `package.json`, the two start scripts, the
+README, the line endings each of them wants), and each trap a docs page can fall into on the way to
+becoming a website.
 
 A script cannot be imported to be asked what it would do — it has its effects at the top of the
 file — so the part of one worth a test lives in `tools/lib/` and the script reads and writes the
-files around it. That is the split to keep when a script grows a decision worth checking.
+files around it. That is the split to keep when a script grows a decision worth checking. The
+desktop shell is the same rule under another name: `main.mjs` runs on import and cannot be asked
+anything, so what it would decide lives in the modules beside it.
 
 **End to end — `npm run e2e`.** Playwright drives the real app against
 `e2e/fake-openai-server.mjs`, a deterministic stand-in for an OpenAI-compatible endpoint. Both

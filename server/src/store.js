@@ -1,21 +1,104 @@
-import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { SETTINGS_ID, revisionOf } from '../../wire/contract.mjs';
+import { writeAtomic } from './fs-atomic.js';
+import { defaultLog } from './log.js';
 
 /**
- * Where each collection lives on disk. `settings` is one file rather than a
- * folder because there is exactly one of it.
+ * Where each collection lives on disk, as one of two shapes.
+ *
+ * `settings` is one file rather than a folder because there is exactly one of
+ * it — and everything that follows from that, the fixed id, the listing with
+ * at most one entry, the document nothing invents an id for, used to be five
+ * separate `if (config.single)` branches spread through the store below. It is
+ * now one choice made here, once, and the store asks the shape rather than
+ * reading the shape's flags: a third layout would be a third function beside
+ * these two and nothing else.
  *
  * The names are the wire's — `wire/contract.mjs` — and only the layout is
  * here, so a fourth collection is a name over there and an entry here. A test
  * holds the two lists against each other.
  */
 export const COLLECTIONS = {
-  [SETTINGS_ID]: { single: SETTINGS_ID, file: `${SETTINGS_ID}.json` },
-  stories: { dir: 'stories' },
-  chapters: { dir: 'chapters' },
+  [SETTINGS_ID]: oneFile(SETTINGS_ID),
+  stories: aFolder('stories'),
+  chapters: aFolder('chapters'),
 };
+
+/**
+ * @typedef {object} Shape
+ * @property {(dataDir: string) => Promise<void>} make          the folder it needs, if any
+ * @property {(dataDir: string, id: string) => string} pathOf   the file one document is in
+ * @property {(id: string) => boolean} holds                    whether it files anything under that id
+ * @property {(dataDir: string) => Promise<string[]>} ids       what is filed there now
+ * @property {(id: string, document: unknown) => unknown} named a read document, id and all
+ */
+
+/**
+ * One document, in one file, under one id — which is the collection's own name.
+ *
+ * Nothing is added to it on the way out: the client's settings document has no
+ * `id` field, and inventing one would put a field on the wire that the app
+ * never wrote and would then write back.
+ *
+ * @param {string} name
+ * @returns {Shape}
+ */
+function oneFile(name) {
+  const file = `${name}.json`;
+  return {
+    // The data folder itself is made by init; there is nothing under it.
+    make: async () => {},
+    pathOf: (dataDir) => join(dataDir, file),
+    holds: (id) => id === name,
+    ids: async () => [name],
+    named: (id, document) => document,
+  };
+}
+
+/**
+ * A folder of documents, one file each, named by id.
+ *
+ * @param {string} dir
+ * @returns {Shape}
+ */
+function aFolder(dir) {
+  return {
+    make: async (dataDir) => {
+      await mkdir(join(dataDir, dir), { recursive: true });
+    },
+    pathOf: (dataDir, id) => join(dataDir, dir, `${id}.json`),
+    holds: () => true,
+    ids: async (dataDir) => {
+      const files = await readdir(join(dataDir, dir)).catch(() => []);
+      return files
+        .filter((file) => file.endsWith('.json'))
+        .map((file) => file.slice(0, -'.json'.length));
+    },
+    named: named,
+  };
+}
+
+/**
+ * A document from a folder collection, filed under the name it is filed under.
+ *
+ * The filename wins, and that is the whole of it. A folder collection keys
+ * everything — the listing, the client's snapshot, the write it sends back —
+ * off the id *inside* the document, so `stories/A.json` carrying `{id: 'B'}`
+ * was loaded as story B, written back to `stories/B.json`, and `A.json` was
+ * left behind to be listed again at every start and duplicated once `B.json`
+ * existed. Only a hand-edited file or a curl could do it, and the API now
+ * refuses the write that would (see the id check in `documents-router.js`) —
+ * but a file on disk is not something the API was ever asked about, so disk
+ * truth wins here too and the next write puts the document straight.
+ */
+function named(id, document) {
+  if (document === null || typeof document !== 'object' || Array.isArray(document)) {
+    return document;
+  }
+  return { ...document, id };
+}
 
 /** Ids come from `crypto.randomUUID()`; this also keeps `..` out of paths. */
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
@@ -34,8 +117,7 @@ export function isCollection(name) {
 
 export function isId(collection, id) {
   if (!ID.test(id) || RESERVED.test(id)) return false;
-  const config = COLLECTIONS[collection];
-  return config.single ? id === config.single : true;
+  return COLLECTIONS[collection].holds(id);
 }
 
 /**
@@ -64,10 +146,16 @@ export function isId(collection, id) {
  */
 export class DocumentStore {
   #dataDir;
+  #log;
   #chains = new Map();
 
-  constructor(dataDir) {
+  /**
+   * @param {string} dataDir
+   * @param {{log?: import('./log.js').Log}} [said] where a skipped document is reported
+   */
+  constructor(dataDir, { log = defaultLog } = {}) {
     this.#dataDir = dataDir;
+    this.#log = log;
   }
 
   get dataDir() {
@@ -76,40 +164,16 @@ export class DocumentStore {
 
   async init() {
     await mkdir(this.#dataDir, { recursive: true });
-    for (const config of Object.values(COLLECTIONS)) {
-      if (config.dir) await mkdir(join(this.#dataDir, config.dir), { recursive: true });
-    }
+    for (const shape of Object.values(COLLECTIONS)) await shape.make(this.#dataDir);
   }
 
   pathOf(collection, id) {
-    const config = COLLECTIONS[collection];
-    return config.single
-      ? join(this.#dataDir, config.file)
-      : join(this.#dataDir, config.dir, `${id}.json`);
+    return COLLECTIONS[collection].pathOf(this.#dataDir, id);
   }
 
-  /** Every document in the collection, unparseable files skipped. */
+  /** Every document in the collection, unreadable files skipped. */
   async list(collection) {
-    const config = COLLECTIONS[collection];
-    if (config.single) {
-      const document = await this.read(collection, config.single);
-      return document === null ? [] : [document];
-    }
-    const files = await readdir(join(this.#dataDir, config.dir)).catch(() => []);
-    const documents = [];
-    for (const file of files) {
-      if (!file.endsWith('.json')) continue;
-      const id = file.slice(0, -'.json'.length);
-      // One entry that cannot be read — a folder wearing the name, a file held
-      // open, a permission — costs that entry, not the collection. The listing
-      // is what the app starts from; a 500 here is a no-server screen.
-      const document = await this.read(collection, id).catch((error) => {
-        console.warn(`[lamplit] skipping ${collection}/${file}: ${error.message}`);
-        return null;
-      });
-      if (document !== null) documents.push(document);
-    }
-    return documents;
+    return (await this.#entries(collection)).map(({ document }) => document);
   }
 
   /**
@@ -119,36 +183,40 @@ export class DocumentStore {
    * for this when its tab is looked at again and fetches only what moved.
    */
   async index(collection) {
-    const documents = await this.list(collection);
-    return documents.map((document, position) => ({
-      id: document?.id ?? COLLECTIONS[collection].single ?? String(position),
+    return (await this.#entries(collection)).map(({ id, document }) => ({
+      id: document?.id ?? id,
       updatedAt: document?.updatedAt ?? null,
       rev: revisionOf(document),
     }));
   }
 
   /**
+   * Everything filed in the collection, each with the id it is filed under.
+   *
+   * One entry that cannot be read — a folder wearing the name, a file held
+   * open, a permission — costs that entry, not the collection. The listing is
+   * what the app starts from; a 500 here is a no-server screen.
+   */
+  async #entries(collection) {
+    const found = [];
+    for (const id of await COLLECTIONS[collection].ids(this.#dataDir)) {
+      const document = await this.read(collection, id).catch((error) => {
+        this.#log(`skipping ${collection}/${id}.json: ${error.message}`);
+        return null;
+      });
+      if (document !== null) found.push({ id, document });
+    }
+    return found;
+  }
+
+  /**
    * The document filed under this id, with `id` set to the id it was filed
-   * under.
-   *
-   * The filename wins, and that is the whole of it. A folder collection keys
-   * everything — the listing, the client's snapshot, the write it sends back —
-   * off the id *inside* the document, so `stories/A.json` carrying `{id: 'B'}`
-   * was loaded as story B, written back to `stories/B.json`, and `A.json` was
-   * left behind to be listed again at every start and duplicated once `B.json`
-   * existed. Only a hand-edited file or a curl could do it, and the API now
-   * refuses the write that would (see the id check in `app.js`) — but a file on
-   * disk is not something the API was ever asked about, so disk truth wins here
-   * too and the next write puts the document straight.
-   *
-   * The settings document is left alone: there is one file, its id is its
-   * collection's name, and the client's settings document has no `id` field
-   * for this to invent one on.
+   * under — see `named` above, which is where that rule and its reasons are.
    */
   async read(collection, id) {
     try {
       const document = JSON.parse(await readFile(this.pathOf(collection, id), 'utf8'));
-      return this.#named(collection, id, document);
+      return COLLECTIONS[collection].named(id, document);
     } catch (error) {
       if (error.code === 'ENOENT') return null;
       // A truncated or hand-edited file reads as missing rather than as a 500:
@@ -156,15 +224,6 @@ export class DocumentStore {
       if (error instanceof SyntaxError) return null;
       throw error;
     }
-  }
-
-  /** A folder collection's document, filed under the name it is filed under. */
-  #named(collection, id, document) {
-    if (COLLECTIONS[collection].single) return document;
-    if (document === null || typeof document !== 'object' || Array.isArray(document)) {
-      return document;
-    }
-    return { ...document, id };
   }
 
   /**
@@ -184,10 +243,10 @@ export class DocumentStore {
       if (basedOn !== undefined) {
         const current = await this.#current(path);
         if (current.rev !== basedOn) {
-          // Through `#named` as well, because the client files whatever comes
+          // Through the shape as well, because the client files whatever comes
           // back with the refusal and must file it where it actually lives.
           const document =
-            current.document === null ? null : this.#named(collection, id, current.document);
+            current.document === null ? null : COLLECTIONS[collection].named(id, current.document);
           return { ok: false, conflict: true, rev: current.rev, document };
         }
       }
@@ -238,10 +297,16 @@ export class DocumentStore {
     const previous = this.#chains.get(key) ?? Promise.resolve();
     const run = previous.then(() => work(path));
     // The chain must survive a failed write, or the document jams for good.
-    this.#chains.set(
-      key,
-      run.catch(() => {}),
-    );
+    const settled = run.catch(() => {});
+    this.#chains.set(key, settled);
+    // And it must not outlive the work. One entry per document ever touched,
+    // in a process that runs for weeks, is a map that only grows. The entry
+    // goes only if it is still the last link — whoever queued behind it in the
+    // meantime is waiting on it and keeps it — so the last writer clears up
+    // and nothing in flight loses its order.
+    void settled.finally(() => {
+      if (this.#chains.get(key) === settled) this.#chains.delete(key);
+    });
     return run;
   }
 }
@@ -253,29 +318,4 @@ export class DocumentStore {
  */
 function newRevision() {
   return randomBytes(8).toString('hex');
-}
-
-/**
- * Writes a file by writing another one and renaming it over the target, which
- * is atomic on both Windows and POSIX: a reader sees the old bytes or the new
- * ones, and a run that dies half way leaves the old file intact.
- *
- * Here rather than inside the store's own write because `share.js` keeps a file
- * of its own beside the documents and wants exactly this, the Windows rename
- * failure included — where something holds the target open the write has failed
- * either way, and it must not also leave a stray `.tmp` behind for the backup
- * to pick up.
- *
- * @param {string} path
- * @param {string} text
- */
-export async function writeAtomic(path, text) {
-  const temporary = `${path}.${randomBytes(4).toString('hex')}.tmp`;
-  await writeFile(temporary, text, 'utf8');
-  try {
-    await rename(temporary, path);
-  } catch (error) {
-    await rm(temporary, { force: true }).catch(() => {});
-    throw error;
-  }
 }

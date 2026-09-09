@@ -3,7 +3,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { builderArgs, rootVersion } from '../lib/desktop-build.mjs';
+import { builderArgs, parseArguments } from '../lib/desktop-build.mjs';
+import { rootVersion } from '../lib/script.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -39,6 +40,34 @@ describe('the desktop build’s arguments', () => {
   it('reads the version from the root package.json', () => {
     const root = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
     assert.equal(rootVersion(ROOT), root.version);
+  });
+});
+
+describe('the desktop build’s command line', () => {
+  it('is a window by default, which is what `npm run desktop` means', () => {
+    assert.deepEqual(parseArguments([]), { mode: 'run', publish: false });
+  });
+
+  it('reads the two other modes, and the flag that uploads', () => {
+    assert.deepEqual(parseArguments(['--stage-only']), { mode: 'stage', publish: false });
+    assert.deepEqual(parseArguments(['--dist']), { mode: 'dist', publish: false });
+    assert.deepEqual(parseArguments(['--dist', '--publish']), { mode: 'dist', publish: true });
+  });
+
+  it('refuses to publish something it is not building installers for', () => {
+    // Uploading nothing to a draft release, with an exit code of zero, is the
+    // failure this refusal exists to make loud.
+    assert.throws(() => parseArguments(['--publish']), /only means something with --dist/);
+    assert.throws(() => parseArguments(['--stage-only', '--publish']), /--dist/);
+  });
+
+  it('refuses a pair of modes that ask for opposite things', () => {
+    assert.throws(() => parseArguments(['--dist', '--stage-only']), /opposite/);
+  });
+
+  it('says what it would have taken, rather than accepting a misspelling', () => {
+    assert.throws(() => parseArguments(['--dst']), /Unknown option/);
+    assert.throws(() => parseArguments(['--dst']), /--dist, --stage-only or --publish/);
   });
 });
 
