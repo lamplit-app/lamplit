@@ -35,7 +35,7 @@ export function newStory(title = DEFAULT_STORY_TITLE): Story {
     mode: 'narrator',
     narrator: { useDefault: true, prompt: '' },
     characters: [],
-    roleplay: { ...DEFAULT_ROLEPLAY },
+    roleplay: { ...DEFAULT_ROLEPLAY, instruction: { useDefault: true, prompt: '' } },
     persona: { name: '', description: '' },
     style: { ...DEFAULT_STYLE },
     world: {

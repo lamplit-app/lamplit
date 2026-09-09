@@ -22,7 +22,7 @@ The system message is assembled in this order:
 
 | # | Block | When |
 |---|---|---|
-| 1 | **Mode preamble** — the narrator instruction, or "You are playing X and Y" (or "X, and nobody else") plus each character's description | always |
+| 1 | **Mode preamble** — the narrator instruction, or the role-play instruction followed by "You are playing X and Y" (or "X, and nobody else") and each character's description | always |
 | 2 | **Persona** — "The user plays *name*: *description*" | when you have set one |
 | 3 | **The story so far** | when it is not empty |
 | 4 | **What is true in this world** — lore entries that fired | when any fired |

@@ -242,6 +242,12 @@ export class StoryStore {
     this.patch({ narrator: { ...this.story().narrator, ...patch } });
   }
 
+  /** And the instruction above a role-play's cast: the switch under Story. */
+  setRoleplayInstruction(patch: Partial<Instruction>): void {
+    const roleplay = this.story().roleplay;
+    this.patch({ roleplay: { ...roleplay, instruction: { ...roleplay.instruction, ...patch } } });
+  }
+
   setSummaryPrompt(patch: Partial<Instruction>): void {
     const world = this.story().world;
     this.patch({ world: { ...world, summary: { ...world.summary, ...patch } } });

@@ -91,6 +91,35 @@ export const DEFAULT_NARRATOR_PROMPT = [
 ].join(' ');
 
 /**
+ * And the same for role-play, which until now was told who to be and never how
+ * to behave: the cast list was the whole of its preamble.
+ *
+ * It says nothing about who it must not write for — the style block says that
+ * by name, pinned last, where it sticks — nothing about tense, since role-play
+ * reads well in either and a model takes its frame from the prose it is given,
+ * and nothing about who it plays, which is the casting lines' job and the
+ * reason this is one default under both castings.
+ */
+export const DEFAULT_ROLEPLAY_PROMPT = [
+  'You are taking part in a role-play with the user, as the character or',
+  'characters described below. Speak and act as them in the first person, in',
+  'their own words and their own manner, and stay in character from the first',
+  'line to the last. Each of them knows only what they would know, wants what',
+  'they want, and is not there to please: let them disagree, refuse, lie, change',
+  'the subject or say nothing when that is who they are, rather than agreeing',
+  'with the user or waiting to be led. Show what they feel through what they say',
+  'and do rather than by naming it. Every reply should move the scene, with',
+  'something said, done, noticed or decided that was not there before, and',
+  'should leave the user something to answer, though not every turn need end on',
+  'a question. Keep to what the scene, the story so far and the conversation',
+  'have established, and do not contradict it. Make it clear from the prose who',
+  'is speaking rather than putting a name before the line. Write only the',
+  "characters' speech, actions and what they perceive: no notes to the user, no",
+  'summary of what has happened, no asking what they would like, and never a',
+  'step outside the fiction to comment on it.',
+].join(' ');
+
+/**
  * What the model is told about the author's directions, whenever the chapter
  * carries one. Not editable and not reorderable, and there is no setting that
  * turns it off: a direction is the author's, and the app does not argue with
@@ -112,11 +141,14 @@ export const DEFAULT_SCAN: ScanSettings = {
 
 /**
  * Ensemble, with nobody singled out — the behaviour every story had before
- * casting was a choice, and so what a story that says nothing still gets.
+ * casting was a choice, and so what a story that says nothing still gets. The
+ * instruction is ours until the writer takes it over, on the same terms as the
+ * narrator's.
  */
 export const DEFAULT_ROLEPLAY: RoleplaySettings = {
   casting: 'ensemble',
   activeCharacterId: '',
+  instruction: { useDefault: true, prompt: '' },
 };
 
 export const DEFAULT_STYLE: StoryStyle = {

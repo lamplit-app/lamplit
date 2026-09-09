@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_GENERATION } from './defaults';
-import { CastChange, Chapter, ChapterMessage, Character, Story } from './models';
+import { DEFAULT_GENERATION, DEFAULT_ROLEPLAY, DEFAULT_ROLEPLAY_PROMPT } from './defaults';
+import { CastChange, Chapter, ChapterMessage, Character, RoleplaySettings, Story } from './models';
 import { activeCharacter, buildPrompt, buildSummaryPrompt, isOneAtATime } from './prompt-builder';
 import { heuristicEstimator } from './tokens';
 import { newChapter, newStory } from './fixtures';
@@ -39,6 +39,17 @@ function troupe(patch: Partial<Story> = {}): Story {
   };
 }
 
+/** The whole of the mode block when there is nobody to name in it. */
+const EMPTY_STAGE =
+  DEFAULT_ROLEPLAY_PROMPT +
+  '\n\n' +
+  'You play every character the story needs except the one the user plays.';
+
+/** One at a time, on whoever is named, with the instruction left at ours. */
+function playing(activeCharacterId: string): RoleplaySettings {
+  return { ...DEFAULT_ROLEPLAY, casting: 'one-at-a-time', activeCharacterId };
+}
+
 function chapter(messages: ChapterMessage[] = []): Chapter {
   return {
     ...newChapter('story', 1, 'The keeper’s cottage, late afternoon, low tide.'),
@@ -71,13 +82,21 @@ function system(story: Story, chapter: Chapter): string {
 
 describe('ensemble casting', () => {
   /**
-   * The prompt as it stood before casting was a choice, written out in full.
-   * A story that never answered the question is an ensemble, and an ensemble
-   * has to be byte for byte what it always was — an existing story cannot
-   * start getting different answers because the app learned a new trick.
+   * The prompt an ensemble is sent, written out in full.
+   *
+   * What the casting *choice* adds is still nothing: a story that never
+   * answered the question is an ensemble, and it cannot start getting
+   * different answers because the app learned a new trick. The casting lines
+   * below are the words they always were, less the one sentence that has
+   * moved up into the instruction above them.
+   *
+   * The instruction itself is a change to every role-play story, made on
+   * purpose — role-play was told who to be and never how to behave.
    */
   const ALWAYS =
-    'You are playing Nell and Tomas. Answer in character, in the first person, as they would speak and act.\n' +
+    DEFAULT_ROLEPLAY_PROMPT +
+    '\n\n' +
+    'You are playing Nell and Tomas.\n' +
     'Nell: Kept the light with Tomas, and keeps it still.\n' +
     'Tomas: The keeper before her father, seventy, deaf on one side.\n' +
     '\n' +
@@ -98,7 +117,11 @@ describe('ensemble casting', () => {
     const old = troupe();
     // Exactly what `normaliseStory` puts on a document from before this
     // version: the field, at its default, and nothing else disturbed.
-    expect(old.roleplay).toEqual({ casting: 'ensemble', activeCharacterId: '' });
+    expect(old.roleplay).toEqual({
+      casting: 'ensemble',
+      activeCharacterId: '',
+      instruction: { useDefault: true, prompt: '' },
+    });
     expect(isOneAtATime(old)).toBe(false);
   });
 
@@ -119,10 +142,34 @@ describe('ensemble casting', () => {
   });
 });
 
+/**
+ * Role-play with nobody cast, which is what a story gets before a character has
+ * been added and after the last one is switched off. The instruction is sent to
+ * it as it is to every other role-play story; the one line under it says there
+ * are no descriptions coming and to play whoever the story needs.
+ */
+describe('no cast at all', () => {
+  const nobody = () => troupe({ characters: [] });
+
+  it('is the instruction and one line, and says nothing twice', () => {
+    expect(system(nobody(), chapter()).startsWith(EMPTY_STAGE)).toBe(true);
+    // The line used to end "Answer in character, in the first person.", which
+    // the instruction above now says — and says better, since there is no
+    // description here to be in character as.
+    expect(system(nobody(), chapter())).not.toContain('Answer in character');
+  });
+
+  it('is what a cast switched off entirely gets, not just an empty one', () => {
+    const off = troupe({ characters: [{ ...NELL, enabled: false }] });
+    expect(system(off, chapter()).startsWith(EMPTY_STAGE)).toBe(true);
+    expect(system(off, chapter())).not.toContain('Nell');
+  });
+});
+
 describe('one character at a time', () => {
   const solo = (patch: Partial<Story> = {}) =>
     troupe({
-      roleplay: { casting: 'one-at-a-time', activeCharacterId: 'nell' },
+      roleplay: playing('nell'),
       characters: [NELL, TOMAS, ISA],
       ...patch,
     });
@@ -144,13 +191,13 @@ describe('one character at a time', () => {
   });
 
   it('falls back to the first character in the scene when nobody is named', () => {
-    const nobody = solo({ roleplay: { casting: 'one-at-a-time', activeCharacterId: '' } });
+    const nobody = solo({ roleplay: playing('') });
     expect(activeCharacter(nobody)?.id).toBe('nell');
 
     // And when the named one has left it, rather than leaving no voice at all.
     const gone = solo({
       characters: [{ ...NELL, enabled: false }, TOMAS],
-      roleplay: { casting: 'one-at-a-time', activeCharacterId: 'nell' },
+      roleplay: playing('nell'),
     });
     expect(activeCharacter(gone)?.id).toBe('tomas');
     expect(system(gone, chapter())).toContain('You are playing Tomas, and nobody else.');
@@ -168,7 +215,7 @@ describe('one character at a time', () => {
 describe('the cast changing mid-chapter', () => {
   const solo = troupe({
     characters: [NELL, TOMAS, ISA],
-    roleplay: { casting: 'one-at-a-time', activeCharacterId: 'tomas' },
+    roleplay: playing('tomas'),
   });
   const everyone = ['nell', 'tomas', 'isa'];
 
@@ -279,9 +326,7 @@ describe('a chapter written before any of this', () => {
 
 describe('the summariser', () => {
   it('is told who spoke, so it can attribute what was said', () => {
-    const solo = troupe({
-      roleplay: { casting: 'one-at-a-time', activeCharacterId: 'nell' },
-    });
+    const solo = troupe({ roleplay: playing('nell') });
     const user = buildSummaryPrompt(
       solo,
       chapter([

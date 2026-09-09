@@ -1,6 +1,7 @@
 import {
   AUTHOR_DIRECTIONS_PROMPT,
   DEFAULT_NARRATOR_PROMPT,
+  DEFAULT_ROLEPLAY_PROMPT,
   DEFAULT_SUMMARY_INSTRUCTION,
   REPLY_LENGTH_HINTS,
 } from './defaults';
@@ -384,15 +385,16 @@ function speakerLabel(story: Story, message: ChapterMessage): string {
 }
 
 // ---------------------------------------------------------------------------
-// The two instructions the writer may take over
+// The three instructions the writer may take over
 // ---------------------------------------------------------------------------
 //
-// The narrator's preamble and the instruction a chapter is closed with are the
-// same object twice: ours until the writer says otherwise, theirs after that.
-// Each is asked about in three or four places — the block builder below, the
-// chapter panel, the sheet that edits it, the sheet that uses it — and every
-// one of those has to give the same answer the request does, because the guide
-// promises that what "What the model sees" shows is what goes on the wire.
+// The narrator's preamble, the one above a role-play's cast and the instruction
+// a chapter is closed with are the same object three times: ours until the
+// writer says otherwise, theirs after that. Each is asked about in three or
+// four places — the block builder below, the chapter panel, the sheet that
+// edits it, the sheet that uses it — and every one of those has to give the
+// same answer the request does, because the guide promises that what "What the
+// model sees" shows is what goes on the wire.
 //
 // It did not. The panel showed `useDefault ? ours : theirs` while the request
 // sent `useDefault || nothing-written ? ours : theirs`, so a story with the
@@ -414,6 +416,11 @@ export function isDefaultInstruction(chosen: Instruction): boolean {
 /** Ours, or the writer's own once they have overridden it and written one. */
 export function narratorInstruction(story: Pick<Story, 'narrator'>): string {
   return instructionOf(story.narrator, DEFAULT_NARRATOR_PROMPT);
+}
+
+/** And the same for how a role-play's characters are played. */
+export function roleplayInstruction(story: Pick<Story, 'roleplay'>): string {
+  return instructionOf(story.roleplay.instruction, DEFAULT_ROLEPLAY_PROMPT);
 }
 
 /** And the same for the instruction a chapter is closed with. */
@@ -512,10 +519,23 @@ function systemBlocks(
 
 function modeBlock(story: Story): string {
   if (story.mode === 'narrator') return narratorInstruction(story);
+  return [roleplayInstruction(story), castingLines(story)].join('\n\n');
+}
 
+/**
+ * Who the model is playing, under the instruction that says how. Nothing here
+ * says to answer in character or in the first person: the instruction above
+ * says it once, for every casting, including the casting of nobody.
+ *
+ * That last one is why the no-cast line lost its own version of the sentence
+ * as well. A story with nothing cast has no description under it to be in
+ * character *as*, so "answer in character" was the emptiest place it was said
+ * — and it is now said above, where it is said to every role-play story.
+ */
+function castingLines(story: Story): string {
   const cast = story.characters.filter((c) => c.enabled && c.name.trim());
   if (!cast.length) {
-    return 'You play every character the story needs except the one the user plays. Answer in character, in the first person.';
+    return 'You play every character the story needs except the one the user plays.';
   }
 
   // One at a time: the model is one of them, and the rest are furniture it
@@ -525,7 +545,7 @@ function modeBlock(story: Story): string {
   if (only) {
     const others = cast.filter((c) => c.id !== only.id);
     const lines = [
-      `You are playing ${only.name.trim()}, and nobody else. Answer in character, in the first person, as they would speak and act.`,
+      `You are playing ${only.name.trim()}, and nobody else.`,
       `${only.name.trim()}: ${only.description.trim() || '(no description)'}`,
     ];
     if (others.length) {
@@ -541,9 +561,7 @@ function modeBlock(story: Story): string {
     return lines.join('\n');
   }
 
-  const lines = [
-    `You are playing ${joinNames(cast.map((c) => c.name.trim()))}. Answer in character, in the first person, as they would speak and act.`,
-  ];
+  const lines = [`You are playing ${joinNames(cast.map((c) => c.name.trim()))}.`];
   for (const character of cast) {
     lines.push(`${character.name.trim()}: ${character.description.trim() || '(no description)'}`);
   }

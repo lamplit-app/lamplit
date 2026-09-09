@@ -59,6 +59,19 @@ conversation: one person across a table, whose voice you want to stay put. The p
 *"You are playing X, and nobody else"*, and the rule about never writing for your persona extends
 to everybody else on stage.
 
+**How the characters are played** is the instruction above the cast, folded away under **Add a
+character**. Either casting sends it first, before the names and the descriptions, with every
+request of a role-play story. A description says who a character is; this says how a role-play is
+played — that each of them knows only what they would know and is not there to please you, that
+they may disagree, refuse, lie or say nothing, that every reply should move the scene and leave you
+something to answer, and that nothing steps outside the fiction to comment on it. It asks for
+nothing about tense: role-play reads well in either, and your own prose is what settles it.
+
+**Write my own role-play instructions** replaces it for this story, on the same terms as the
+narrator's. The switch starts you from ours rather than from a blank page, so it is an edit; the
+words stay in the box, greyed, if you switch back; and an emptied box is never a story with no
+instruction — ours is sent, and the box shows what is being sent.
+
 **Switching** is in the chapter panel's **Cast** section: click a row and the model plays that
 character from there on. The row that is being played is marked, and the little switch on each row
 takes a character in and out of the scene.
@@ -131,6 +144,9 @@ sent with the request, and every one of them is yours to edit:
   sentence — *"Address Mara as you and write in the second person, present tense"* — and keep the
   rest of it as it is. The text starts out as the default, so this is an edit rather than a blank
   page.
+- **How the characters are played**, in role-play: **Story → Mode → How the characters are
+  played**. It asks for nothing about tense on purpose, so there is nothing there to argue with
+  your prose; add a sentence to it if you want to say it outright.
 - **Your persona's description**, which is sent in both modes: *"Mara, a marine biologist. Her
   lines are written in the first person."*
 - **An author direction**, for a change part-way through a chapter:

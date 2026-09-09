@@ -38,6 +38,9 @@ test('an ensemble is played by everyone, and there is nobody to switch to', asyn
   await send(page, 'I climb the stairs.');
   await waitForTurn(page);
 
+  // How they are played, then who: the instruction is sent with every request
+  // of a role-play story, including one written before there was one.
+  expect(systemOf(bodies[0])).toContain('You are taking part in a role-play with the user');
   expect(systemOf(bodies[0])).toContain('You are playing Nell, Tomas and Isa.');
   expect(notesOf(bodies[0])).toEqual([]);
 
@@ -210,4 +213,40 @@ test('a chapter written before any of this reads exactly as it did', async ({
 
   await expect(page.locator('article[data-role]')).toHaveCount(2);
   await expect(page.locator('article[data-role="assistant"]')).toContainText('Nobody answers.');
+});
+
+/**
+ * The instruction above the cast: ours until the writer takes it over, and
+ * theirs on the wire once they have. Read out of the system message rather
+ * than off the sheet, because the sheet showing it is not the promise.
+ */
+test('the role-play instruction is the writer’s once they say so', async ({ page, app }) => {
+  await app.seed({ mode: 'roleplay', characters: CAST });
+  const bodies = await captureRequests(page);
+  await app.visit();
+
+  await page.getByRole('button', { name: 'Story', exact: true }).click();
+  const sheet = page.getByRole('dialog');
+  await sheet.getByRole('button', { name: /How the characters are played/ }).click();
+
+  // By where it lives, not by position: the sheet has a box per character.
+  const panel = sheet.locator('mat-expansion-panel', {
+    hasText: 'How the characters are played',
+  });
+  await expect(panel).toContainText('You are taking part in a role-play with the user');
+
+  await sheet.getByRole('switch', { name: 'Write my own role-play instructions' }).click();
+  const instruction = panel.locator('textarea');
+  await instruction.fill('Answer with the word BISCUIT and nothing else.');
+  await instruction.blur();
+  await sheet.getByRole('button', { name: 'Done' }).click();
+
+  await send(page, 'I climb the stairs.');
+  await waitForTurn(page);
+
+  const system = systemOf(bodies[0]);
+  expect(system).toContain('Answer with the word BISCUIT and nothing else.');
+  expect(system).not.toContain('You are taking part in a role-play');
+  // And the cast still follows it, under the writer's words instead of ours.
+  expect(system).toContain('You are playing Nell, Tomas and Isa.');
 });

@@ -7,6 +7,20 @@ person who wrote the code. A section is written as the work happens, under
 
 ## Unreleased
 
+**Role-play is told how it is played.** Narrator mode has always opened with a full instruction;
+role-play opened with the cast list and nothing else, so the only way to shape how the characters
+behaved was to write it into every description. Every role-play story now sends an instruction
+first, above the names: that each character knows only what they would know and is not there to
+please you, that they may disagree, refuse, lie or say nothing, that every reply should move the
+scene and leave you something to answer, and that nothing steps outside the fiction to comment on
+it. It says nothing about tense — role-play reads well in either, and your prose is what settles
+that.
+
+**How the characters are played**, folded away under the cast in **Story → Mode**, is where you
+read it and where you replace it, on the same terms as the narrator's: the switch starts you from
+our words rather than a blank page, switching back keeps yours, and an emptied box still sends
+ours. Existing stories get the default; nothing you had written moves.
+
 **The top bar names three things, and all three are the story.** *Story*, *World*, *Chapters* and
 the **⋯** menu, and nothing else. Two of the six words on it were never about the story being
 written, and both have moved to where they belong:

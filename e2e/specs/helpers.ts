@@ -183,7 +183,12 @@ export interface SeedStory {
   title?: string;
   mode?: 'narrator' | 'roleplay';
   /** Absent is what a story written before casting was a choice looks like. */
-  roleplay?: { casting: 'ensemble' | 'one-at-a-time'; activeCharacterId: string };
+  roleplay?: {
+    casting: 'ensemble' | 'one-at-a-time';
+    activeCharacterId: string;
+    /** Absent is a story from before there was an instruction above the cast. */
+    instruction?: { useDefault: boolean; prompt: string };
+  };
   persona?: { name: string; description: string };
   characters?: { id: string; name: string; description: string; enabled: boolean }[];
   storySoFar?: string;

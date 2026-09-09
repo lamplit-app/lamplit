@@ -334,6 +334,8 @@ export interface RoleplaySettings {
   casting: RoleplayCasting;
   /** One-at-a-time only. Unset, or naming nobody, means the first enabled. */
   activeCharacterId: string;
+  /** How the characters are played, above the cast; `useDefault` keeps ours. */
+  instruction: Instruction;
 }
 
 export type ReplyLength = 'short' | 'medium' | 'long';
@@ -377,11 +379,12 @@ export interface ScanSettings {
 }
 
 /**
- * One of the two instructions the writer may take over: ours until they say
- * otherwise, theirs after that. The narrator's preamble and the instruction a
- * chapter is closed with are the same object, and `isDefaultInstruction` in
- * `prompt-builder.ts` is the one place that decides which of the two is being
- * sent — an override with an empty box is still ours.
+ * One of the three instructions the writer may take over: ours until they say
+ * otherwise, theirs after that. The narrator's preamble, the one above a
+ * role-play's cast and the instruction a chapter is closed with are the same
+ * object, and `isDefaultInstruction` in `prompt-builder.ts` is the one place
+ * that decides which of them is being sent — an override with an empty box is
+ * still ours.
  */
 export interface Instruction {
   useDefault: boolean;
@@ -421,7 +424,7 @@ export interface Story {
   /** Narrator mode only; `useDefault` keeps the built-in preamble. */
   narrator: Instruction;
   characters: Character[];
-  /** Role-play only; ensemble, which is what every story before it did. */
+  /** Role-play only; how it is cast, and the instruction above the cast. */
   roleplay: RoleplaySettings;
   persona: { name: string; description: string };
   style: StoryStyle;

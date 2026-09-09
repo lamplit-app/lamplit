@@ -38,7 +38,7 @@ export function newStory(title = DEFAULT_STORY_TITLE): Story {
     mode: 'narrator',
     narrator: { useDefault: true, prompt: '' },
     characters: [],
-    roleplay: { ...DEFAULT_ROLEPLAY },
+    roleplay: { ...DEFAULT_ROLEPLAY, instruction: { useDefault: true, prompt: '' } },
     persona: { name: '', description: '' },
     style: { ...DEFAULT_STYLE },
     world: {
@@ -129,8 +129,14 @@ export function normaliseStory(stored: Partial<Story>): Story {
     narrator: { ...base.narrator, ...stored.narrator },
     characters: coloured(Array.isArray(stored.characters) ? stored.characters : []),
     // A story written before casting was a choice is an ensemble, which is
-    // what it always was.
-    roleplay: { ...base.roleplay, ...stored.roleplay },
+    // what it always was — and one written before there was an instruction
+    // above the cast gets ours, which is why this one is merged a level deeper
+    // than the shallow spread the rest of them get.
+    roleplay: {
+      ...base.roleplay,
+      ...stored.roleplay,
+      instruction: { ...base.roleplay.instruction, ...stored.roleplay?.instruction },
+    },
     persona: { ...base.persona, ...stored.persona },
     style: { ...base.style, ...stored.style },
     world: {

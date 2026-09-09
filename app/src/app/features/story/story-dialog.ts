@@ -1,11 +1,17 @@
 import { Component, ElementRef, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
-import { DEFAULT_NARRATOR_PROMPT } from '../../core/defaults';
+import { DEFAULT_NARRATOR_PROMPT, DEFAULT_ROLEPLAY_PROMPT } from '../../core/defaults';
 import { ReplyLength, RoleplayCasting, StoryMode } from '../../core/models';
-import { isDefaultInstruction, narratorInstruction, overriding } from '../../core/prompt-builder';
+import {
+  isDefaultInstruction,
+  narratorInstruction,
+  overriding,
+  roleplayInstruction,
+} from '../../core/prompt-builder';
 import { StoryStore } from '../../store/story-store';
 import { CharacterSwatch } from '../../chrome/character-swatch';
 import { EditorField } from '../../shared/editor-field';
@@ -22,6 +28,7 @@ export interface StoryDialogData {
   imports: [
     MatButtonModule,
     MatDialogModule,
+    MatExpansionModule,
     MatSlideToggleModule,
     MatTabsModule,
     CharacterSwatch,
@@ -154,6 +161,41 @@ export interface StoryDialogData {
                 <button matButton="outlined" (click)="stories.addCharacter()">
                   Add a character
                 </button>
+
+                <mat-expansion-panel class="instruction li-card">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>How the characters are played</mat-panel-title>
+                    <mat-panel-description>
+                      {{ ownRoleplay() ? 'your own' : 'default' }}
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+
+                  <p class="li-hint">
+                    Sent first, before the cast, with every request of a role-play story. The
+                    characters say who they are; this says how they are played.
+                  </p>
+
+                  <mat-slide-toggle
+                    [checked]="!story().roleplay.instruction.useDefault"
+                    (change)="setRoleplayOverride($event.checked)"
+                  >
+                    Write my own role-play instructions
+                  </mat-slide-toggle>
+
+                  <!-- As with the narrator above: the switch decides whether
+                       there is a box, and the box holds what is being sent. -->
+                  @if (story().roleplay.instruction.useDefault) {
+                    <p class="preset li-preset">{{ roleplayText() }}</p>
+                  } @else {
+                    <li-editor-field
+                      class="li-rows-tall"
+                      label="Role-play instructions"
+                      [value]="roleplayText()"
+                      [dimmed]="!ownRoleplay()"
+                      (save)="stories.setRoleplayInstruction({ prompt: $event })"
+                    />
+                  }
+                </mat-expansion-panel>
               </div>
             }
           </div>
@@ -271,6 +313,17 @@ export interface StoryDialogData {
       flex: 1;
     }
 
+    .instruction {
+      /* The panel clips its body for its own animation, and a flex column
+         squashes anything that clips when it runs out of room: it would be
+         folded to nothing under a long cast rather than scrolled to. */
+      flex-shrink: 0;
+    }
+
+    .preset {
+      margin-top: var(--li-space-sm);
+    }
+
     .lengths {
       display: flex;
       align-items: center;
@@ -303,6 +356,11 @@ export class StoryDialog {
   /** The words being sent, and whether they are the story's own; see the panel. */
   protected readonly narratorText = computed(() => narratorInstruction(this.story()));
   protected readonly ownNarrator = computed(() => !isDefaultInstruction(this.story().narrator));
+  /** And the same pair for the instruction above a role-play's cast. */
+  protected readonly roleplayText = computed(() => roleplayInstruction(this.story()));
+  protected readonly ownRoleplay = computed(
+    () => !isDefaultInstruction(this.story().roleplay.instruction),
+  );
 
   protected readonly lengths: { value: ReplyLength; label: string }[] = [
     { value: 'short', label: 'Short' },
@@ -344,6 +402,12 @@ export class StoryDialog {
 
   protected setNarratorPrompt(prompt: string): void {
     this.stories.setNarrator({ prompt });
+  }
+
+  protected setRoleplayOverride(override: boolean): void {
+    this.stories.setRoleplayInstruction(
+      overriding(this.story().roleplay.instruction, override, DEFAULT_ROLEPLAY_PROMPT),
+    );
   }
 
   protected setPersona(patch: Partial<{ name: string; description: string }>): void {

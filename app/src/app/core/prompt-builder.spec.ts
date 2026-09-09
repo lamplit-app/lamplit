@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_GENERATION,
   DEFAULT_NARRATOR_PROMPT,
+  DEFAULT_ROLEPLAY_PROMPT,
   DEFAULT_SUMMARY_INSTRUCTION,
 } from './defaults';
 import { BlockId, Chapter, ChapterMessage, LoreEntry, Story } from './models';
@@ -18,6 +19,7 @@ import {
   movableOrderFrom,
   narratorInstruction,
   overriding,
+  roleplayInstruction,
   sceneBlock,
   summaryInstruction,
   writtenIn,
@@ -120,7 +122,9 @@ describe('buildPrompt: the system message', () => {
       },
     });
     const system = built.messages[0].content;
-    expect(system).toContain('You are playing Tomas.');
+    // The instruction first, then who it is playing, with a blank line between.
+    expect(system.startsWith(DEFAULT_ROLEPLAY_PROMPT)).toBe(true);
+    expect(system).toContain(DEFAULT_ROLEPLAY_PROMPT + '\n\nYou are playing Tomas.');
     expect(system).toContain('deaf on one side');
     expect(system).not.toContain('Ghost');
     expect(system).toContain('never write words, thoughts or actions for Mara');
@@ -473,10 +477,11 @@ describe('the scene block', () => {
 });
 
 /**
- * The two instructions the writer may take over, and the one rule the request
- * and every box that shows it now share. The rule matters because the two used
- * to differ: the panel showed the document, the request fell back to ours, and
- * an override with an emptied box showed nothing while sending the default.
+ * The three instructions the writer may take over, and the one rule the request
+ * and every box that shows it now share. The rule matters because the two the
+ * app started with used to differ: the panel showed the document, the request
+ * fell back to ours, and an override with an emptied box showed nothing while
+ * sending the default.
  */
 describe('the instructions the writer may take over', () => {
   const narrator = (patch: Partial<Story['narrator']>) =>
@@ -496,6 +501,39 @@ describe('the instructions the writer may take over', () => {
     expect(isDefaultInstruction({ useDefault: true, prompt: 'Write it cold.' })).toBe(true);
     expect(isDefaultInstruction({ useDefault: false, prompt: '  ' })).toBe(true);
     expect(isDefaultInstruction({ useDefault: false, prompt: 'Write it cold.' })).toBe(false);
+  });
+
+  it('is the same rule for the role-play instruction', () => {
+    const roleplay = (patch: Partial<Story['roleplay']['instruction']>) => {
+      const base = story();
+      return roleplayInstruction({
+        roleplay: { ...base.roleplay, instruction: { useDefault: false, prompt: '', ...patch } },
+      });
+    };
+    expect(roleplay({ useDefault: true })).toBe(DEFAULT_ROLEPLAY_PROMPT);
+    expect(roleplay({ prompt: 'Play them as three ghosts.' })).toBe('Play them as three ghosts.');
+    expect(roleplay({ prompt: '   ' })).toBe(DEFAULT_ROLEPLAY_PROMPT);
+    expect(roleplay({ useDefault: true, prompt: 'Play them as three ghosts.' })).toBe(
+      DEFAULT_ROLEPLAY_PROMPT,
+    );
+  });
+
+  it('puts the writer’s own role-play instruction where ours was', () => {
+    const base = story();
+    const built = build({
+      story: {
+        ...base,
+        mode: 'roleplay',
+        characters: [{ id: 'a', name: 'Tomas', description: 'The keeper.', enabled: true }],
+        roleplay: {
+          ...base.roleplay,
+          instruction: { useDefault: false, prompt: 'Play them as three ghosts.' },
+        },
+      },
+    });
+    const system = built.messages[0].content;
+    expect(system.startsWith('Play them as three ghosts.\n\nYou are playing Tomas.')).toBe(true);
+    expect(system).not.toContain(DEFAULT_ROLEPLAY_PROMPT);
   });
 
   it('is the same rule for the summary instruction', () => {
