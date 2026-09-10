@@ -127,6 +127,46 @@ test.describe('sharing on this network', () => {
   });
 });
 
+/**
+ * A phone reaches Lamplit at `http://192.168.x.x`, and a browser treats a page
+ * from there as insecure: `crypto.randomUUID` and `navigator.clipboard` are
+ * simply not there. The suite's phone is on the loopback, which a browser
+ * trusts, so the two are taken away by hand — that is the whole difference
+ * between this context and the one in the test above, and it used to be the
+ * difference between the story and a blank page.
+ */
+test('a phone on a plain-HTTP address, without the secure-context APIs, still gets the app', async ({
+  browser,
+  server,
+}) => {
+  // An empty install, because a store that finds nothing makes a story, and
+  // the id of that story was the first thing the phone could not do.
+  await server.setShare(true);
+  const phone = await browser.newContext();
+  try {
+    await phone.addInitScript(() => {
+      delete (Crypto.prototype as { randomUUID?: unknown }).randomUUID;
+      Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    });
+    const phonePage = await phone.newPage();
+    const failures: string[] = [];
+    phonePage.on('pageerror', (error) => failures.push(error.message));
+
+    await phonePage.goto(`${server.sharedUrl}/pair/${await server.shareToken()}`);
+    await expect(phonePage.locator('li-top-bar')).toBeVisible();
+    await expect(phonePage.getByRole('dialog')).toBeVisible();
+    expect(failures).toEqual([]);
+
+    // And what it made is filed, once the debounced write lands, under an id
+    // the server will take back.
+    await expect.poll(() => server.ids('stories')).toHaveLength(1);
+    const [story] = await server.ids('stories');
+    expect(story).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  } finally {
+    await phone.close();
+  }
+});
+
 test.describe('two devices, one document', () => {
   test('a write onto a document the other device changed is refused and reloaded', async ({
     page,

@@ -21,8 +21,32 @@ export const KEYS = {
   chapterPrefix: 'chapter:',
 } as const;
 
+/**
+ * A v4 UUID: `crypto.randomUUID` where the browser offers it, sixteen bytes of
+ * `getRandomValues` with the version and variant bits set where it does not.
+ *
+ * It does not on a phone. `randomUUID` is one of the APIs a browser withholds
+ * from a page that did not arrive over HTTPS, and a phone reaches Lamplit at
+ * `http://192.168.x.x` — plain HTTP by design, see share.js, and #21 for why a
+ * certificate is not a thing this can simply add. The desktop never notices,
+ * because `127.0.0.1` and `localhost` count as secure. So the first store to
+ * need an id on the phone threw at construction, before anything was on
+ * screen, and a paired phone got the boot screen and then a blank page.
+ */
 export function newId(): string {
-  return crypto.randomUUID();
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  const hex = Array.from(bytes, (byte, at) => stamped(byte, at).toString(16).padStart(2, '0'));
+  return [hex.slice(0, 4), hex.slice(4, 6), hex.slice(6, 8), hex.slice(8, 10), hex.slice(10)]
+    .map((group) => group.join(''))
+    .join('-');
+}
+
+/** The seventh byte carries the version, the ninth the variant; the rest are random. */
+function stamped(byte: number, at: number): number {
+  if (at === 6) return (byte & 0x0f) | 0x40;
+  if (at === 8) return (byte & 0x3f) | 0x80;
+  return byte;
 }
 
 export function now(): string {

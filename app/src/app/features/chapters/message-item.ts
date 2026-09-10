@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChapterMessage } from '../../core/models';
+import { copyText } from '../../core/clipboard';
 import { renderStoryHtml } from '../../core/formatting';
 import { withDirection } from '../../core/prompt-builder';
 import { SpeakerLabel } from '../../core/speakers';
@@ -699,16 +700,12 @@ export class MessageItem {
   }
 
   protected async copy(): Promise<void> {
-    try {
-      // What was sent, direction and all: a message whose only content is a
-      // direction would otherwise copy nothing at all.
-      await navigator.clipboard.writeText(
-        withDirection(this.message().content, this.message().direction),
-      );
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 1200);
-    } catch {
-      /* clipboard blocked; nothing useful to say about it */
-    }
+    // What was sent, direction and all: a message whose only content is a
+    // direction would otherwise copy nothing at all.
+    const copied = await copyText(withDirection(this.message().content, this.message().direction));
+    // Blocked, and nothing useful to say about it.
+    if (!copied) return;
+    this.copied.set(true);
+    setTimeout(() => this.copied.set(false), 1200);
   }
 }

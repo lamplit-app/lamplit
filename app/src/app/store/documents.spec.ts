@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Story } from '../core/models';
-import { normaliseChapter, normaliseStory } from './documents';
+import { newId, normaliseChapter, normaliseStory } from './documents';
 
 /**
  * What a document read off the disk is turned into before anything sees it.
@@ -84,5 +84,32 @@ describe('normaliseStory', () => {
       useDefault: false,
       prompt: 'Play them as three ghosts.',
     });
+  });
+});
+
+/**
+ * A phone reaches Lamplit over plain HTTP, and a browser withholds
+ * `crypto.randomUUID` from a page that did — so the first id the phone needed
+ * used to be a thrown TypeError and a blank page. The fallback has to be a
+ * UUID all the same: the server files documents by id, and a reader who moves
+ * between two devices is filing into the same folder from both.
+ */
+describe('newId', () => {
+  const V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+  it('is a v4 UUID where the browser has randomUUID', () => {
+    expect(newId()).toMatch(V4);
+  });
+
+  it('is a v4 UUID where the browser withholds it, as a phone on plain HTTP does', () => {
+    // A `crypto` with the one method a page over plain HTTP still has.
+    vi.stubGlobal('crypto', { getRandomValues: crypto.getRandomValues.bind(crypto) });
+    try {
+      const ids = new Set(Array.from({ length: 50 }, () => newId()));
+      for (const id of ids) expect(id).toMatch(V4);
+      expect(ids.size).toBe(50);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

@@ -5,6 +5,16 @@ onto the draft release, so it is written for the person downloading, not for the
 person who wrote the code. A section is written as the work happens, under
 `## Unreleased`, and renamed to the version when the tag goes out.
 
+## Unreleased
+
+**A paired phone gets the story instead of a blank page.** Scanning the code loaded the boot screen
+and then nothing: a grey page with the app's background and nothing on it. A phone reaches Lamplit
+at a plain `http://192.168…` address, and browsers withhold a handful of APIs from a page served
+that way — among them the one the app used to make an id for a new story, chapter or message. The
+desktop never saw it, because a browser trusts its own machine. Ids are now made either way, and
+**Copy** on a message or in **What the model sees** works on the phone too, by the older route the
+clipboard API replaced.
+
 ## 0.2.1
 
 **A long chapter stops costing full price on every turn.** Every request carries the whole prompt —

@@ -5,6 +5,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { ChapterRequests } from '../../store/chapter-requests';
 import { StoryStore } from '../../store/story-store';
+import { copyText } from '../../core/clipboard';
 import { BlockId } from '../../core/models';
 import {
   MOVABLE_BLOCKS,
@@ -416,10 +417,7 @@ export class PromptPreviewDialog {
     const text = this.prompt()
       .messages.map((m) => `[${m.role}]\n${m.content}`)
       .join('\n\n');
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      /* clipboard blocked; nothing useful to say about it */
-    }
+    // Blocked is the one failure, and there is nothing useful to say about it.
+    await copyText(text);
   }
 }
