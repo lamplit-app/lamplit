@@ -57,6 +57,10 @@ the check and prints this table, so it can be brought up to date rather than tru
 | Chutes | `https://llm.chutes.ai/v1` | chutes.ai/app/api |
 | Pollinations | `https://gen.pollinations.ai/v1` | free tier: no key needed |
 
+*Caching:* OpenRouter and NanoGPT cache automatically on their OpenAI, Gemini and open-source
+routes, and take the explicit markers Lamplit sends for Claude models. This is the way to cache a
+Claude model — see [What it costs to send it all again](the-prompt.md).
+
 **Hosted** — the model's own maker.
 
 | | URL | Where the key comes from |
@@ -77,6 +81,10 @@ the check and prints this table, so it can be brought up to date rather than tru
 | MiniMax | `https://api.minimax.io/v1` | platform.minimax.io |
 | Perplexity | `https://api.perplexity.ai` | perplexity.ai/settings/api |
 
+*Caching:* OpenAI, DeepSeek, Google Gemini 2.5, xAI, Groq, Moonshot and Z.ai all cache a repeated
+prompt prefix without being asked, and report what they saved. **Anthropic does not** — see below.
+The rest say nothing about it either way.
+
 **Run locally** — a model on this machine, no key and no bill.
 
 | | URL |
@@ -89,13 +97,19 @@ the check and prints this table, so it can be brought up to date rather than tru
 | TabbyAPI | `http://localhost:5000/v1` |
 | text-generation-webui | `http://localhost:5000/v1` |
 
+*Caching:* all of these reuse the prompt prefix they already have in memory, and none of them
+report it. The win there is how fast the reply starts, not the bill, since there is no bill.
+
 Anything else OpenAI-compatible works too, under **Custom**; only streaming chat completions are
 used.
 
 Three of these need one thing said about them:
 
 - **Anthropic** only answers a browser when the request says the key is meant to be in one. It
-  does, always — this app has no server to hide a key on. Nothing to switch on.
+  does, always — this app has no server to hide a key on. Nothing to switch on. But note that
+  `api.anthropic.com/v1` is Anthropic's *OpenAI compatibility layer*, and prompt caching is one of
+  the things it does not support: a long chapter is re-read at full price on every turn. Reach the
+  same Claude model through **NanoGPT** or **OpenRouter** and it caches normally.
 - **Perplexity** publishes no model list, so Lamplit carries its five, and there is no
   **Fetch models** button to press.
 - **SiliconFlow** and **MiniMax** run separate hosts for mainland China (`api.siliconflow.cn`,
@@ -142,6 +156,11 @@ story pointed at something stricter later.
 
 Under each answer (when **Show token counts** is on in **Preferences → Reading**) is the model
 that wrote it and the turn's real cost as the provider reported it: `612 in · 148 out`.
+
+A third number joins them when the provider reports one: `8.0k in · 240 out · 7.6k cached` — how
+much of the prompt it had already read and charged a fraction for. It is the only sign that the
+[prefix cache](the-prompt.md) is working, and its absence on a second turn in the same chapter is
+the sign that it is not.
 
 With **Developer mode** on in **Preferences → Advanced**, the context pill under the composer is
 the *estimate* for what you are about to send. Comparing the two over a few turns tells you how far

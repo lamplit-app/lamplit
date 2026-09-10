@@ -6,6 +6,7 @@ import {
   fillProse,
   openPreferences,
   systemOf,
+  tailOf,
   waitForTurn,
 } from './helpers';
 import { IS_BUILT, PersistenceServer } from './persistence-server';
@@ -245,8 +246,12 @@ test.describe('a story from nothing, told by a narrator', () => {
 
     await page.getByRole('button', { name: 'Send', exact: true }).click();
     await waitForTurn(page);
-    expect(lastSystem()).toContain('What is true in this world:');
-    expect(lastSystem()).toContain(LORE_FACT);
+    // Last in the request, not first: an entry a keyword fired comes and goes
+    // as the story moves, and the leading message must not move with it.
+    const tail = tailOf(requests[requests.length - 1]);
+    expect(tail).toContain('What is true in this world:');
+    expect(tail).toContain(LORE_FACT);
+    expect(lastSystem()).not.toContain(LORE_FACT);
   });
 
   test('8 · closing the chapter folds it into the story so far and opens the next', async () => {

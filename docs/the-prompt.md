@@ -16,19 +16,33 @@ all go down exactly the same road as a fresh send.
 
 ## What goes on the wire
 
-One `system` message, then the chapter's messages, then your new line.
+One `system` message, then the chapter's messages, then your new line — and, when a lore entry
+fired on a keyword, one more short `system` message after all of it.
 
-The system message is assembled in this order:
+The first system message is assembled in this order:
 
 | # | Block | When |
 |---|---|---|
 | 1 | **Mode preamble** — the narrator instruction, or the role-play instruction followed by "You are playing X and Y" (or "X, and nobody else") and each character's description | always |
 | 2 | **Persona** — "The user plays *name*: *description*" | when you have set one |
 | 3 | **The story so far** | when it is not empty |
-| 4 | **What is true in this world** — lore entries that fired | when any fired |
+| 4 | **What is true in this world** — the lore entries that are **always on** | when you have any |
 | 5 | **This chapter** — "Chapter *n*, *title*. The scene:" then the scene, verbatim | always |
 | 6 | **Style rules** — dialogue, reply length, stay in character, never write for the persona | always |
 | 7 | **Author** — how to read a direction, and that it outranks everything above | when the chapter carries one |
+
+And after everything, past your own new line, the eighth:
+
+| # | Block | When |
+|---|---|---|
+| 8 | **What is true in this world** — the entries a **keyword** fired | when any fired this turn |
+
+Two blocks with the same words, split by how often they change. An always-on entry is on for the
+whole chapter, so it can sit near the front without ever moving anything. A keyed entry fires when
+its word is in the scan window and stops when the word slides out of it — which is a block that
+comes and goes, and a block that comes and goes at the *front* of the prompt changes the prompt
+from its very first byte. Last, it changes nothing in front of it. [Why that
+matters](#what-it-costs-to-send-it-all-again) is below.
 
 The order is not arbitrary. The mode preamble sits first because it is the standing instruction
 everything else qualifies, and the style rules sit last because the instruction closest to the
@@ -95,6 +109,11 @@ If it does not fit, the **oldest messages are dropped first** until it does. The
 never trimmed — the scene, the persona and the world are what keep the story coherent, so they
 stay and the transcript gives way.
 
+They are dropped **a block at a time**, not one at a time: when the chapter first outgrows the
+budget the window gives up its oldest four turns and then stays where it is, for as long as what is
+left keeps fitting. One at a time would drop exactly one more message every turn for the rest of
+the chapter, so no two requests in a row would ever begin the same way — see below.
+
 This is never silent. The composer says *3 older messages left out* when it happens, whether or
 not developer mode is on, and it is the signal that the chapter has run long enough to close.
 
@@ -102,6 +121,46 @@ not developer mode is on, and it is the signal that the chapter has run long eno
 > provider-specific and not worth a 400 kB dependency to be approximately as wrong. After each
 > reply the app shows the provider's *real* usage under the answer, so you can calibrate the
 > budget against what you are actually billed.
+
+## What it costs to send it all again
+
+Sending the whole prompt every time sounds expensive, and it would be if every provider read it
+from scratch every time. Almost none of them do.
+
+Every provider worth naming keeps a **prefix cache**: the leading bytes of a prompt it has already
+processed cost a fraction of the full rate — often a tenth, sometimes nothing — on the next request
+that opens with *exactly* those bytes. A chapter that grows a turn at a time is the best possible
+shape for that, because each request is the last one with two more messages on the end. Nothing has
+to be remembered between requests for this to work; the provider is recognising bytes, not keeping
+a session.
+
+What breaks it is anything that rewrites the front of the prompt, and Lamplit is careful not to:
+
+- **Keyed lore goes last**, after your message, so an entry firing or falling silent never touches
+  the blocks in front of the chapter.
+- **The history window moves in blocks**, so a chapter over budget keeps the same opening for many
+  turns instead of shedding one message every turn.
+- **Claude models reached through an aggregator** are sent the two cache markers they need — one at
+  the end of the system message, one at the end of the history — because those models cache only
+  where the request asks them to. Everything else caches on its own, or does not cache at all, and
+  is sent exactly what it has always been sent. If an endpoint refuses the markers, the same turn
+  is sent again without them.
+
+**You can see whether it worked.** With **Show token counts** on, the footer under a reply says
+`8.0k in · 240 out · 7.6k cached` — that last number is how much of the prompt the provider did not
+have to read again. It is absent when the provider does not report one, which is most local servers
+and a few hosted ones. A second turn in the same chapter that still says nothing about caching means
+you are paying full price for the whole chapter, every turn.
+
+Two things worth knowing before you count on it:
+
+- **Anthropic's own endpoint does not cache at all** from here. `api.anthropic.com/v1` is their
+  OpenAI compatibility layer, and prompt caching is one of the things that layer does not support.
+  To cache a Claude model, reach it through NanoGPT or OpenRouter.
+- **Caching is not free money.** Writing a prefix into the cache costs a little *more* than reading
+  it fresh on some providers. Two requests over one prefix pay that back; one does not. Which is
+  another way of saying that this is worth most on a long chapter and nothing at all on a chapter
+  you abandon after a turn.
 
 ## Looking at it
 
@@ -134,8 +193,13 @@ do the same to a block whose handle has the focus.
 **Three blocks have no handle.** The mode preamble is always first — it says what the model *is*,
 and everything after it is read as instructions to that. The style rules are always last, for the
 same reason in reverse: the instruction closest to the conversation is the one that sticks. And
-after those, when there is one, the author's block, which overrides everything above it and so may
-have nothing put between it and the conversation. Each says so in the sheet.
+after those, when there is one, the author's block, which outranks every instruction above it and
+so has none put after it. Each says so in the sheet.
+
+**And one block is not in the order at all**: the entries a keyword fired, which go after your own
+message rather than into the system message, and so have no slot to be dragged into. The author's
+block still has the last word — world facts are not instructions, and nothing there argues with a
+direction.
 
 The order belongs to **the story**, not to the app: it is a judgement about this story and the
 model behind it, so another story is unaffected and a duplicate carries it along. **Reset the

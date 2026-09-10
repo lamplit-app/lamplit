@@ -143,18 +143,25 @@ export function formatTokens(n: number): string {
 }
 
 /**
- * `1.2k in · 340 out` — what one request cost, said the same way wherever it
- * is said: under a message, under the summary a chapter is closed with, under
- * the entries proposed from it.
+ * `1.2k in · 340 out · 1.1k cached` — what one request cost, said the same way
+ * wherever it is said: under a message, under the summary a chapter is closed
+ * with, under the entries proposed from it.
  *
  * Empty when the provider counted nothing out loud. An endpoint that reports
  * no usage is common enough that a zero would be a lie, and the prompt half is
- * left off on its own for the same reason.
+ * left off on its own for the same reason — as is the cached half, which most
+ * endpoints never mention and no local one does.
+ *
+ * That last number is the only place a reader can see whether the prefix cache
+ * is working. It is the whole of the instrumentation, because a caching
+ * failure is otherwise silent: the requests still succeed, the replies are
+ * still right, and the bill is just larger.
  */
 export function tokenCost(
-  usage: { promptTokens?: number; completionTokens?: number } | undefined,
+  usage: { promptTokens?: number; completionTokens?: number; cachedTokens?: number } | undefined,
 ): string {
   if (!usage?.completionTokens) return '';
   const asked = usage.promptTokens ? `${formatTokens(usage.promptTokens)} in · ` : '';
-  return `${asked}${formatTokens(usage.completionTokens)} out`;
+  const cached = usage.cachedTokens ? ` · ${formatTokens(usage.cachedTokens)} cached` : '';
+  return `${asked}${formatTokens(usage.completionTokens)} out${cached}`;
 }

@@ -274,7 +274,59 @@ describe('buildPrompt: lore', () => {
     const built = build({ story: withEntries([lore()]) });
     expect(built.lore).toHaveLength(1);
     expect(built.lore[0]).toMatchObject({ key: 'keeper', where: 'scene' });
-    expect(built.messages[0].content).toContain('missing since spring');
+    // Keyed, so it is the block after the line rather than part of the first
+    // message — see the prefix cases below.
+    expect(built.afterTheLine?.content).toContain('missing since spring');
+  });
+
+  it('keeps a keyed entry out of the leading message and an always-on one in', () => {
+    const built = build({
+      story: withEntries([
+        lore({ title: 'Old Tomas' }),
+        lore({
+          id: 'lore-tide',
+          title: 'The tide',
+          content: 'The bar is walkable for two hours either side of low water.',
+          keys: ['nothing-matches'],
+          alwaysOn: true,
+        }),
+      ]),
+      draft: 'I knock.',
+    });
+
+    const leading = built.messages[0];
+    expect(leading.role).toBe('system');
+    expect(leading.content).toContain('two hours either side of low water');
+    expect(leading.content).not.toContain('missing since spring');
+
+    // Last of all, after the new line: a block that comes and goes must not
+    // sit in front of everything that does not.
+    const last = built.messages[built.messages.length - 1];
+    expect(last.role).toBe('system');
+    expect(last.content).toContain('missing since spring');
+    expect(built.messages[built.messages.length - 2]).toEqual({
+      role: 'user',
+      content: 'I knock.',
+    });
+  });
+
+  it('leaves the leading message alone when a keyword falls out of the window', () => {
+    const entries = [lore({ keys: ['ferry'] })];
+    const heard = build({
+      story: withEntries(entries, 1),
+      chapter: chapter({ messages: [said('user', 'I ask about the ferry.')] }),
+    });
+    const forgotten = build({
+      story: withEntries(entries, 1),
+      chapter: chapter({
+        messages: [said('user', 'I ask about the ferry.'), said('assistant', 'She shrugs.')],
+      }),
+    });
+
+    expect(heard.afterTheLine?.content).toContain('missing since spring');
+    expect(forgotten.afterTheLine).toBeUndefined();
+    // Which is the whole point: byte 0 of the prompt did not move.
+    expect(forgotten.messages[0]).toEqual(heard.messages[0]);
   });
 
   it('leaves an entry out when nothing mentions it', () => {
@@ -412,6 +464,113 @@ describe('buildPrompt: the budget', () => {
     });
     expect(built.messages.filter((m) => m.role === 'assistant')).toHaveLength(0);
     expect(built.dropped).toBe(0);
+  });
+});
+
+/**
+ * The one thing about the request that is not visible in any single one of
+ * them: what two consecutive sends have in common.
+ *
+ * Every provider worth naming keeps a prefix cache, and charges a fraction —
+ * or nothing — for the leading bytes of a prompt it has already read. The
+ * prompt is resent whole because `/chat/completions` is stateless and there is
+ * no version of this app that sends less; what is negotiable is whether the
+ * provider sees a new prompt or a longer version of the last one. `buildPrompt`
+ * is pure, so that is testable here, without a network and without a bill.
+ *
+ * These cases are the standing check the caching work is worth anything at
+ * all: a caching failure is silent — the requests still succeed, the replies
+ * are still right, the bill is just larger — so nothing but an assertion
+ * notices when a change to prompt assembly starts rewriting byte 0 again.
+ */
+describe('buildPrompt: the prefix a provider caches', () => {
+  /** Element for element, `JSON.stringify`-identical, from the first. */
+  function isPrefixOf(earlier: readonly unknown[], later: readonly unknown[]): boolean {
+    return (
+      earlier.length <= later.length &&
+      earlier.every((m, i) => JSON.stringify(m) === JSON.stringify(later[i]))
+    );
+  }
+
+  /** The chapter as it stands after `turns` sends, each answered. */
+  function after(turns: number, seeded: ChapterMessage[]): ChapterMessage[] {
+    const messages = [...seeded];
+    for (let i = 0; i < turns; i++) {
+      messages.push(said('user', `I go on. (${i})`), said('assistant', `So does she. (${i})`));
+    }
+    return messages;
+  }
+
+  it('grows the request rather than rewriting it, turn after turn', () => {
+    const seeded = [said('user', 'I knock.'), said('assistant', 'The door opens.')];
+    const params = DEFAULT_GENERATION;
+    const send = (turns: number) =>
+      buildPrompt({
+        story: story(),
+        chapter: chapter({ messages: after(turns, seeded) }),
+        draft: 'And then?',
+        params,
+        estimator: heuristicEstimator,
+      });
+
+    for (let turn = 0; turn < 4; turn++) {
+      const earlier = send(turn).messages;
+      const later = send(turn + 1).messages;
+      // The draft is the same words every turn, so the earlier request is the
+      // later one with the last line removed: exactly the shape a cache reads.
+      expect(isPrefixOf(earlier.slice(0, -1), later)).toBe(true);
+    }
+  });
+
+  it('keeps the same window for many turns once the chapter is over budget', () => {
+    // Long enough that the budget cannot hold it, and made of messages large
+    // enough that a turn of ordinary size barely moves the boundary — which is
+    // the case one message at a time got wrong, and got wrong every turn.
+    const seeded = Array.from({ length: 83 }, (_, i) =>
+      said(i % 2 ? 'assistant' : 'user', `Paragraph ${i}. ${'The tide turned again. '.repeat(5)}`),
+    );
+    const params = { ...DEFAULT_GENERATION, maxContextTokens: 2400, maxResponseTokens: 200 };
+    const send = (turns: number) =>
+      buildPrompt({
+        story: story(),
+        chapter: chapter({ messages: after(turns, seeded) }),
+        draft: 'And then?',
+        params,
+        estimator: heuristicEstimator,
+      });
+
+    // The premise: this really is over budget, and by a long way.
+    expect(send(0).dropped).toBeGreaterThan(8);
+
+    let breaks = 0;
+    for (let turn = 0; turn < 6; turn++) {
+      const earlier = send(turn).messages;
+      const later = send(turn + 1).messages;
+      if (!isPrefixOf(earlier.slice(0, -1), later)) breaks++;
+    }
+    // One message at a time, every one of the six would have broken here. In
+    // blocks the window gives way once every four turns at the most, and over
+    // six turns of this size it does not give way at all.
+    expect(breaks).toBeLessThanOrEqual(1);
+
+    // And two consecutive sends over budget open on the same message, which is
+    // what the whole of the above is for.
+    expect(send(0).messages[1]).toEqual(send(1).messages[1]);
+    expect(isPrefixOf(send(0).messages.slice(0, -1), send(1).messages)).toBe(true);
+  });
+
+  it('opens the window on a turn rather than on an answer to nothing', () => {
+    const seeded = Array.from({ length: 83 }, (_, i) =>
+      said(i % 2 ? 'assistant' : 'user', `Paragraph ${i}. ${'The tide turned again. '.repeat(5)}`),
+    );
+    const built = buildPrompt({
+      story: story(),
+      chapter: chapter({ messages: seeded }),
+      draft: 'And then?',
+      params: { ...DEFAULT_GENERATION, maxContextTokens: 2400, maxResponseTokens: 200 },
+      estimator: heuristicEstimator,
+    });
+    expect(built.messages[1].role).toBe('user');
   });
 });
 

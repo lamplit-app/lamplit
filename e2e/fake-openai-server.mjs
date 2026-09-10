@@ -24,6 +24,15 @@
  * Anything else takes the schema and answers with a bare object. That id is
  * deliberately not in the list above: a spec that wants it names it in the
  * settings it seeds, and two specs count what `/models` returns.
+ *
+ * And one more that the model id decides:
+ *   …no-cache-control…    refuses array content with a 400 naming
+ *                         `cache_control`, the way a local server that has
+ *                         only ever seen strings does
+ * Every other id takes it, and a request that marked a prefix is answered with
+ * a cached count for exactly what it marked — which is what the app reads back
+ * and writes under the reply. A request that marked nothing gets no such
+ * field, which is what most endpoints report and every local one.
  */
 import { createServer } from 'node:http';
 
@@ -82,6 +91,7 @@ const server = createServer(async (request, response) => {
 
   if (url.pathname === '/v1/chat/completions' && request.method === 'POST') {
     const body = await readJson(request);
+    if (noCacheControl(response, body)) return;
     const prompt = lastUserMessage(body);
 
     if (prompt.includes('!401') || request.headers.authorization === 'Bearer bad-key') {
@@ -128,8 +138,7 @@ async function stream(response, body, prompt) {
     Connection: 'keep-alive',
   });
 
-  let promptTokens = 0;
-  for (const message of body?.messages ?? []) promptTokens += Math.ceil(message.content.length / 4);
+  const promptTokens = countPrompt(body);
 
   for (const word of words) {
     if (response.writableEnded || response.destroyed) return;
@@ -158,6 +167,11 @@ async function stream(response, body, prompt) {
         prompt_tokens: promptTokens,
         completion_tokens: words.length,
         total_tokens: promptTokens + words.length,
+        // What a provider with a prefix cache says it did not have to read
+        // again: everything up to and including the last message the request
+        // marked. Said only when the request marked something, because an
+        // endpoint that does not cache says nothing rather than zero.
+        ...(marked(body) ? { prompt_tokens_details: { cached_tokens: cached(body) } } : {}),
       },
     });
   }
@@ -185,6 +199,52 @@ function palette(response, body, prompt) {
 }
 
 /**
+ * The 400 a server that has only ever seen string content answers a request
+ * with `cache_control` blocks in it. One model id only, so the spec that wants
+ * to watch the retry names it; the retry sends plain strings and works.
+ */
+function noCacheControl(response, body) {
+  if (!String(body?.model ?? '').includes('no-cache-control')) return false;
+  if (!(body?.messages ?? []).some((m) => Array.isArray(m.content))) return false;
+  json(response, 400, {
+    error: { message: "Unknown parameter: 'cache_control'.", type: 'invalid_request_error' },
+  });
+  return true;
+}
+
+/**
+ * How many prompt tokens a request carries, over its first `upTo` messages —
+ * all of them by default. Content is a string, or the array form a request
+ * that marks a cache breakpoint sends.
+ */
+function countPrompt(body, upTo) {
+  const messages = (body?.messages ?? []).slice(0, upTo ?? undefined);
+  return messages.reduce((total, message) => total + Math.ceil(textOf(message).length / 4), 0);
+}
+
+function textOf(message) {
+  const content = message?.content;
+  if (typeof content === 'string') return content;
+  return (Array.isArray(content) ? content : []).map((part) => part?.text ?? '').join('');
+}
+
+/** What the marked prefix costs, which is what this endpoint calls a hit. */
+function cached(body) {
+  return countPrompt(body, marked(body));
+}
+
+/** How many leading messages the request asked to have cached, if any. */
+function marked(body) {
+  const messages = body?.messages ?? [];
+  let upTo = 0;
+  messages.forEach((message, i) => {
+    const parts = Array.isArray(message?.content) ? message.content : [];
+    if (parts.some((part) => part?.cache_control)) upTo = i + 1;
+  });
+  return upTo;
+}
+
+/**
  * The 400 an endpoint that has never heard of `response_format` answers with.
  * True of one model id only, so the specs that want that path name it.
  */
@@ -205,8 +265,7 @@ function answer(response, body, object) {
   const model = body?.model ?? 'fake/storyteller-large';
   const content = model === 'fake/no-json-schema' ? '```json\n' + object + '\n```' : object;
 
-  let promptTokens = 0;
-  for (const message of body?.messages ?? []) promptTokens += Math.ceil(message.content.length / 4);
+  const promptTokens = countPrompt(body);
   const completionTokens = Math.ceil(content.length / 4);
 
   json(response, 200, {
@@ -279,7 +338,7 @@ function send(response, payload) {
 function lastUserMessage(body) {
   const messages = Array.isArray(body?.messages) ? body.messages : [];
   for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i]?.role === 'user') return String(messages[i].content ?? '');
+    if (messages[i]?.role === 'user') return textOf(messages[i]);
   }
   return '';
 }

@@ -27,6 +27,7 @@ export async function seedConnectedSettings(
   server: PersistenceServer,
   apiKey = 'test-key',
   generation: Record<string, unknown> = {},
+  connection: Record<string, unknown> = {},
 ): Promise<void> {
   const settings = {
     connection: {
@@ -35,6 +36,10 @@ export async function seedConnectedSettings(
       apiKey,
       model: FAKE_MODEL,
       modelsCache: [{ id: FAKE_MODEL, name: 'Storyteller Large', ownedBy: 'fake' }],
+      // A spec that names a provider is asking for that row's own behaviour —
+      // the headers it sends, and whether it marks a cache prefix — against
+      // this endpoint. The URL stays the fake one either way.
+      ...connection,
     },
     generation: {
       maxContextTokens: 16384,
@@ -167,12 +172,14 @@ export async function openPromptPreview(page: Page): Promise<void> {
 
 /**
  * The blocks of the system message, top to bottom; the rest of the sheet is
- * not one. Read as text content rather than as rendered text, because the
- * headings are set in small capitals by the stylesheet.
+ * not one — including the block after the new line, which is drawn with the
+ * same chrome and is deliberately not part of this order. Read as text content
+ * rather than as rendered text, because the headings are set in small capitals
+ * by the stylesheet.
  */
 export async function promptBlocks(page: Page): Promise<string[]> {
   const names = await page
-    .locator('mat-dialog-content .block')
+    .locator('mat-dialog-content .block:not(.tail)')
     .filter({ has: page.locator('.handle, .why') })
     .locator('.name')
     .allTextContents();
@@ -467,4 +474,15 @@ export function notesOf(body: Record<string, any> | undefined): string[] {
     .filter((m) => m.role === 'system')
     .slice(1)
     .map((m) => m.content);
+}
+
+/**
+ * The last message of a request, which is where the entries a keyword fired
+ * go: after the new line rather than into the system message, so that the
+ * bytes in front of the chapter stop changing as the scan window slides.
+ */
+export function tailOf(body: Record<string, any> | undefined): string {
+  const messages = (body?.['messages'] ?? []) as { role: string; content: string }[];
+  const last = messages[messages.length - 1];
+  return last?.role === 'system' ? last.content : '';
 }

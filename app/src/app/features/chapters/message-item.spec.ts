@@ -219,6 +219,17 @@ describe('MessageItem, in its footer', () => {
     expect(open({}, false)).toBe('a-model');
   });
 
+  it('says how much of the prompt the provider had already read', () => {
+    // The one place a caching failure is visible: a number that was under
+    // yesterday's answers and is not under today's.
+    expect(open({ meta: { ...MESSAGE.meta, cachedTokens: 1100 } })).toBe(
+      'a-model  ·  1.2k in · 340 out · 1.1k cached',
+    );
+    // And nothing at all from an endpoint that does not count it, which is
+    // most of them and every local one.
+    expect(open({})).not.toContain('cached');
+  });
+
   it('says a message was edited', () => {
     expect(open({ editedAt: '2026-01-02T00:00:00.000Z' })).toContain('edited');
   });

@@ -25,6 +25,28 @@ export type ChatEndpoint = Pick<ConnectionSettings, 'provider' | 'baseUrl' | 'ap
 export interface ChatStreamRequest extends ChatEndpoint {
   messages: readonly OutboundMessage[];
   params: GenerationParams;
+  /**
+   * What to tell a provider that routes, so consecutive turns land where the
+   * warm prefix is. The chapter id, from the one caller that has one; absent
+   * everywhere else, and ignored by every provider whose row does not name a
+   * field for it.
+   */
+  cacheKey?: string;
+}
+
+/**
+ * The three dials on the body that are not the user's: each is asked for
+ * first and dropped on the 400 that names it, because half of what speaks
+ * chat-completions does not speak all of it and there is no list of who does
+ * that would stay true.
+ */
+export interface WireOptions {
+  /** `stream_options: { include_usage: true }`. */
+  streamOptions?: boolean;
+  /** `cache_control` breakpoints, where the provider's row asks for them. */
+  caching?: boolean;
+  /** Present on the JSON path: the answer must be one object, and is not streamed. */
+  json?: { schema?: JsonChatRequest['schema'] };
 }
 
 export interface ChatStreamResult {
@@ -125,16 +147,15 @@ export class ModelClient {
   ): Promise<ChatStreamResult> {
     const url = `${normaliseBaseUrl(request.baseUrl)}/chat/completions`;
 
-    let response = await this.post(url, request, true, signal);
-    // Not every OpenAI-compatible server knows `stream_options`; one retry
-    // without it costs nothing and keeps odd endpoints working.
+    let response = await this.post(url, request, {}, signal);
+    // Not every OpenAI-compatible server knows `stream_options`, and plenty of
+    // local ones reject array content outright; one retry without whichever
+    // the refusal named costs nothing and keeps odd endpoints working.
     if (response.status === 400) {
       const body = await safeText(response);
-      if (body.includes('stream_options')) {
-        response = await this.post(url, request, false, signal);
-      } else {
-        throw errorFromResponse(400, body);
-      }
+      const relaxed = relaxation(body, {});
+      if (!relaxed) throw errorFromResponse(400, body);
+      response = await this.post(url, request, relaxed, signal);
     }
     if (!response.ok) throw errorFromResponse(response.status, await safeText(response));
     if (!response.body) throw new ModelError('unknown', 'The endpoint returned an empty stream.');
@@ -213,16 +234,17 @@ export class ModelClient {
   async chatJson<T>(request: JsonChatRequest, signal?: AbortSignal): Promise<JsonChatResult<T>> {
     const url = `${normaliseBaseUrl(request.baseUrl)}/chat/completions`;
 
-    let response = await this.post(url, request, false, signal, { schema: request.schema });
+    const asked: WireOptions = { json: { schema: request.schema } };
+    let response = await this.post(url, request, asked, signal);
     if (response.status === 400) {
       const body = await safeText(response);
-      if (/response_format|json_schema/i.test(body)) {
-        // Without the schema, and still not streamed: the answer is a whole
-        // object or it is nothing, and there is no half of one worth watching.
-        response = await this.post(url, request, false, signal, {});
-      } else {
-        throw errorFromResponse(400, body);
-      }
+      // Without the schema, and still not streamed: the answer is a whole
+      // object or it is nothing, and there is no half of one worth watching.
+      const relaxed = /response_format|json_schema/i.test(body)
+        ? { ...asked, json: {} }
+        : relaxation(body, asked);
+      if (!relaxed) throw errorFromResponse(400, body);
+      response = await this.post(url, request, relaxed, signal);
     }
     if (!response.ok) throw errorFromResponse(response.status, await safeText(response));
 
@@ -234,9 +256,8 @@ export class ModelClient {
   private async post(
     url: string,
     request: ChatStreamRequest,
-    withStreamOptions: boolean,
+    options: WireOptions,
     signal?: AbortSignal,
-    json?: { schema?: JsonChatRequest['schema'] },
   ): Promise<Response> {
     try {
       return await fetch(url, {
@@ -246,7 +267,7 @@ export class ModelClient {
           ...(providerPreset(request.provider).headers ?? {}),
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(buildBody(request, withStreamOptions, json)),
+        body: JSON.stringify(buildBody(request, options)),
         signal,
       });
     } catch (e) {
@@ -273,26 +294,39 @@ function dropped(error: ModelError): ModelError {
 /**
  * The whole request body, rebuilt from parameters every time.
  *
- * `json` marks the other path: an answer that has to be one object, which is
- * not streamed — there is nothing to watch arrive, and half of an object is no
- * use to anybody. It stays not-streamed when the schema is dropped, because
- * dropping the schema is a retry of the same request rather than a different
- * kind of one.
+ * `options.json` marks the other path: an answer that has to be one object,
+ * which is not streamed — there is nothing to watch arrive, and half of an
+ * object is no use to anybody. It stays not-streamed when the schema is
+ * dropped, because dropping the schema is a retry of the same request rather
+ * than a different kind of one.
  */
 export function buildBody(
   request: ChatStreamRequest,
-  withStreamOptions = true,
-  json?: { schema?: JsonChatRequest['schema'] },
+  options: WireOptions = {},
 ): Record<string, unknown> {
   const p = request.params;
+  const json = options.json;
   const streaming = !json;
+  const preset = providerPreset(request.provider);
   const body: Record<string, unknown> = {
     model: request.model,
-    messages: request.messages,
+    // Never on the JSON path: the summary and the lore proposals are their own
+    // prompts, asked once each, and marking a prefix nothing will read again
+    // is a cache write paid for and thrown away.
+    messages:
+      options.caching === false || json
+        ? request.messages
+        : breakpointed(request.messages, request, preset),
     stream: streaming,
     max_tokens: p.maxResponseTokens,
   };
-  if (streaming && withStreamOptions) body['stream_options'] = { include_usage: true };
+  if (streaming && options.streamOptions !== false) {
+    body['stream_options'] = { include_usage: true };
+  }
+  // Where the provider takes one: which of its upstreams — or which of its own
+  // machines — should answer, so the turn lands on the prefix the last one left
+  // warm. One value for a chapter, and a different one for the next chapter.
+  if (preset.cacheKeyField && request.cacheKey) body[preset.cacheKeyField] = request.cacheKey;
   if (json?.schema) {
     body['response_format'] = {
       type: 'json_schema',
@@ -315,6 +349,79 @@ export function buildBody(
     body['reasoning_effort'] = p.reasoningEffort;
   }
   return body;
+}
+
+/**
+ * What to drop from a request the endpoint has just refused with a 400 that
+ * names it. Null when the refusal is about something we did not choose, which
+ * is a real error and not a dialect.
+ */
+function relaxation(body: string, options: WireOptions): WireOptions | null {
+  if (body.includes('cache_control')) return { ...options, caching: false };
+  if (body.includes('stream_options')) return { ...options, streamOptions: false };
+  return null;
+}
+
+/**
+ * The same messages, with up to two of them marked as worth caching.
+ *
+ * Anthropic-shaped caching is the one kind that has to be asked for: the
+ * request marks where the reusable prefix ends and the provider keeps
+ * everything up to that mark. Two marks, which is the pattern (the ceiling is
+ * four): the leading system message, which is the same bytes for the whole
+ * chapter, and the newest reply, which is the end of the history and so takes
+ * the growing tail with it. What comes after that mark — the new line, and the
+ * world block behind it — is the only part paid for in full.
+ *
+ * Only for the models that need it, on the providers that route them: a
+ * `gpt-*` id on the same connection caches implicitly and wants the plain
+ * string it has always been sent, and plenty of local servers reject array
+ * content outright.
+ */
+function breakpointed(
+  messages: readonly OutboundMessage[],
+  request: ChatStreamRequest,
+  preset: ProviderPreset,
+): readonly (OutboundMessage | WireMessage)[] {
+  if (preset.caching !== 'breakpoints' || !CACHE_CONTROL_MODELS.test(request.model)) {
+    return messages;
+  }
+
+  const marked = new Set<number>();
+  if (messages[0]?.role === 'system') marked.add(0);
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i]!.role === 'assistant') {
+      marked.add(i);
+      break;
+    }
+  }
+
+  return messages.map((message, i) =>
+    marked.has(i)
+      ? {
+          role: message.role,
+          content: [{ type: 'text' as const, text: message.content, cache_control: EPHEMERAL }],
+        }
+      : message,
+  );
+}
+
+/** The families whose caching is explicit wherever they are routed from. */
+const CACHE_CONTROL_MODELS = /claude|qwen/i;
+
+const EPHEMERAL = { type: 'ephemeral' as const };
+
+/**
+ * A message as the wire may carry it when a breakpoint is on it.
+ *
+ * Only here, and only in `buildBody`: `OutboundMessage.content` stays a plain
+ * string everywhere the app reasons about a prompt — the estimator counts it,
+ * the preview draws it, the clipboard copies it — and the array form is a
+ * dialect one provider asks for at the last moment.
+ */
+interface WireMessage {
+  role: OutboundMessage['role'];
+  content: { type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }[];
 }
 
 interface ParsedChunk {
@@ -466,12 +573,32 @@ function numberOrUndefined(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
+/**
+ * What the request cost, in whichever of the three dialects the provider
+ * counts a cache hit in.
+ *
+ * `prompt_tokens_details.cached_tokens` is OpenAI's and what most aggregators
+ * copied; `prompt_cache_hit_tokens` is DeepSeek's; `cache_read_input_tokens`
+ * is Anthropic's shape, which is what NanoGPT and OpenRouter report for a
+ * Claude model. First one present wins, and a provider that reports none of
+ * them leaves the field undefined rather than zero — nobody can tell a
+ * provider that missed from one that does not count out loud, and a zero
+ * would claim to.
+ */
 function usageOf(value: unknown): TokenUsage | undefined {
   if (value === null || typeof value !== 'object') return undefined;
+  const details = field(value, 'prompt_tokens_details');
   return {
     promptTokens: numberOrUndefined(field(value, 'prompt_tokens')),
     completionTokens: numberOrUndefined(field(value, 'completion_tokens')),
     totalTokens: numberOrUndefined(field(value, 'total_tokens')),
+    cachedTokens:
+      numberOrUndefined(field(details, 'cached_tokens')) ??
+      numberOrUndefined(field(value, 'prompt_cache_hit_tokens')) ??
+      numberOrUndefined(field(value, 'cache_read_input_tokens')),
+    cacheWriteTokens:
+      numberOrUndefined(field(value, 'cache_write_tokens')) ??
+      numberOrUndefined(field(value, 'cache_creation_input_tokens')),
   };
 }
 

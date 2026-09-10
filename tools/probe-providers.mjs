@@ -90,11 +90,21 @@ async function probe(page, preset) {
 function report(results) {
   const today = new Date().toISOString().slice(0, 10);
   console.log(`\n--- for docs/models-and-parameters.md, ${today} ---\n`);
-  console.log('| Provider | URL | Answers a browser |');
-  console.log('|---|---|---|');
+  console.log('| Provider | URL | Answers a browser | Caches a prefix |');
+  console.log('|---|---|---|---|');
   for (const { preset, allowed, detail } of results) {
+    // The row's own claim about caching, printed beside the probe's so that
+    // whoever refreshes this table refreshes both halves of it. This one is
+    // not measured — it is what the provider documents, and what decides
+    // whether the app marks a prefix for it.
+    const caching =
+      preset.caching === 'breakpoints'
+        ? 'yes, and asks to be told where'
+        : preset.caching === 'implicit'
+          ? 'yes, on its own'
+          : 'not that it says';
     console.log(
-      `| ${preset.name} | \`${preset.baseUrl}\` | ${allowed ? `yes (${detail})` : `**no** — ${detail}`} |`,
+      `| ${preset.name} | \`${preset.baseUrl}\` | ${allowed ? `yes (${detail})` : `**no** — ${detail}`} | ${caching} |`,
     );
   }
   const refused = results.filter((r) => !r.allowed);

@@ -259,7 +259,15 @@ export class ChapterRequests {
 
     try {
       const result = await this.client.streamChat(
-        { ...endpoint, messages, params: this.settings.generation() },
+        {
+          ...endpoint,
+          messages,
+          params: this.settings.generation(),
+          // What a routing provider is told to keep this turn near the last
+          // one's cache. The chapter is the right grain: its prompt grows a
+          // message at a time, and the next chapter's is a new prompt anyway.
+          cacheKey: chapterId,
+        },
         (delta) => {
           if (delta.content) this.pendingContent += delta.content;
           if (delta.reasoning) this.pendingReasoning += delta.reasoning;
@@ -275,6 +283,10 @@ export class ChapterRequests {
           model: endpoint.model,
           promptTokens: result.usage?.promptTokens ?? this.estimator.countMessages(messages),
           completionTokens: result.usage?.completionTokens ?? this.estimator.count(result.content),
+          // Only when the provider counted one: there is no estimate to fall
+          // back on here, and a zero would say the cache missed where the
+          // truth is that nobody was asked.
+          cachedTokens: result.usage?.cachedTokens || undefined,
           finishReason: result.finishReason,
           aborted: result.aborted || undefined,
           interrupted: result.interrupted?.message,

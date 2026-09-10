@@ -44,7 +44,11 @@ export const PIN_REASONS: Record<string, string> = {
   style: 'Always last: the instruction closest to the conversation is the one that sticks.',
   author:
     'Only when the chapter carries a direction, and never anywhere but here: a direction ' +
-    'overrides everything above it, so nothing may be put between it and the conversation.',
+    'outranks every instruction above it, and no instruction is put after it.',
+  'lore-fired':
+    'After your message, on its own: an entry a keyword fired comes and goes as the story ' +
+    'moves, and a block that changes must not sit in front of everything that does not. ' +
+    'World facts are not instructions, so nothing here competes with a direction.',
 };
 
 /**
@@ -109,6 +113,23 @@ export interface PromptBlock {
   tokens: number;
 }
 
+/**
+ * The block that is not one of those: the entries a keyword fired, sent as a
+ * `system` message after the new line.
+ *
+ * Its own shape rather than an eighth `BlockId`, because it is a different
+ * kind of thing — it is not part of the system message, it has no slot in
+ * `promptOrder`, and nothing can be dragged above or below it. What it shares
+ * with a block is that the preview draws it and prices it, which is these four
+ * fields and no more.
+ */
+export interface TailBlock {
+  id: 'lore-fired';
+  label: string;
+  content: string;
+  tokens: number;
+}
+
 /** Why an entry is in this request, for the "What the model sees" modal. */
 export interface LoreHit {
   entry: LoreEntry;
@@ -132,7 +153,14 @@ export interface PromptInput {
 
 export interface BuiltPrompt {
   messages: OutboundMessage[];
+  /** The blocks of the leading system message, in this story's order. */
   blocks: PromptBlock[];
+  /**
+   * The one block that is not in it: the entries a keyword fired, sent as a
+   * `system` message after the new line rather than before the chapter. Absent
+   * when nothing fired, which is every story whose world is always-on.
+   */
+  afterTheLine?: TailBlock;
   lore: LoreHit[];
   /**
    * What the model is told, mid-history, about the cast changing. Empty in
@@ -171,11 +199,37 @@ export function buildPrompt(input: PromptInput): BuiltPrompt {
   // Lore is scanned over the story's own words. A direction is about the story
   // rather than in it, so it fires nothing.
   const lore = activeLore(story, chapter, history, draft);
-  const blocks = systemBlocks(story, chapter, lore, directions, estimator);
+
+  // Split by what can change mid-chapter. An always-on entry is on for the
+  // whole chapter, so it can sit in the leading block without ever rewriting
+  // it. A keyed entry fires and stops firing as the scan window slides, and a
+  // block that changes at the front of the prompt makes a prompt the provider
+  // has never seen before — so those go last instead. See `PIN_REASONS`.
+  const standing = lore.filter((hit) => hit.where === 'always on');
+  const fired = lore.filter((hit) => hit.where !== 'always on');
+
+  const blocks = systemBlocks(story, chapter, standing, directions, estimator);
   const system = blocks.map((b) => b.content).join('\n\n');
   const systemMessage: OutboundMessage[] = system ? [{ role: 'system', content: system }] : [];
 
-  const systemTokens = estimator.countMessages(systemMessage);
+  const firedContent = loreBlock(fired);
+  const afterTheLine: TailBlock | undefined = firedContent
+    ? {
+        id: 'lore-fired',
+        label: 'World, as it came up',
+        content: firedContent,
+        tokens: estimator.count(firedContent),
+      }
+    : undefined;
+  const tailMessage: OutboundMessage[] = afterTheLine
+    ? [{ role: 'system', content: afterTheLine.content }]
+    : [];
+
+  // Counted with the system message rather than beside it: `system` is what
+  // the request costs before a word of the chapter is in it, and the budget
+  // below has to subtract every part of that or it overruns by the size of
+  // the world.
+  const systemTokens = estimator.countMessages([...systemMessage, ...tailMessage]);
   const draftContent = withDirection(draft, draftDirection);
   const draftMessage: OutboundMessage[] = draftContent
     ? [{ role: 'user', content: draftContent }]
@@ -186,22 +240,20 @@ export function buildPrompt(input: PromptInput): BuiltPrompt {
   const budget = Math.max(0, params.maxContextTokens - reserve - systemTokens - draftTokens);
 
   const usable = outboundHistory(story, history);
-  const kept: OutboundMessage[] = [];
-  let historyTokens = 0;
-  let sent = 0;
-  // Oldest messages drop out first, so the newest turns always survive.
-  for (let i = usable.length - 1; i >= 0; i--) {
-    const { message, note } = usable[i]!;
-    const cost = estimator.countMessages([message]);
-    if (historyTokens + cost > budget && (kept.length || draftContent)) break;
-    kept.unshift(message);
-    historyTokens += cost;
-    if (!note) sent++;
-  }
+  const start = historyStart(usable, budget, !!draftContent, estimator);
+  const kept = usable.slice(start).map((entry) => entry.message);
+  const historyTokens = estimator.countMessages(kept);
+  const sent = usable.slice(start).filter((entry) => !entry.note).length;
 
   return {
-    messages: [...systemMessage, ...kept, ...draftMessage],
+    // The keyed world goes after the new line rather than between the history
+    // and it: injected before the line it would sit exactly where the
+    // *previous* turn's message sits next time, so the match would stop a turn
+    // early and that message would be paid for twice. Last keeps everything
+    // but genuinely new content identical from one request to the next.
+    messages: [...systemMessage, ...kept, ...draftMessage, ...tailMessage],
     blocks,
+    afterTheLine,
     lore,
     castNotes: usable.filter((entry) => entry.note).map((entry) => entry.message.content),
     tokens: {
@@ -216,6 +268,73 @@ export function buildPrompt(input: PromptInput): BuiltPrompt {
     // wrote, and a chapter that lost one has not lost a word of itself.
     dropped: usable.filter((entry) => !entry.note).length - sent,
   };
+}
+
+/**
+ * How many messages the window gives up when the budget forces it to give up
+ * any: eight, or four turns, rather than the one it used to.
+ *
+ * One at a time is the obvious rule and the expensive one. Once a chapter
+ * passes the budget, every subsequent turn drops exactly one more message off
+ * the front, so no two consecutive requests open with the same bytes and the
+ * provider's prefix cache goes to zero precisely when the prompt is at its
+ * largest. Dropping a block instead, and keeping that window until it stops
+ * fitting, breaks the prefix occasionally rather than always.
+ *
+ * The window opens on a multiple of this, counted from the chapter's first
+ * message — a grid, not an offset. That is what makes it stable: appending a
+ * turn never moves an earlier message's index, so the same grid line stays the
+ * same message for as long as it is chosen. A boundary computed as a fraction
+ * of the window would be recomputed from a list that grew, and would move
+ * every turn, which is the thing being fixed.
+ */
+const TRIM_BLOCK = 8;
+
+/**
+ * Where the sent history opens: the index into `usable` of the oldest message
+ * this request carries.
+ *
+ * Two rules, in order. The budget's: walking back from the newest, the oldest
+ * message that still fits. And then the grid's: round that forward to a block
+ * boundary, and on to the start of a turn, so the same window is chosen again
+ * next time and the time after.
+ *
+ * The grid is only used when a block is a small part of what fits — a quarter
+ * or less. Under that, rounding forward would throw away most of a short
+ * window to save a cache that a prompt this size was never going to fill, so a
+ * tight budget trims exactly as it always did.
+ */
+function historyStart(
+  usable: readonly { message: OutboundMessage; note: boolean }[],
+  budget: number,
+  hasDraft: boolean,
+  estimator: TokenEstimator,
+): number {
+  const costs = usable.map((entry) => estimator.countMessages([entry.message]));
+
+  let fits = usable.length;
+  let running = 0;
+  for (let i = usable.length - 1; i >= 0; i--) {
+    if (running + costs[i]! > budget) break;
+    running += costs[i]!;
+    fits = i;
+  }
+
+  let start = fits;
+  if (start > 0 && usable.length - fits >= TRIM_BLOCK * 4) {
+    const grid = Math.min(usable.length, Math.ceil(start / TRIM_BLOCK) * TRIM_BLOCK);
+    // And on to a whole turn: a window that opens on a reply reads as an
+    // answer to a question nobody asked.
+    let turn = grid;
+    while (turn < usable.length && usable[turn]!.message.role !== 'user') turn++;
+    start = turn < usable.length ? turn : grid;
+  }
+
+  // The message being sent is never dropped for the budget's sake, and neither
+  // is the newest message when there is no draft to send instead of it: a
+  // request with nothing in it is not a smaller request, it is a different one.
+  if (start >= usable.length && !hasDraft && usable.length) return usable.length - 1;
+  return start;
 }
 
 /**

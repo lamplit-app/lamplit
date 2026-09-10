@@ -36,6 +36,35 @@ export interface ProviderPreset {
   modelsFixed?: readonly ModelInfo[];
   /** Stripped off ids coming back from `/models` (Gemini's `models/`). */
   stripModelPrefix?: string;
+  /**
+   * What this endpoint needs from us to reuse a prompt prefix it has already
+   * read, and charge a fraction for it.
+   *
+   * Absent is the common answer and means "send plain strings": every provider
+   * on this list either caches implicitly or does not cache at all, and both
+   * of those want the request exactly as it has always been sent. `breakpoints`
+   * is the aggregators that route Claude and Qwen models, which cache only
+   * where the request marks the prefix with `cache_control` — and only for
+   * those models, which is why the model id decides as well as this field.
+   *
+   * Anthropic's own row does not have it. `api.anthropic.com/v1` is their
+   * OpenAI compatibility layer, and its documentation lists prompt caching
+   * under what that layer does not support, with `prompt_tokens_details`
+   * always empty. Caching a Claude model against Anthropic directly means
+   * speaking `/v1/messages`, which is a different request, response and
+   * stream; through NanoGPT or OpenRouter the same model caches normally.
+   */
+  caching?: 'implicit' | 'breakpoints';
+  /**
+   * The body field this provider takes a sticky-routing hint in, if any.
+   *
+   * An aggregator routes each request on its own, so a warm prefix on one
+   * upstream is no use to a turn that lands somewhere else; OpenAI uses the
+   * same hint to pick which of its own machines answers. The chapter id is
+   * what the app sends, because it changes exactly when the prompt legitimately
+   * changes wholesale.
+   */
+  cacheKeyField?: 'prompt_cache_key' | 'session_id';
   /** One line under the URL field, when this provider needs something said. */
   note?: string;
   /** True when the endpoint works with the key box left empty. */
@@ -68,6 +97,10 @@ export const PROVIDERS: readonly ProviderPreset[] = [
     group: 'Hosted',
     baseUrl: 'https://api.openai.com/v1',
     keyUrl: 'https://platform.openai.com/api-keys',
+    // Automatic from 1024 tokens up, in 128-token increments; the key only
+    // improves which machine the request lands on.
+    caching: 'implicit',
+    cacheKeyField: 'prompt_cache_key',
     note: 'The list includes models that cannot chat; filter for gpt.',
   },
   {
@@ -88,6 +121,7 @@ export const PROVIDERS: readonly ProviderPreset[] = [
     name: 'Google Gemini',
     group: 'Hosted',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    caching: 'implicit',
     keyUrl: 'https://aistudio.google.com/apikey',
     stripModelPrefix: 'models/',
   },
@@ -103,6 +137,7 @@ export const PROVIDERS: readonly ProviderPreset[] = [
     name: 'DeepSeek',
     group: 'Hosted',
     baseUrl: 'https://api.deepseek.com/v1',
+    caching: 'implicit',
     keyUrl: 'https://platform.deepseek.com/api_keys',
   },
   {
@@ -110,6 +145,7 @@ export const PROVIDERS: readonly ProviderPreset[] = [
     name: 'xAI (Grok)',
     group: 'Hosted',
     baseUrl: 'https://api.x.ai/v1',
+    caching: 'implicit',
     keyUrl: 'https://console.x.ai',
   },
   {
@@ -117,6 +153,7 @@ export const PROVIDERS: readonly ProviderPreset[] = [
     name: 'Groq',
     group: 'Hosted',
     baseUrl: 'https://api.groq.com/openai/v1',
+    caching: 'implicit',
     keyUrl: 'https://console.groq.com/keys',
   },
   {
@@ -145,6 +182,7 @@ export const PROVIDERS: readonly ProviderPreset[] = [
     name: 'Moonshot (Kimi)',
     group: 'Hosted',
     baseUrl: 'https://api.moonshot.ai/v1',
+    caching: 'implicit',
     keyUrl: 'https://platform.moonshot.ai/console/api-keys',
   },
   {
@@ -152,6 +190,7 @@ export const PROVIDERS: readonly ProviderPreset[] = [
     name: 'Z.ai (GLM)',
     group: 'Hosted',
     baseUrl: 'https://api.z.ai/api/paas/v4',
+    caching: 'implicit',
     keyUrl: 'https://z.ai/manage-apikey/apikey-list',
   },
   {
@@ -188,6 +227,9 @@ export const PROVIDERS: readonly ProviderPreset[] = [
     baseUrl: 'https://openrouter.ai/api/v1',
     keyUrl: 'https://openrouter.ai/keys',
     headers: ATTRIBUTION_HEADERS,
+    caching: 'breakpoints',
+    // Ten minutes idle, and ≤256 characters, which a chapter id is.
+    cacheKeyField: 'session_id',
   },
   {
     id: DEFAULT_PROVIDER_ID,
@@ -195,6 +237,7 @@ export const PROVIDERS: readonly ProviderPreset[] = [
     group: 'Aggregators',
     baseUrl: 'https://nano-gpt.com/api/v1',
     keyUrl: 'https://nano-gpt.com/api',
+    caching: 'breakpoints',
     // `?detailed=true` is what turns a list of ids into a list with display
     // names and context lengths, which is what the model picker reads.
     modelsQuery: 'detailed=true',

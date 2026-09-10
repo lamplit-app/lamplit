@@ -1,6 +1,6 @@
 import { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { captureRequests, send, STORY_ID, waitForTurn } from './helpers';
+import { captureRequests, send, STORY_ID, tailOf, waitForTurn } from './helpers';
 import type { PersistenceServer } from './persistence-server';
 
 /**
@@ -127,9 +127,12 @@ test('a filed entry reaches the next chapter’s prompt when it is mentioned', a
   await send(page, 'I buy a ticket.');
   await waitForTurn(page);
 
-  const system = (bodies[bodies.length - 1]['messages'] as { role: string; content: string }[])[0];
-  expect(system.content).toContain('What is true in this world:');
-  expect(system.content).toContain('nine hundred at the mouth of the estuary');
+  // A keyed entry, so it goes last in the request rather than into the leading
+  // system message: what fires comes and goes, and the front of the prompt is
+  // what a provider's cache is keyed on.
+  const tail = tailOf(bodies[bodies.length - 1]);
+  expect(tail).toContain('What is true in this world:');
+  expect(tail).toContain('nine hundred at the mouth of the estuary');
 });
 
 test('an update shows what it would overwrite, and waits to be asked', async ({

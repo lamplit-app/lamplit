@@ -135,7 +135,7 @@ test('the Author block sits last and has no handle', async ({ page, app }) => {
     .locator('mat-dialog-content .block')
     .filter({ has: page.locator('.name', { hasText: /^Author$/ }) });
   await expect(author.locator('.handle')).toHaveCount(0);
-  await expect(author).toContainText('overrides everything above it');
+  await expect(author).toContainText('outranks every instruction above it');
 
   // What the next message will carry, as it will carry it.
   await expect(

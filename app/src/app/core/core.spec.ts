@@ -14,7 +14,7 @@ import {
   describeContextLimit,
   errorFromResponse,
 } from './model-errors';
-import { formatTokens, heuristicEstimator } from './tokens';
+import { formatTokens, heuristicEstimator, tokenCost } from './tokens';
 import { CUSTOM_PROVIDER_ID } from './providers';
 import { DEFAULT_GENERATION } from './defaults';
 import { renderMarkdown, renderStoryHtml } from './formatting';
@@ -206,6 +206,28 @@ describe('parseChunk', () => {
     ).toMatchObject({ usage: { promptTokens: 10, completionTokens: 4 } });
   });
 
+  it('reads a cache hit in whichever of the three dialects it arrives in', () => {
+    const cached = (usage: string) =>
+      parseChunk(`{"choices":[],"usage":{"prompt_tokens":8000,"completion_tokens":9,${usage}}}`)
+        ?.usage;
+
+    // OpenAI's, and what most aggregators copied.
+    expect(cached('"prompt_tokens_details":{"cached_tokens":7600}')).toMatchObject({
+      cachedTokens: 7600,
+    });
+    // DeepSeek's.
+    expect(cached('"prompt_cache_hit_tokens":7600')).toMatchObject({ cachedTokens: 7600 });
+    // Anthropic's shape, which is what NanoGPT reports for a Claude model.
+    expect(
+      cached('"cache_read_input_tokens":7600,"cache_creation_input_tokens":120'),
+    ).toMatchObject({ cachedTokens: 7600, cacheWriteTokens: 120 });
+
+    // And a provider that counts none of it says nothing rather than zero.
+    expect(
+      parseChunk('{"choices":[],"usage":{"prompt_tokens":10,"completion_tokens":4}}')?.usage,
+    ).toMatchObject({ cachedTokens: undefined, cacheWriteTokens: undefined });
+  });
+
   it('reads reasoning under either of the two field names', () => {
     expect(parseChunk('{"choices":[{"delta":{"reasoning_content":"hm"}}]}')).toMatchObject({
       reasoning: 'hm',
@@ -284,7 +306,73 @@ describe('buildBody', () => {
     expect(
       buildBody({ ...base, params: { ...params, reasoningEffort: 'none' } }),
     ).not.toHaveProperty('reasoning_effort');
-    expect(buildBody({ ...base, params }, false)).not.toHaveProperty('stream_options');
+    expect(buildBody({ ...base, params }, { streamOptions: false })).not.toHaveProperty(
+      'stream_options',
+    );
+  });
+
+  it('marks the prefix only where the provider asks and the model needs it', () => {
+    const messages = [
+      { role: 'system' as const, content: 'You are the narrator.' },
+      { role: 'user' as const, content: 'I open the door.' },
+      { role: 'assistant' as const, content: 'The room is empty.' },
+      { role: 'user' as const, content: 'I go in.' },
+    ];
+
+    const claude = buildBody({
+      ...base,
+      provider: 'nanogpt',
+      model: 'claude-sonnet-4.5',
+      messages,
+      params,
+    });
+    const marked = claude['messages'] as { content: unknown }[];
+    // The leading system message and the newest reply: the end of the prefix
+    // that is the same bytes next turn, and the end of the growing history.
+    expect(marked[0].content).toEqual([
+      {
+        type: 'text',
+        text: 'You are the narrator.',
+        cache_control: { type: 'ephemeral' },
+      },
+    ]);
+    expect(marked[1].content).toBe('I open the door.');
+    expect(marked[2].content).toEqual([
+      { type: 'text', text: 'The room is empty.', cache_control: { type: 'ephemeral' } },
+    ]);
+    expect(marked[3].content).toBe('I go in.');
+
+    // Same connection, a model that caches without being asked.
+    const gpt = buildBody({ ...base, provider: 'nanogpt', model: 'gpt-4.1', messages, params });
+    expect(gpt['messages']).toEqual(messages);
+
+    // Same model, a provider whose row does not ask for breakpoints.
+    const custom = buildBody({ ...base, model: 'claude-sonnet-4.5', messages, params });
+    expect(custom['messages']).toEqual(messages);
+
+    // And the retry after a 400 that named the field.
+    const retried = buildBody(
+      { ...base, provider: 'nanogpt', model: 'claude-sonnet-4.5', messages, params },
+      { caching: false },
+    );
+    expect(retried['messages']).toEqual(messages);
+  });
+
+  it('sends the routing hint each provider takes, and only that one', () => {
+    const openai = buildBody({ ...base, provider: 'openai', cacheKey: 'chapter-7', params });
+    expect(openai['prompt_cache_key']).toBe('chapter-7');
+    expect(openai).not.toHaveProperty('session_id');
+
+    const router = buildBody({ ...base, provider: 'openrouter', cacheKey: 'chapter-7', params });
+    expect(router['session_id']).toBe('chapter-7');
+
+    // Nothing to say, or nobody to say it to.
+    expect(buildBody({ ...base, provider: 'openai', params })).not.toHaveProperty(
+      'prompt_cache_key',
+    );
+    expect(buildBody({ ...base, cacheKey: 'chapter-7', params })).not.toHaveProperty(
+      'prompt_cache_key',
+    );
   });
 });
 
@@ -488,6 +576,20 @@ describe('token estimates', () => {
     expect(formatTokens(9999)).toBe('10k');
     expect(formatTokens(999_999)).toBe('1.0M');
     expect(formatTokens(2_000_000)).toBe('2.0M');
+  });
+
+  it('says what a request cost, and what of it the provider had already read', () => {
+    expect(tokenCost({ promptTokens: 8000, completionTokens: 200 })).toBe('8.0k in · 200 out');
+    expect(tokenCost({ promptTokens: 8000, completionTokens: 200, cachedTokens: 7600 })).toBe(
+      '8.0k in · 200 out · 7.6k cached',
+    );
+    // A provider that reports no hit, and one that reports none of it: the
+    // half is left off exactly as the prompt half is.
+    expect(tokenCost({ promptTokens: 8000, completionTokens: 200, cachedTokens: 0 })).toBe(
+      '8.0k in · 200 out',
+    );
+    expect(tokenCost({ completionTokens: 200 })).toBe('200 out');
+    expect(tokenCost(undefined)).toBe('');
   });
 });
 

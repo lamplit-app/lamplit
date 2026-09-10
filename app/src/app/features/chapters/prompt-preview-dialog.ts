@@ -160,6 +160,20 @@ export interface PromptPreviewData {
           <pre>{{ nextMessage() }}</pre>
         </section>
       }
+
+      <!-- Last in the request, and drawn last: the entries a keyword fired go
+           after the new line rather than into the system message above. -->
+      @if (afterTheLine(); as tail) {
+        <section class="block pinned tail">
+          <header>
+            <span class="pin" aria-hidden="true">•</span>
+            <span class="name li-label">{{ tail.label }}</span>
+            <span class="tokens">{{ format(tail.tokens) }}</span>
+          </header>
+          <pre>{{ tail.content }}</pre>
+          <p class="why">{{ reasons[tail.id] }}</p>
+        </section>
+      }
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
@@ -343,6 +357,8 @@ export class PromptPreviewDialog {
   protected readonly unwritten = computed(
     () => this.stories.story().world.entries.filter((e) => e.enabled && !e.content.trim()).length,
   );
+
+  protected readonly afterTheLine = computed(() => this.prompt().afterTheLine);
 
   protected readonly nextMessage = computed(() =>
     withDirection(this.data.draft, this.data.direction),

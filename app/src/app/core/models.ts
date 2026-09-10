@@ -228,12 +228,34 @@ export interface TokenUsage {
   promptTokens?: number;
   completionTokens?: number;
   totalTokens?: number;
+  /**
+   * How much of `promptTokens` the provider had already read, and charged a
+   * fraction of. Every provider that caches reports this and each of them
+   * spells it differently; `usageOf` reads the three dialects into this one
+   * number. Absent means the provider said nothing, which is not the same as
+   * zero and is why nothing is shown for it.
+   */
+  cachedTokens?: number;
+  /**
+   * And what it cost to put a prefix into the cache, where the provider bills
+   * that separately — 1.25× input on the newer OpenAI models and on
+   * Anthropic's five-minute entries. Read for the same reason the count above
+   * is: two requests over one prefix break even, and one does not.
+   */
+  cacheWriteTokens?: number;
 }
 
 export interface MessageMeta {
   model?: string;
   promptTokens?: number;
   completionTokens?: number;
+  /**
+   * How many of the prompt tokens the provider read out of its cache. Kept
+   * per message because a caching failure is silent — the reply is right and
+   * the bill is larger — so the only way anyone notices is a number under the
+   * answer that used to be there and is not.
+   */
+  cachedTokens?: number;
   finishReason?: string;
   aborted?: boolean;
   /**

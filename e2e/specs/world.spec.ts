@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { captureRequests, openPromptPreview, send, systemOf, waitForTurn } from './helpers';
+import { captureRequests, openPromptPreview, send, systemOf, tailOf, waitForTurn } from './helpers';
 
 /**
  * The world behind the story: what is true in it, which of it the scene and
@@ -35,13 +35,14 @@ test('lore fires on the scene, and only on what is mentioned', async ({ page, ap
   await expect(preview.getByText('Mara has just arrived.')).toBeVisible();
   await preview.getByRole('button', { name: 'Done' }).click();
 
-  // What the preview promised is what the request carries.
+  // What the preview promised is what the request carries — in the block after
+  // the new line, which is where an entry a keyword fired goes.
   const bodies = await captureRequests(page);
   await send(page, 'I look around.');
   await waitForTurn(page);
-  const system = systemOf(bodies[0]);
-  expect(system).toContain('missing since spring');
-  expect(system).not.toContain('hundred and nine iron steps');
+  expect(tailOf(bodies[0])).toContain('missing since spring');
+  expect(tailOf(bodies[0])).not.toContain('hundred and nine iron steps');
+  expect(systemOf(bodies[0])).not.toContain('missing since spring');
 });
 
 test('what the reader types can fire an entry too', async ({ page, app }) => {
@@ -51,7 +52,7 @@ test('what the reader types can fire an entry too', async ({ page, app }) => {
 
   await send(page, 'I climb to the lantern.');
   await waitForTurn(page);
-  expect(systemOf(bodies[0])).toContain('hundred and nine iron steps');
+  expect(tailOf(bodies[0])).toContain('hundred and nine iron steps');
 });
 
 test('closing the modal saves what was typed into it', async ({ page, app }) => {

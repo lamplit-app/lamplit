@@ -23,6 +23,8 @@ export interface AppOptions extends SeedStory {
   readAloud?: boolean;
   /** Generation settings other than the ones `seedConnectedSettings` writes. */
   generation?: Record<string, unknown>;
+  /** Connection fields other than those: the provider row, and the model id. */
+  connection?: Record<string, unknown>;
 }
 
 /**
@@ -56,8 +58,8 @@ export const test = base.extend<{ server: PersistenceServer; app: App }>({
 
   app: async ({ page, server }, use) => {
     const app: App = {
-      async seed({ developerMode, readAloud, generation, ...story } = {}) {
-        await seedConnectedSettings(server, 'test-key', generation);
+      async seed({ developerMode, readAloud, generation, connection, ...story } = {}) {
+        await seedConnectedSettings(server, 'test-key', generation, connection);
         // After the settings document, which they read and write back.
         if (developerMode) await seedDeveloperMode(server);
         if (readAloud) await seedUi(server, { readAloud: true });
