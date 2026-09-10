@@ -45,6 +45,14 @@ is their OpenAI compatibility layer, and prompt caching is one of the things it 
 so reach a Claude model through NanoGPT or OpenRouter if you want this. And caching pays for itself
 over two requests on one prefix, not one; it is worth most on a long chapter.
 
+**A paired phone gets the story instead of a blank page.** Scanning the code loaded the boot screen
+and then nothing: a grey page with the app's background and nothing on it. A phone reaches Lamplit
+at a plain `http://192.168…` address, and browsers withhold a handful of APIs from a page served
+that way — among them the one the app used to make an id for a new story, chapter or message. The
+desktop never saw it, because a browser trusts its own machine. Ids are now made either way, and
+**Copy** on a message or in **What the model sees** works on the phone too, by the older route the
+clipboard API replaced.
+
 ## 0.2.0
 
 **Role-play is told how it is played.** Narrator mode has always opened with a full instruction;
