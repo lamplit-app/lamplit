@@ -5,7 +5,7 @@ onto the draft release, so it is written for the person downloading, not for the
 person who wrote the code. A section is written as the work happens, under
 `## Unreleased`, and renamed to the version when the tag goes out.
 
-## Unreleased
+## 0.2.1
 
 **A long chapter stops costing full price on every turn.** Every request carries the whole prompt —
 that is deliberate, and it is what makes edit, regenerate and replay work — but almost every

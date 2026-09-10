@@ -1,6 +1,6 @@
 {
   "name": "lamplit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "A chat-centred, text-only storytelling app talking straight to any OpenAI-compatible endpoint.",
   "workspaces": [

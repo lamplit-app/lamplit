@@ -9,6 +9,42 @@ notes: **⋯ → About Lamplit → Release notes**, and the top bar says so when
 
 <!-- Generated from CHANGELOG.md by tools/release-notes.mjs. Edit the changelog. -->
 
+## 0.2.1
+
+**A long chapter stops costing full price on every turn.** Every request carries the whole prompt —
+that is deliberate, and it is what makes edit, regenerate and replay work — but almost every
+provider will charge a fraction for the leading bytes of a prompt it has already read, if those
+bytes stop changing. Two things in the way were ours, and both are gone:
+
+- **Lore that fires on a keyword now goes last**, in a short `system` message after your own line,
+  instead of into the block near the front. An entry firing when its word is mentioned and falling
+  silent four messages later used to rewrite the prompt from its very first byte, and re-price the
+  whole chapter behind it, several times a chapter. Entries marked **always on** have not moved:
+  they cannot change mid-chapter, so they stay where you put them. **What the model sees** draws
+  the block where it now goes.
+- **A chapter over budget gives up its oldest turns in blocks**, not one message per turn. The
+  window it settles on then stays put for many turns, where before every single turn dropped one
+  more message off the front and no two requests in a row ever began the same way. What is dropped
+  is still said out loud under the composer, and nothing about which messages survive has changed
+  beyond the size of the step.
+
+**And you can now see whether it is working.** With **Show token counts** on, the footer under a
+reply reads `8.0k in · 240 out · 7.6k cached` when the provider says how much of the prompt it had
+already read. Lamplit reads that count in all three of the shapes providers report it in, so it
+turns up on OpenAI, DeepSeek, OpenRouter, NanoGPT and most aggregators. Nothing is shown for an
+endpoint that does not report one, which is every local server.
+
+**Claude models through an aggregator** are sent the two cache markers those models need — one at
+the end of the system message, one at the end of the history. Other models on the same connection
+are sent exactly what they were sent before, and an endpoint that refuses the markers is sent the
+same turn again without them. **OpenAI** and **OpenRouter** are also told which chapter a request
+belongs to, so consecutive turns land where the warm copy is.
+
+Two things worth knowing: **Anthropic's own endpoint cannot cache at all** — `api.anthropic.com/v1`
+is their OpenAI compatibility layer, and prompt caching is one of the things it does not support —
+so reach a Claude model through NanoGPT or OpenRouter if you want this. And caching pays for itself
+over two requests on one prefix, not one; it is worth most on a long chapter.
+
 ## 0.2.0
 
 **Role-play is told how it is played.** Narrator mode has always opened with a full instruction;

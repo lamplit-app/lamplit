@@ -26,16 +26,16 @@ Unzip the new version beside the old one. Then either **move the data across**:
 
 ```bash
 # Windows (PowerShell)
-Move-Item lamplit-0.1.0\data lamplit-0.2.0\data
+Move-Item lamplit-0.2.0\data lamplit-0.2.1\data
 
 # macOS, Linux
-mv lamplit-0.1.0/data lamplit-0.2.0/data
+mv lamplit-0.2.0/data lamplit-0.2.1/data
 ```
 
 …or leave it where it is and **tell the new one where to look**:
 
 ```bash
-./start.sh --data ../lamplit-0.1.0/data
+./start.sh --data ../lamplit-0.2.0/data
 ```
 
 Either works; moving it is tidier, and then the old folder can be deleted whole. `backups` can
@@ -70,7 +70,7 @@ running.
 
 ![A newer version, and what changed in it](images/whats-new.png)
 
-It is a small pill — *0.2.0 available* — and nothing else. No modal, no banner over the page you
+It is a small pill — *0.2.1 available* — and nothing else. No modal, no banner over the page you
 are writing on. Click it for **What's new**: every release above yours, newest first, with the
 notes as they were written, and a line at the bottom about getting it on the channel you are
 using. The same sheet, showing every release, is under **⋯ → About Lamplit → Release notes**,
@@ -107,10 +107,10 @@ The server writes the version it is running into `data/lastRun.json`. When it st
 different one there, it says so in its log —
 
 ```
-upgraded 0.1.0 → 0.2.0
+upgraded 0.2.0 → 0.2.1
 ```
 
-— and the app shows one line at the top of the page: *Lamplit was upgraded to 0.2.0*, with a link
+— and the app shows one line at the top of the page: *Lamplit was upgraded to 0.2.1*, with a link
 to what changed in it. Dismiss it and it is gone for good; it is recorded in `settings.json`, so
 it never appears twice for the same version.
 
@@ -126,7 +126,7 @@ same version number as the one before it.
 **⋯ → About Lamplit**, which is the answer to give in a bug report:
 
 ```
-Version 0.2.0
+Version 0.2.1
 build 42 · a1b2c3d · 2026-09-04 · zip
 ```
 
