@@ -26,7 +26,7 @@ The first system message is assembled in this order:
 | 1 | **Mode preamble** — the narrator instruction, or the role-play instruction followed by "You are playing X and Y" (or "X, and nobody else") and each character's description | always |
 | 2 | **Persona** — "The user plays *name*: *description*" | when you have set one |
 | 3 | **The story so far** | when it is not empty |
-| 4 | **What is true in this world** — the lore entries that are **always on** | when you have any |
+| 4 | **World, always on** — the lore entries marked always on | when you have any |
 | 5 | **This chapter** — "Chapter *n*, *title*. The scene:" then the scene, verbatim | always |
 | 6 | **Style rules** — dialogue, reply length, stay in character, never write for the persona | always |
 | 7 | **Author** — how to read a direction, and that it outranks everything above | when the chapter carries one |
@@ -35,14 +35,19 @@ And after everything, past your own new line, the eighth:
 
 | # | Block | When |
 |---|---|---|
-| 8 | **What is true in this world** — the entries a **keyword** fired | when any fired this turn |
+| 8 | **World, as it came up** — the entries a **keyword** fired | when any fired this turn |
 
-Two blocks with the same words, split by how often they change. An always-on entry is on for the
-whole chapter, so it can sit near the front without ever moving anything. A keyed entry fires when
-its word is in the scan window and stops when the word slides out of it — which is a block that
-comes and goes, and a block that comes and goes at the *front* of the prompt changes the prompt
-from its very first byte. Last, it changes nothing in front of it. [Why that
-matters](#what-it-costs-to-send-it-all-again) is below.
+Both send the same sentence — *What is true in this world:* and a line per entry — and the preview
+names them apart because they behave apart. An always-on entry is on for the whole chapter, so it
+can sit near the front without ever moving anything. A keyed entry fires when its word is in the
+scan window and stops when the word slides out of it — which is a block that comes and goes, and a
+block that comes and goes at the *front* of the prompt changes the prompt from its very first byte.
+Last, it changes nothing in front of it. [Why that matters](#what-it-costs-to-send-it-all-again) is
+below.
+
+So if you type a word an entry is keyed on and the **World, always on** block does not change, that
+is right: look at **Lore**, which names every entry that fired and on which word, and at **World, as
+it came up** at the foot of the sheet.
 
 The order is not arbitrary. The mode preamble sits first because it is the standing instruction
 everything else qualifies, and the style rules sit last because the instruction closest to the

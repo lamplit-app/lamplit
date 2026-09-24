@@ -117,6 +117,15 @@ export interface PromptPreviewData {
             Nothing matched the scene, the last messages or what you are typing.
           </p>
         }
+        <!-- The bridge between the two halves of the world. Without it, a
+             writer types a keyword, watches the block above for it and
+             concludes the scan is broken — which is what happened. -->
+        @if (afterTheLine()) {
+          <p class="li-hint empty">
+            What a keyword fired is sent last, after your message, and not in the
+            <strong>World, always on</strong> block above.
+          </p>
+        }
         @if (unwritten()) {
           <p class="li-hint empty warn">
             {{ unwritten() }}

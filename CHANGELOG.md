@@ -17,7 +17,10 @@ bytes stop changing. Two things in the way were ours, and both are gone:
   silent four messages later used to rewrite the prompt from its very first byte, and re-price the
   whole chapter behind it, several times a chapter. Entries marked **always on** have not moved:
   they cannot change mid-chapter, so they stay where you put them. **What the model sees** draws
-  the block where it now goes.
+  the block where it now goes, and names the two halves apart — **World, always on** in the system
+  message, **World, as it came up** at the foot of the sheet — so a keyword you type that does not
+  change the first of them is not a scan that has stopped working. **Lore** still lists every entry
+  that fired and on which word, and now says where what fired is sent.
 - **A chapter over budget gives up its oldest turns in blocks**, not one message per turn. The
   window it settles on then stays put for many turns, where before every single turn dropped one
   more message off the front and no two requests in a row ever began the same way. What is dropped

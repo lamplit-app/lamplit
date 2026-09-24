@@ -620,7 +620,12 @@ function systemBlocks(
     },
     persona: { label: 'Persona', content: personaBlock(story) },
     'story-so-far': { label: 'The story so far', content: storySoFarBlock(story) },
-    lore: { label: 'World', content: loreBlock(lore) },
+    // Named for what it holds rather than for the subject it is about: since
+    // the keyed half moved to the end of the request, a block called plain
+    // "World" was a block a writer watched for a word they had just typed and
+    // never saw arrive. The pair reads as a pair — this one and "World, as it
+    // came up" below.
+    lore: { label: 'World, always on', content: loreBlock(lore) },
     scene: { label: 'This chapter', content: sceneBlock(chapter) },
     style: { label: 'Style', content: styleBlock(story) },
     // Fixed words, and the only block whose presence is decided by the

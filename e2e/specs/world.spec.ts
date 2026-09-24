@@ -1,5 +1,14 @@
 import { expect, test } from './fixtures';
-import { captureRequests, openPromptPreview, send, systemOf, tailOf, waitForTurn } from './helpers';
+import {
+  captureRequests,
+  composer,
+  fillProse,
+  openPromptPreview,
+  send,
+  systemOf,
+  tailOf,
+  waitForTurn,
+} from './helpers';
 
 /**
  * The world behind the story: what is true in it, which of it the scene and
@@ -43,6 +52,64 @@ test('lore fires on the scene, and only on what is mentioned', async ({ page, ap
   expect(tailOf(bodies[0])).toContain('missing since spring');
   expect(tailOf(bodies[0])).not.toContain('hundred and nine iron steps');
   expect(systemOf(bodies[0])).not.toContain('missing since spring');
+});
+
+/**
+ * Where the sheet puts each half of the world, which is the half of this that
+ * the request specs cannot see.
+ *
+ * The split is invisible in a request body and very visible to a writer: the
+ * block called World stopped answering to a word they had just typed, because
+ * what a keyword fires is sent last now. A reader who does not find that out
+ * from the sheet concludes the scan is broken.
+ */
+test('the sheet says which half of the world is where', async ({ page, app }) => {
+  await app.open({
+    developerMode: true,
+    entries: [
+      ...entries,
+      {
+        id: 'lore-tide',
+        title: 'The tide',
+        alwaysOn: true,
+        keys: [],
+        content: 'The bar is walkable two hours either side of low water.',
+      },
+    ],
+  });
+
+  await fillProse(composer(page), 'I climb to the lantern.');
+  await openPromptPreview(page);
+  const preview = page.getByRole('dialog');
+
+  // Every block of the sheet, in the order it is drawn — which for the two
+  // halves of the world is the order they are sent in.
+  const names = (await preview.locator('.block .name').allTextContents()).map((n) => n.trim());
+  expect(names).toEqual([
+    'Narrator',
+    'World, always on',
+    'This chapter',
+    'Style',
+    'Lore',
+    'This chapter',
+    'Your next message',
+    'World, as it came up',
+  ]);
+
+  // Named by position rather than by text, because the hint below names the
+  // first block too and a text filter would find both.
+  const block = (name: string) => preview.locator('.block').nth(names.indexOf(name));
+
+  // The always-on entry, in the block that keeps its place in the order.
+  await expect(block('World, always on')).toContainText('either side of low water');
+  await expect(block('World, always on')).not.toContainText('hundred and nine iron steps');
+
+  // And what the typing fired, in the block after the message it fired on.
+  await expect(block('World, as it came up')).toContainText('hundred and nine iron steps');
+  await expect(block('World, as it came up')).not.toContainText('either side of low water');
+
+  // And the one line that stops a writer concluding the scan is broken.
+  await expect(preview).toContainText('sent last, after your message');
 });
 
 test('what the reader types can fire an entry too', async ({ page, app }) => {
